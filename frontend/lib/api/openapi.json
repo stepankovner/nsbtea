@@ -5046,6 +5046,57 @@
     "title": "LoginOut",
     "type": "object"
    },
+   "LookupProduct": {
+    "properties": {
+     "id": {
+      "format": "uuid",
+      "title": "Id",
+      "type": "string"
+     },
+     "image_url": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Image Url"
+     },
+     "name": {
+      "title": "Name",
+      "type": "string"
+     },
+     "slug": {
+      "title": "Slug",
+      "type": "string"
+     },
+     "status": {
+      "title": "Status",
+      "type": "string"
+     },
+     "stock_label": {
+      "title": "Stock Label",
+      "type": "string"
+     },
+     "type": {
+      "title": "Type",
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "slug",
+     "name",
+     "type",
+     "status",
+     "image_url",
+     "stock_label"
+    ],
+    "title": "LookupProduct",
+    "type": "object"
+   },
    "LowStockRow": {
     "properties": {
      "image_url": {
@@ -13656,6 +13707,91 @@
     "summary": "Списание",
     "tags": [
      "admin: склад"
+    ]
+   }
+  },
+  "/api/admin/lookup/products": {
+   "get": {
+    "operationId": "lookup_products_api_admin_lookup_products_get",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "q",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "maxLength": 100,
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Q"
+      }
+     },
+     {
+      "description": "id через запятую",
+      "in": "query",
+      "name": "ids",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "maxLength": 4000,
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "id через запятую",
+       "title": "Ids"
+      }
+     },
+     {
+      "in": "query",
+      "name": "limit",
+      "required": false,
+      "schema": {
+       "default": 30,
+       "maximum": 100,
+       "minimum": 1,
+       "title": "Limit",
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/LookupProduct"
+         },
+         "title": "Response Lookup Products Api Admin Lookup Products Get",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Выбор товаров (поиск)",
+    "tags": [
+     "admin: каталог"
     ]
    }
   },

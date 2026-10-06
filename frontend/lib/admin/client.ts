@@ -10,6 +10,10 @@ export function setCsrfToken(token: string | null): void {
   csrfToken = token;
 }
 
+export function getCsrfToken(): string | null {
+  return csrfToken;
+}
+
 export const adminApi = createApi({ csrf: () => csrfToken });
 export { must };
 export type { Schemas };

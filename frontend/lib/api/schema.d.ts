@@ -780,6 +780,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/lookup/products": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Выбор товаров (поиск) */
+        get: operations["lookup_products_api_admin_lookup_products_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/media": {
         parameters: {
             query?: never;
@@ -3658,6 +3675,26 @@ export interface components {
              */
             status: "ok" | "two_factor_required";
             user: components["schemas"]["AdminUserOut"] | null;
+        };
+        /** LookupProduct */
+        LookupProduct: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Image Url */
+            image_url: string | null;
+            /** Name */
+            name: string;
+            /** Slug */
+            slug: string;
+            /** Status */
+            status: string;
+            /** Stock Label */
+            stock_label: string;
+            /** Type */
+            type: string;
         };
         /** LowStockRow */
         LowStockRow: {
@@ -7374,6 +7411,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WriteoffOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    lookup_products_api_admin_lookup_products_get: {
+        parameters: {
+            query?: {
+                q?: string | null;
+                /** @description id через запятую */
+                ids?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LookupProduct"][];
                 };
             };
             /** @description Validation Error */
