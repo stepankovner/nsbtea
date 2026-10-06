@@ -68,17 +68,24 @@ class TestBuildReceipt:
         assert sum(i.amount_kop for i in items) == 180_000 - 20_000 + 35_000
 
     def test_free_delivery_not_in_receipt(self) -> None:
-        items = build_receipt([ReceiptSource(name="Шу", amount_kop=100_000)], points_kop=0, delivery_kop=0)
+        items = build_receipt(
+            [ReceiptSource(name="Шу", amount_kop=100_000)], points_kop=0, delivery_kop=0
+        )
         assert len(items) == 1
 
     def test_points_cannot_exceed_goods(self) -> None:
         with pytest.raises(DomainError):
-            build_receipt([ReceiptSource(name="Шу", amount_kop=100)], points_kop=200, delivery_kop=0)
+            build_receipt(
+                [ReceiptSource(name="Шу", amount_kop=100)], points_kop=200, delivery_kop=0
+            )
 
     def test_zero_amount_lines_are_dropped(self) -> None:
         # позиция, полностью покрытая скидкой, не может уйти в чек с нулевой суммой
         items = build_receipt(
-            [ReceiptSource(name="Подарок", amount_kop=0), ReceiptSource(name="Шу", amount_kop=1_000)],
+            [
+                ReceiptSource(name="Подарок", amount_kop=0),
+                ReceiptSource(name="Шу", amount_kop=1_000),
+            ],
             points_kop=0,
             delivery_kop=0,
         )

@@ -30,14 +30,21 @@ class TestRules:
 
 class TestMaxSpend:
     def test_half_of_items(self) -> None:
-        assert max_points_to_spend(items_after_discounts_kop=200_000, balance=5_000, rules=RULES) == 1_000
+        assert (
+            max_points_to_spend(items_after_discounts_kop=200_000, balance=5_000, rules=RULES)
+            == 1_000
+        )
 
     def test_limited_by_balance(self) -> None:
-        assert max_points_to_spend(items_after_discounts_kop=200_000, balance=300, rules=RULES) == 300
+        assert (
+            max_points_to_spend(items_after_discounts_kop=200_000, balance=300, rules=RULES) == 300
+        )
 
     def test_rounds_down_to_whole_points(self) -> None:
         # 50% от 999 ₽ = 499,5 → 499 баллов
-        assert max_points_to_spend(items_after_discounts_kop=99_900, balance=5_000, rules=RULES) == 499
+        assert (
+            max_points_to_spend(items_after_discounts_kop=99_900, balance=5_000, rules=RULES) == 499
+        )
 
     def test_zero_balance(self) -> None:
         assert max_points_to_spend(items_after_discounts_kop=100_000, balance=0, rules=RULES) == 0
@@ -48,10 +55,20 @@ class TestMaxSpend:
 
 class TestResolveSpend:
     def test_within_limit(self) -> None:
-        assert resolve_points_to_spend(200, items_after_discounts_kop=100_000, balance=500, rules=RULES) == 200
+        assert (
+            resolve_points_to_spend(
+                200, items_after_discounts_kop=100_000, balance=500, rules=RULES
+            )
+            == 200
+        )
 
     def test_clamped_to_max(self) -> None:
-        assert resolve_points_to_spend(900, items_after_discounts_kop=100_000, balance=5_000, rules=RULES) == 500
+        assert (
+            resolve_points_to_spend(
+                900, items_after_discounts_kop=100_000, balance=5_000, rules=RULES
+            )
+            == 500
+        )
 
     def test_negative_rejected(self) -> None:
         with pytest.raises(DomainError):
@@ -61,7 +78,9 @@ class TestResolveSpend:
 class TestEarn:
     def test_five_percent_of_money_paid(self) -> None:
         # 2 000 ₽ товаров, 300 баллами → деньгами 1 700 ₽ → 85 баллов
-        assert points_to_earn(items_after_discounts_kop=200_000, points_spent=300, rules=RULES) == 85
+        assert (
+            points_to_earn(items_after_discounts_kop=200_000, points_spent=300, rules=RULES) == 85
+        )
 
     def test_rounds_down(self) -> None:
         # 5% от 999 ₽ = 49,95 → 49

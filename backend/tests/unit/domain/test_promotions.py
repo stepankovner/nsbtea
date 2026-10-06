@@ -211,7 +211,7 @@ class TestPromoCode:
         )
         assert not result.promo_code_applied
         assert result.order_discount_kop == 0
-        assert result.promo_code_message == "Промокод действует при заказе от 2 000 ₽"
+        assert result.promo_code_message == "Промокод действует при заказе от 2 000 ₽"
 
     def test_min_order_counts_after_product_discounts(self) -> None:
         line = tea_line("Шу", 2_000)
@@ -226,7 +226,9 @@ class TestPromoCode:
         sale_line = tea_line("Да Хун Пао", 1_000)
         plain = tea_line("Шу", 1_000)
         result = calculate_discounts(
-            [sale_line, plain], [promo(percent=20, products=(sale_line,))], promo_code=code(percent=10)
+            [sale_line, plain],
+            [promo(percent=20, products=(sale_line,))],
+            promo_code=code(percent=10),
         )
         assert result.lines[0].order_discount_kop == 0
         assert result.lines[1].order_discount_kop == 10_000
@@ -254,7 +256,9 @@ class TestPromoCode:
     def test_restricted_to_category(self) -> None:
         shu = tea_line("Шу", 1_000, cat=CAT_PUER)
         cup = unit_line("Чашка", 500)
-        result = calculate_discounts([shu, cup], [], promo_code=code(percent=10, categories=(CAT_PUER,)))
+        result = calculate_discounts(
+            [shu, cup], [], promo_code=code(percent=10, categories=(CAT_PUER,))
+        )
         assert [ln.order_discount_kop for ln in result.lines] == [10_000, 0]
 
     def test_restricted_and_nothing_matches(self) -> None:

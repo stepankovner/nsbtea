@@ -7,14 +7,18 @@ from app.domain.shipping import Box, choose_box, delivery_price, parcel_weight
 
 BOXES = (
     Box(code="m", name="Средняя", max_weight_grams=3_000, length_cm=30, width_cm=20, height_cm=15),
-    Box(code="s", name="Маленькая", max_weight_grams=1_000, length_cm=20, width_cm=15, height_cm=10),
+    Box(
+        code="s", name="Маленькая", max_weight_grams=1_000, length_cm=20, width_cm=15, height_cm=10
+    ),
     Box(code="l", name="Большая", max_weight_grams=10_000, length_cm=40, width_cm=30, height_cm=30),
 )
 
 
 class TestParcelWeight:
     def test_sum(self) -> None:
-        assert parcel_weight(tea_grams=350, unit_weights_grams=[400, 400], packaging_grams=50) == 1_200
+        assert (
+            parcel_weight(tea_grams=350, unit_weights_grams=[400, 400], packaging_grams=50) == 1_200
+        )
 
     def test_only_packaging_for_empty(self) -> None:
         assert parcel_weight(tea_grams=0, unit_weights_grams=[], packaging_grams=50) == 50

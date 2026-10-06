@@ -19,8 +19,8 @@ from app.domain.thursday import (
 )
 
 
-def utc(*args: int) -> datetime:
-    return datetime(*args, tzinfo=UTC)
+def utc(year: int, month: int, day: int, hour: int = 0, minute: int = 0) -> datetime:
+    return datetime(year, month, day, hour, minute, tzinfo=UTC)
 
 
 class TestUpcoming:
