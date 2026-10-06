@@ -72,3 +72,30 @@ def extract_code(text: str, digits: int = 6) -> str:
     match = re.search(rf"\b(\d{{{digits}}})\b", text)
     assert match, f"в сообщении нет кода: {text!r}"
     return match.group(1)
+
+
+async def customer_login(client: AsyncClient, db: AsyncSession, email: str) -> None:
+    """Вход покупателя по коду из письма."""
+    response = await client.post("/api/auth/code", json={"email": email})
+    assert response.status_code == 200, response.text
+    messages = [m for m in await outbox(db, channel="email") if m.recipient == email.lower()]
+    code = extract_code(messages[-1].body)
+    response = await client.post("/api/auth/verify", json={"email": email, "code": code})
+    assert response.status_code == 200, response.text
+
+
+async def add_to_cart(
+    client: AsyncClient,
+    product_id: object,
+    *,
+    kind: str = "preset",
+    grams: int = 50,
+    qty: int = 1,
+) -> dict[str, object]:
+    response = await client.post(
+        "/api/cart/items",
+        json={"product_id": str(product_id), "kind": kind, "grams": grams, "qty": qty},
+    )
+    assert response.status_code == 200, response.text
+    body: dict[str, object] = response.json()
+    return body
