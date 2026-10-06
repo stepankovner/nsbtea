@@ -16,6 +16,7 @@ from app.models import (
     Setting,
     ThursdayPlan,
 )
+from app.models.catalog import ProductStatus
 from app.services.seed import seed_content
 from tests.factories import make_tea
 from tests.helpers import outbox
@@ -161,6 +162,26 @@ class TestPages:
         await db.commit()
         guides = (await client.get("/api/pages?kind=guide")).json()
         assert [g["title"] for g in guides] == ["Термос", "Пролив"]
+
+    async def test_product_cards_in_text_get_current_data(
+        self, client: AsyncClient, db: AsyncSession
+    ) -> None:
+        """Карточка товара внутри статьи показывает актуальные цену и наличие."""
+        tea = await make_tea(db, "Шу пуэр Менхай", price_per_gram_kop=1_200, presets=[50])
+        hidden = await make_tea(db, "Снятый", status=ProductStatus.HIDDEN)
+
+        def card(slug: str) -> dict[str, object]:
+            return {"type": "productCard", "attrs": {"slug": slug, "name": "старое название"}}
+
+        content = {"type": "doc", "content": [card(tea.slug), card(hidden.slug), card("net")]}
+        db.add(
+            Page(slug="termos", title="Термос", kind="guide", content=content, is_published=True)
+        )
+        await db.commit()
+        body = (await client.get("/api/pages/termos")).json()
+        assert set(body["products"]) == {tea.slug}
+        assert body["products"][tea.slug]["name"] == "Шу пуэр Менхай"
+        assert body["products"][tea.slug]["price_kop"] == 60_000
 
 
 class TestEvents:
