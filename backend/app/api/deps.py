@@ -82,6 +82,10 @@ async def require_owner(context: Admin) -> AdminContext:
 Owner = Annotated[AdminContext, Depends(require_owner)]
 
 
-def perm(permission: AdminPermission) -> Any:
-    """Annotated-тип для эндпоинта раздела: `ctx: perm(AdminPermission.PRODUCTS)`."""
-    return Annotated[AdminContext, Depends(require(permission))]
+OrdersAccess = Annotated[AdminContext, Depends(require(AdminPermission.ORDERS))]
+ProductsAccess = Annotated[AdminContext, Depends(require(AdminPermission.PRODUCTS))]
+InventoryAccess = Annotated[AdminContext, Depends(require(AdminPermission.INVENTORY))]
+CustomersAccess = Annotated[AdminContext, Depends(require(AdminPermission.CUSTOMERS))]
+PromotionsAccess = Annotated[AdminContext, Depends(require(AdminPermission.PROMOTIONS))]
+ContentAccess = Annotated[AdminContext, Depends(require(AdminPermission.CONTENT))]
+ApplicationsAccess = Annotated[AdminContext, Depends(require(AdminPermission.APPLICATIONS))]

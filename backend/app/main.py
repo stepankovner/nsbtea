@@ -6,12 +6,17 @@ from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.api import health
 from app.api.admin import auth as admin_auth_api
+from app.api.admin import catalog as admin_catalog_api
+from app.api.admin import inventory as admin_inventory_api
+from app.api.admin import settings as admin_settings_api
 from app.api.errors import install_error_handlers
 from app.config import Environment, get_settings
 from app.container import Container, build_container
+from app.integrations.storage import LocalStorage
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +26,9 @@ def _api_router() -> APIRouter:
     router.include_router(health.router)
     router.include_router(admin_auth_api.router)
     router.include_router(admin_auth_api.staff_router)
+    router.include_router(admin_settings_api.router)
+    router.include_router(admin_catalog_api.router)
+    router.include_router(admin_inventory_api.router)
     return router
 
 
@@ -75,6 +83,14 @@ def create_app(container: Container | None = None) -> FastAPI:
         return response
 
     app.include_router(_api_router())
+
+    if isinstance(container.storage, LocalStorage):
+        container.storage.root.mkdir(parents=True, exist_ok=True)
+        app.mount(
+            settings.media_public_url,
+            StaticFiles(directory=container.storage.root),
+            name="media",
+        )
     return app
 
 

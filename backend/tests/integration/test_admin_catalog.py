@@ -265,7 +265,9 @@ class TestProductWizard:
             json={"unit_price_kop": 150_000, "weight_grams": 350},
         )
         assert response.status_code == 200
-        assert (await client.post(f"/api/admin/products/{product['id']}/publish")).status_code == 200
+        assert (
+            await client.post(f"/api/admin/products/{product['id']}/publish")
+        ).status_code == 200
 
     async def test_price_change_is_audited_with_diff(
         self, client: AsyncClient, db: AsyncSession

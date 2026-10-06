@@ -53,9 +53,7 @@ class TestSupply:
 
         await db.refresh(tea)
         assert tea.stock == 1_100
-        history = (
-            await client.get(f"/api/admin/inventory/movements?product_id={tea.id}")
-        ).json()
+        history = (await client.get(f"/api/admin/inventory/movements?product_id={tea.id}")).json()
         assert history["items"][0]["reason_label"] == "Поставка"
         assert history["items"][0]["delta_label"] == "+1 000 г"
         assert history["items"][0]["comment"] == "Поставщик: Ли, Уишань"
@@ -252,9 +250,7 @@ class TestAlerts:
             await session.commit()
         assert await outbox(db) == []
 
-    async def test_product_threshold_override(
-        self, db: AsyncSession, container: Container
-    ) -> None:
+    async def test_product_threshold_override(self, db: AsyncSession, container: Container) -> None:
         await add_recipient(db)
         tea = await make_tea(db, stock=300, low_stock_threshold=200)
         async with container.session_factory() as session:
