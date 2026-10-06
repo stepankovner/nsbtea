@@ -10,22 +10,12 @@ import { formatRub } from "@/lib/format";
 import { shopApi } from "@/lib/shop-api";
 
 import { useCart } from "./cart-context";
+import { navItems } from "./nav";
 import { NsbLogo } from "./NsbLogo";
 
 type Site = Schemas["SiteOut"];
 
-export function navItems(site: Site) {
-  const items = [{ href: "/catalog", label: "Чай" }];
-  if (site.thursday.active) items.push({ href: "/#chai-nedeli", label: `Чай недели −${site.thursday.percent}%` });
-  items.push(
-    { href: "/events", label: "Церемонии и сплавы" },
-    { href: "/wholesale", label: "Оптовые заказы" },
-    { href: "/about", label: "О магазине" },
-  );
-  return items;
-}
-
-function SearchBox({ onDone }: { onDone: () => void }) {
+function SearchBox({ onDone, autoFocus = true }: { onDone: () => void; autoFocus?: boolean }) {
   const router = useRouter();
   const id = useId();
   const [q, setQ] = useState("");
@@ -34,7 +24,9 @@ function SearchBox({ onDone }: { onDone: () => void }) {
   const wanted = q.trim().length >= 2 ? q.trim() : null;
   const items = wanted && result?.q === wanted ? result.items : [];
 
-  useEffect(() => input.current?.focus(), []);
+  useEffect(() => {
+    if (autoFocus) input.current?.focus();
+  }, [autoFocus]);
 
   useEffect(() => {
     if (!wanted) return;
@@ -108,7 +100,7 @@ export function Header({ site }: { site: Site }) {
     <Link
       href="/cart"
       aria-label={`Корзина, товаров: ${count}`}
-      className="flex items-center gap-2 border border-ink px-3.5 py-2 text-[15px] transition-colors hover:bg-ink hover:text-paper"
+      className="flex items-center gap-2 whitespace-nowrap border border-ink px-3 py-2 text-[15px] transition-colors hover:bg-ink hover:text-paper sm:px-3.5"
     >
       Корзина <span className="font-mono text-[13px] text-red">{count}</span>
     </Link>
@@ -116,7 +108,7 @@ export function Header({ site }: { site: Site }) {
 
   return (
     <header className="sticky top-0 z-30 border-b border-line-2 bg-paper">
-      <div className="container-site flex items-center justify-between gap-x-8 gap-y-4 py-3.5">
+      <div className="container-site flex items-center justify-between gap-x-3 gap-y-4 py-3.5 sm:gap-x-8">
         <Link href="/" aria-label="НСБ Чай — на главную" onClick={close} className="flex">
           <NsbLogo size={12} />
         </Link>
@@ -136,7 +128,7 @@ export function Header({ site }: { site: Site }) {
           ))}
         </nav>
 
-        <div className="flex items-center gap-2 sm:gap-4">
+        <div className="flex items-center gap-1 sm:gap-4">
           <button
             type="button"
             aria-label="Поиск"
@@ -145,7 +137,7 @@ export function Header({ site }: { site: Site }) {
               setSearchOpen((v) => !v);
               setMenuOpen(false);
             }}
-            className="flex size-11 items-center justify-center hover:text-red"
+            className="hidden size-11 items-center justify-center hover:text-red sm:flex"
           >
             <svg aria-hidden="true" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
               <circle cx="8.5" cy="8.5" r="6" />
@@ -182,6 +174,9 @@ export function Header({ site }: { site: Site }) {
 
       {menuOpen ? (
         <nav id="mobile-menu" aria-label="Меню" className="container-site flex flex-col border-t border-line-2 pb-6 lg:hidden">
+          <div className="py-4 sm:hidden">
+            <SearchBox onDone={close} autoFocus={false} />
+          </div>
           {[...items, { href: "/account", label: "Личный кабинет" }, { href: "/guides", label: "Как заваривать" }].map(
             (item) => (
               <Link key={item.href} href={item.href} onClick={close} className="border-b border-line-2 py-3.5 text-lg">

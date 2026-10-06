@@ -18,6 +18,7 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
   typedRoutes: false,
+  agentRules: false,
   images: {
     // картинки уже нарезаны backend'ом в WebP нескольких размеров — используем их напрямую
     unoptimized: true,

@@ -16,21 +16,23 @@ interface ExtraField {
   label: string;
   placeholder?: string;
   multiline?: boolean;
+  /** поле после контактов (объём, комментарий) */
+  after?: boolean;
 }
 
 const EXTRA: Record<Kind, ExtraField[]> = {
   wholesale: [
     { key: "organization", label: "Организация", placeholder: "Кофейня «Ромашка»" },
     { key: "city", label: "Город", placeholder: "Владимир" },
-    { key: "volume", label: "Объём в месяц", placeholder: "Например, 2–3 кг" },
-    { key: "comment", label: "Комментарий", multiline: true },
+    { key: "volume", label: "Объём в месяц", placeholder: "Например, 2–3 кг", after: true },
+    { key: "comment", label: "Комментарий", multiline: true, after: true },
   ],
   event: [],
   private_ceremony: [
     { key: "date", label: "Желаемая дата", placeholder: "например, 14 ноября" },
     { key: "guests", label: "Сколько гостей", placeholder: "12" },
     { key: "occasion", label: "Повод и место", placeholder: "День рождения, дома / офис / база отдыха" },
-    { key: "comment", label: "Комментарий", multiline: true },
+    { key: "comment", label: "Комментарий", multiline: true, after: true },
   ],
 };
 
@@ -102,6 +104,29 @@ export function ApplicationForm({
     }
   }
 
+  const renderExtra = (fields: ExtraField[]) =>
+    fields.map((f) =>
+      f.multiline ? (
+        <TextAreaField
+          key={f.key}
+          label={f.label}
+          tone={tone}
+          value={values[f.key] ?? ""}
+          onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))}
+          wrapperClassName="sm:col-span-2"
+        />
+      ) : (
+        <TextField
+          key={f.key}
+          label={f.label}
+          tone={tone}
+          placeholder={f.placeholder}
+          value={values[f.key] ?? ""}
+          onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))}
+        />
+      ),
+    );
+
   if (thanks) {
     return (
       <div className="flex flex-col gap-3 pt-2" role="status">
@@ -113,27 +138,7 @@ export function ApplicationForm({
 
   return (
     <form onSubmit={onSubmit} noValidate className="relative grid gap-x-7 gap-y-6 sm:grid-cols-2">
-      {extra.map((f) =>
-        f.multiline ? (
-          <TextAreaField
-            key={f.key}
-            label={f.label}
-            tone={tone}
-            value={values[f.key] ?? ""}
-            onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))}
-            wrapperClassName="sm:col-span-2"
-          />
-        ) : (
-          <TextField
-            key={f.key}
-            label={f.label}
-            tone={tone}
-            placeholder={f.placeholder}
-            value={values[f.key] ?? ""}
-            onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))}
-          />
-        ),
-      )}
+      {renderExtra(extra.filter((f) => !f.after))}
       <TextField label="Имя" tone={tone} autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} error={errors.name} placeholder="Как к вам обращаться" />
       <TextField
         label="Телефон"
@@ -168,6 +173,8 @@ export function ApplicationForm({
         </div>
       ) : null}
       {errors.contact ? <span className={dark ? "text-[13px] text-red-light sm:col-span-2" : "text-[13px] text-red sm:col-span-2"}>{errors.contact}</span> : null}
+
+      {renderExtra(extra.filter((f) => f.after))}
 
       {/* ловушка для ботов: людям поле не видно */}
       <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">

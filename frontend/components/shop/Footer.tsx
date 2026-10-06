@@ -3,7 +3,7 @@ import Link from "next/link";
 import type { Schemas } from "@/lib/api/client";
 import { pageHref } from "@/lib/pages";
 
-import { navItems } from "./Header";
+import { navItems } from "./nav";
 import { NsbLogo } from "./NsbLogo";
 
 function ColumnTitle({ children }: { children: string }) {
