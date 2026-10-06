@@ -2,14 +2,17 @@
 
 from datetime import timedelta
 
-from httpx import AsyncClient
+import pytest
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.container import Container
+from app.domain.errors import DomainError
 from app.models import AdminSession, AdminUser, AuditLog
 from app.models.admin import AdminRole
 from app.services.admin_auth import create_owner
+from app.services.telegram_bot import handle_start_command
 from tests.helpers import (
     OWNER_EMAIL,
     OWNER_PASSWORD,
@@ -26,13 +29,10 @@ class TestCreateOwner:
         await db.commit()
         assert user.email == "owner@nsbtea.test"
         assert user.role == AdminRole.OWNER.value
-        assert user.password_hash and user.password_hash != "x" * 12
+        assert user.password_hash
+        assert user.password_hash != "x" * 12
 
     async def test_short_password_rejected(self, db: AsyncSession) -> None:
-        import pytest
-
-        from app.domain.errors import DomainError
-
         with pytest.raises(DomainError, match="не короче 10"):
             await create_owner(db, email="o@nsbtea.test", name="Н", password="short")
 
@@ -255,8 +255,6 @@ class TestStaff:
         )
         staff_id = staff.id
 
-        from httpx import ASGITransport
-
         transport = client._transport
         assert isinstance(transport, ASGITransport)
         async with AsyncClient(transport=transport, base_url="https://nsbtea.test") as helper:
@@ -327,7 +325,8 @@ class TestPasswordReset:
         assert bad.status_code == 401
         # вход по новому паролю требует кода из Telegram
         good = await client.post(
-            "/api/admin/auth/login", json={"email": OWNER_EMAIL, "password": "новый-надёжный-пароль"}
+            "/api/admin/auth/login",
+            json={"email": OWNER_EMAIL, "password": "новый-надёжный-пароль"},
         )
         assert good.json()["status"] == "two_factor_required"
 
@@ -351,8 +350,6 @@ class TestTelegramLink:
         assert body["deep_link"].startswith("https://t.me/nsbtea_test_bot?start=")
         code = body["code"]
 
-        from app.services.telegram_bot import handle_start_command
-
         async with container.session_factory() as session:
             reply = await handle_start_command(
                 session, container, chat_id=4242, payload=code, from_name="Никита"
@@ -366,8 +363,6 @@ class TestTelegramLink:
         assert me["telegram_linked"] is True
 
     async def test_bot_rejects_unknown_code(self, db: AsyncSession, container: Container) -> None:
-        from app.services.telegram_bot import handle_start_command
-
         async with container.session_factory() as session:
             reply = await handle_start_command(
                 session, container, chat_id=1, payload="WRONG123", from_name="x"

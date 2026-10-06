@@ -92,7 +92,7 @@ class AdminSession(IdMixin, Base):
 
 class ChallengePurpose(StrEnum):
     LOGIN_2FA = "login_2fa"
-    PASSWORD_RESET = "password_reset"
+    PASSWORD_RESET = "password_reset"  # noqa: S105 - это не пароль, а назначение кода
     TELEGRAM_LINK = "telegram_link"
 
 

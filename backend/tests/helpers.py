@@ -44,7 +44,9 @@ async def login(
     client: AsyncClient, email: str = OWNER_EMAIL, password: str = OWNER_PASSWORD
 ) -> str:
     """Войти в админку (без второго фактора). Возвращает CSRF-токен и ставит заголовок клиенту."""
-    response = await client.post("/api/admin/auth/login", json={"email": email, "password": password})
+    response = await client.post(
+        "/api/admin/auth/login", json={"email": email, "password": password}
+    )
     assert response.status_code == 200, response.text
     body = response.json()
     assert body["status"] == "ok"

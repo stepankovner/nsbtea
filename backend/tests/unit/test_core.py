@@ -73,7 +73,7 @@ class TestTokens:
 class TestClock:
     def test_frozen_requires_tz(self) -> None:
         with pytest.raises(ValueError, match="пояс"):
-            FrozenClock(datetime(2026, 1, 1))  # noqa: DTZ001
+            FrozenClock(datetime(2026, 1, 1))
 
     def test_advance(self) -> None:
         clock = FrozenClock(datetime(2026, 1, 1, tzinfo=UTC))

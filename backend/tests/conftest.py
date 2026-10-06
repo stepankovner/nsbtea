@@ -29,7 +29,7 @@ def settings() -> Settings:
     return Settings(
         environment="test",
         database_url=TEST_DATABASE_URL,
-        secret_key="test-secret-key-test-secret-key-0123456789",  # type: ignore[arg-type]
+        secret_key="test-secret-key-test-secret-key-0123456789",
         public_base_url="https://nsbtea.test",
         telegram_bot_username="nsbtea_test_bot",
         media_local_dir="/tmp/nsbtea-test-media",  # noqa: S108
@@ -73,9 +73,7 @@ async def db(session_factory: async_sessionmaker[AsyncSession]) -> AsyncIterator
 
 
 @pytest.fixture
-def container(
-    settings: Settings, session_factory: async_sessionmaker[AsyncSession]
-) -> Container:
+def container(settings: Settings, session_factory: async_sessionmaker[AsyncSession]) -> Container:
     return build_test_container(settings, session_factory, now=DEFAULT_NOW)
 
 

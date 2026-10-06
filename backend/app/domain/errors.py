@@ -42,3 +42,15 @@ class ConflictError(DomainError):
 class PermissionDeniedError(DomainError):
     code = "forbidden"
     http_status = 403
+
+
+class AuthRequiredError(DomainError):
+    code = "auth_required"
+    http_status = 401
+
+
+class InvalidCodeError(DomainError):
+    """Одноразовый код неверен, устарел или исчерпаны попытки."""
+
+    code = "invalid_code"
+    http_status = 400

@@ -55,6 +55,7 @@ ignore = [
     "PLR0911", "PLR0912", "PLR0915",
     "B008",    # Depends() в аргументах FastAPI
     "PLR0917", # позиционные аргументы — в домене почти всегда keyword-only
+    "PLC0415", # ленивые импорты тяжёлых интеграций — осознанно
 ]
 
 [tool.ruff.lint.per-file-ignores]
