@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ subject }}</title>
+</head>
+<body style="margin:0;padding:0;background:#F1EDE4;color:#1D231B;font-family:Arial,Helvetica,sans-serif;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F1EDE4;">
+  <tr><td align="center" style="padding:32px 16px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;">
+      <tr><td style="padding-bottom:24px;">
+        <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+          <td style="background:#8E3236;color:#F1EDE4;font-family:Georgia,serif;font-weight:bold;font-size:14px;line-height:1.1;padding:6px 8px;letter-spacing:2px;">НСБ<br>ЧАЙ</td>
+          <td style="padding-left:12px;font-family:Georgia,serif;font-size:18px;letter-spacing:1px;">НСБ ЧАЙ</td>
+        </tr></table>
+      </td></tr>
+      <tr><td style="background:#FFFFFF;padding:32px 28px;border-top:3px solid #8E3236;">
+        <h1 style="margin:0 0 16px;font-family:Georgia,serif;font-weight:normal;font-size:26px;line-height:1.2;">{{ heading }}</h1>
+        {% block content %}{% endblock %}
+      </td></tr>
+      <tr><td style="padding:20px 4px;font-size:12px;line-height:1.6;color:#5C6656;">
+        Это письмо отправлено магазином «НСБ Чай», Владимир.<br>
+        <a href="{{ base_url }}" style="color:#8E3236;">{{ base_url_label }}</a>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>

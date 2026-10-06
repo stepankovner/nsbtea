@@ -34,7 +34,8 @@ async def test_cdek_quote_uses_parcel_weight_and_box(
     assert call["parcel"].length_cm == 20  # маленькая коробка до 1 кг
     assert call["tariff_code"] == 136
     assert call["to"] == {"code": 44}
-    assert quote["price_kop"] == 35_000 + 5_000
+    # заглушка СДЭК: 350 ₽ за тариф 136 и +50 ₽ за каждые полные 500 г сверх первых 500 г
+    assert quote["price_kop"] == 35_000
     assert quote["period"] == "2–4 дн."
 
 

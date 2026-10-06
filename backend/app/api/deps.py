@@ -8,8 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.container import Container
 from app.domain.errors import AuthRequiredError
+from app.models import Customer
 from app.models.admin import AdminPermission
-from app.services import admin_auth
+from app.services import admin_auth, customer_auth
 from app.services.admin_auth import AdminContext
 
 ADMIN_COOKIE = "nsb_admin"
@@ -89,3 +90,22 @@ CustomersAccess = Annotated[AdminContext, Depends(require(AdminPermission.CUSTOM
 PromotionsAccess = Annotated[AdminContext, Depends(require(AdminPermission.PROMOTIONS))]
 ContentAccess = Annotated[AdminContext, Depends(require(AdminPermission.CONTENT))]
 ApplicationsAccess = Annotated[AdminContext, Depends(require(AdminPermission.APPLICATIONS))]
+
+
+async def get_customer_optional(request: Request, db: Db, container: Deps) -> Customer | None:
+    token = request.cookies.get(CUSTOMER_COOKIE)
+    if not token:
+        return None
+    return await customer_auth.resolve_session(db, container, token)
+
+
+OptionalCustomer = Annotated[Customer | None, Depends(get_customer_optional)]
+
+
+async def get_customer(customer: OptionalCustomer) -> Customer:
+    if customer is None:
+        raise AuthRequiredError("Войдите в личный кабинет")
+    return customer
+
+
+CurrentCustomer = Annotated[Customer, Depends(get_customer)]

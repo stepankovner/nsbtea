@@ -23,7 +23,8 @@ from app.models.catalog import Product
 class Customer(IdMixin, TimestampMixin, Base):
     __tablename__ = "customers"
 
-    email: Mapped[str] = mapped_column(CITEXT, unique=True)
+    # пусто, если вошли через Telegram и ещё не оформляли заказ, или аккаунт обезличен
+    email: Mapped[str | None] = mapped_column(CITEXT, unique=True)
     phone: Mapped[str | None] = mapped_column(String(20), index=True)
     name: Mapped[str | None] = mapped_column(String(120))
     telegram_id: Mapped[int | None] = mapped_column(BigInteger, unique=True)

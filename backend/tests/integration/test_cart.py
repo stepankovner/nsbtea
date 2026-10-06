@@ -191,9 +191,7 @@ class TestDiscounts:
 
     async def test_category_promo_restrictions(self, client: AsyncClient, db: AsyncSession) -> None:
         puer = await make_category(db, "Пуэр")
-        promo = await promo_code(db, "PUER")
-        promo.categories = [puer]
-        await db.commit()
+        await promo_code(db, "PUER", categories=[puer])
         cup = await make_unit(db, "Чаша")
         await add_to_cart(client, cup.id, kind="unit", grams=0)
         cart = (await client.put("/api/cart/promo-code", json={"code": "PUER"})).json()

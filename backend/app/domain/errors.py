@@ -71,3 +71,10 @@ class MovedError(NotFoundError):
 
     def __init__(self, location: str) -> None:
         super().__init__("Страница переехала", extra={"location": location})
+
+
+class ExternalServiceError(DomainError):
+    """Банк, СДЭК или другой внешний сервис не ответил. Можно повторить позже."""
+
+    code = "external_service"
+    http_status = 502

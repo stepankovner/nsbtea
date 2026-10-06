@@ -17,7 +17,9 @@ from tests.helpers import add_to_cart, customer_login, extract_code, outbox
 BOT_TOKEN = "123456:TEST-TOKEN"
 
 
-def telegram_payload(user_id: int = 777, auth_date: int | None = None, **extra: str) -> dict:
+def telegram_payload(
+    user_id: int = 777, auth_date: int | None = None, **extra: str
+) -> dict[str, str]:
     data = {
         "id": str(user_id),
         "first_name": "Анна",

@@ -77,7 +77,6 @@ async def send_webhook(client: AsyncClient, operation_id: str, status: str = "AP
 
 
 async def load_order(db: AsyncSession, order_id: str) -> Order:
-    db.expire_all()
     order = await db.get(Order, uuid.UUID(order_id), populate_existing=True)
     assert order is not None
     return order

@@ -8,13 +8,16 @@ from fastapi import APIRouter, FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+from app.api import dev as dev_api
 from app.api import health
+from app.api.account import routes as account_api
 from app.api.admin import auth as admin_auth_api
 from app.api.admin import catalog as admin_catalog_api
 from app.api.admin import inventory as admin_inventory_api
 from app.api.admin import settings as admin_settings_api
 from app.api.errors import install_error_handlers
 from app.api.public import catalog as public_catalog_api
+from app.api.public import shop as shop_api
 from app.config import Environment, get_settings
 from app.container import Container, build_container
 from app.integrations.storage import LocalStorage
@@ -26,6 +29,9 @@ def _api_router() -> APIRouter:
     router = APIRouter(prefix="/api")
     router.include_router(health.router)
     router.include_router(public_catalog_api.router)
+    router.include_router(shop_api.router)
+    router.include_router(account_api.router)
+    router.include_router(dev_api.router)
     router.include_router(admin_auth_api.router)
     router.include_router(admin_auth_api.staff_router)
     router.include_router(admin_settings_api.router)
