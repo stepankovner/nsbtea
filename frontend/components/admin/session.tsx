@@ -90,3 +90,15 @@ export function useAdmin(): Session {
   if (!session) throw new Error("useAdmin: нет AdminSessionProvider");
   return session;
 }
+
+/** Сессия для тестов и сторибуков: без запроса к серверу. */
+export function TestAdminSession({ user, children }: { user: User; children: ReactNode }) {
+  const value: Session = {
+    user,
+    isOwner: user.is_owner,
+    can: (permission) => canSee(user, { permission }),
+    refresh: async () => undefined,
+    logout: async () => undefined,
+  };
+  return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
+}
