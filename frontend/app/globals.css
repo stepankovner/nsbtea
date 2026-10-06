@@ -71,6 +71,7 @@
   font-family: var(--font-hanzi);
   font-weight: 500;
   writing-mode: vertical-rl;
+  white-space: nowrap;
   letter-spacing: 0.12em;
   line-height: 1;
 }

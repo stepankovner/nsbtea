@@ -36,7 +36,10 @@ export function CookieBar() {
     >
       <div className="container-site flex flex-wrap items-center justify-between gap-x-6 gap-y-2 py-3 text-[13px] text-text2">
         <p>
-          Сайт использует файлы cookie и Яндекс Метрику, чтобы корзина работала, а мы понимали, что улучшить.{" "}
+          <span className="sm:hidden">Сайт использует cookie и Яндекс Метрику.</span>
+          <span className="hidden sm:inline">
+            Сайт использует файлы cookie и Яндекс Метрику, чтобы корзина работала, а мы понимали, что улучшить.
+          </span>{" "}
           <Link href="/legal/privacy" className="underline underline-offset-2 hover:text-red">
             Подробнее
           </Link>
