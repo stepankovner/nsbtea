@@ -5920,6 +5920,13 @@
       "title": "Kind",
       "type": "string"
      },
+     "products": {
+      "additionalProperties": {
+       "$ref": "#/components/schemas/ProductCard"
+      },
+      "title": "Products",
+      "type": "object"
+     },
      "seo_description": {
       "anyOf": [
        {
@@ -7263,6 +7270,17 @@
       "title": "Attributes",
       "type": "array"
      },
+     "available_grams": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Available Grams"
+     },
      "badges": {
       "items": {
        "$ref": "#/components/schemas/Badge"
@@ -7556,6 +7574,7 @@
      "weight_options",
      "custom_weight",
      "max_qty",
+     "available_grams",
      "low_stock",
      "upcoming_thursday",
      "promotion_title",

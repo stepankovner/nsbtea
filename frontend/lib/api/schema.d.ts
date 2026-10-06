@@ -4008,6 +4008,10 @@ export interface components {
             excerpt: string | null;
             /** Kind */
             kind: string;
+            /** Products */
+            products?: {
+                [key: string]: components["schemas"]["ProductCard"];
+            };
             /** Seo Description */
             seo_description: string | null;
             /** Seo Title */
@@ -4443,6 +4447,8 @@ export interface components {
         ProductPage: {
             /** Attributes */
             attributes: components["schemas"]["AttributeItem"][];
+            /** Available Grams */
+            available_grams: number | null;
             /** Badges */
             badges: components["schemas"]["Badge"][];
             /** Breadcrumbs */
