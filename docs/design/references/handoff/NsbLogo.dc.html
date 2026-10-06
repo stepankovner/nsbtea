@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Spectral:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Noto+Serif+SC:wght@500&display=swap" rel="stylesheet"></helmet>
+<div style="display:inline-flex; align-items:center; font-size:{{ fs }}; color:{{ ink }}; line-height:1; font-family:'Spectral', Georgia, serif;">
+  <sc-if value="{{ isWord }}" hint-placeholder-val="{{ false }}">
+    <sc-if value="{{ markOnly }}">
+      <span style="position:relative; display:inline-block; font-weight:500; font-size:2.6em;">И<span style="position:absolute; left:calc(50% - .17em); top:-.34em; width:.34em; height:.34em; background:{{ red }}; border-radius:0 100% 0 100%; transform:rotate(-40deg);"></span></span>
+    </sc-if>
+    <sc-if value="{{ showText }}">
+      <div style="display:flex; flex-direction:column; align-items:flex-start; gap:.7em;">
+        <div style="display:flex; align-items:baseline; gap:.34em; font-weight:500; font-size:2em; white-space:nowrap;">
+          <span style="letter-spacing:.07em;">НСБ</span>
+          <span style="letter-spacing:.07em;">ЧА<span style="position:relative; display:inline-block; letter-spacing:0;">И<span style="position:absolute; left:calc(50% - .17em); top:-.34em; width:.34em; height:.34em; background:{{ red }}; border-radius:0 100% 0 100%; transform:rotate(-40deg);"></span></span></span>
+        </div>
+        <sc-if value="{{ showTag }}">
+          <span style="font-family:'IBM Plex Mono', monospace; font-size:.5em; letter-spacing:.24em; text-transform:uppercase; color:{{ green }};">Китайский чай · Владимир</span>
+        </sc-if>
+      </div>
+    </sc-if>
+  </sc-if>
+  <sc-if value="{{ isSeal }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex; align-items:center; gap:.75em;">
+      <div style="background:{{ red }}; padding:.22em; border-radius:.1em;">
+        <div style="border:.07em solid #F1EDE4; border-radius:.05em; display:grid; grid-template-columns:repeat(3, 1fr); grid-template-rows:1fr 1fr; gap:.12em .1em; padding:.24em .3em; font-weight:600; font-size:1.1em; color:#F1EDE4; text-align:center;">
+          <span>Н</span><span>С</span><span>Б</span><span>Ч</span><span>А</span><span>Й</span>
+        </div>
+      </div>
+      <sc-if value="{{ showText }}">
+        <div style="display:flex; flex-direction:column; gap:.55em;">
+          <span style="font-weight:500; font-size:1.55em; letter-spacing:.07em; white-space:nowrap;">НСБ ЧАЙ</span>
+          <sc-if value="{{ showTag }}">
+            <span style="font-family:'IBM Plex Mono', monospace; font-size:.5em; letter-spacing:.24em; text-transform:uppercase; color:{{ green }};">Китайский чай · Владимир</span>
+          </sc-if>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
+  <sc-if value="{{ isLeaf }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex; align-items:center; gap:.7em;">
+      <div style="position:relative; width:2.6em; height:3.6em; display:flex; align-items:center; justify-content:center; flex:none;">
+        <div style="transform:scaleX(1.25);">
+          <div style="width:2.5em; height:2.5em; box-sizing:border-box; border:.3em solid {{ green }}; border-radius:0 100% 0 100%; transform:rotate(45deg);"></div>
+        </div>
+        <div style="position:absolute; left:calc(50% - .06em); top:.8em; bottom:.8em; width:.14em; background:{{ red }};"></div>
+      </div>
+      <sc-if value="{{ showText }}">
+        <div style="display:flex; flex-direction:column; gap:.3em;">
+          <span style="font-weight:600; font-size:1.5em; letter-spacing:.14em; color:{{ red }};">НСБ</span>
+          <span style="height:.08em; background:{{ ink }};"></span>
+          <span style="font-weight:500; font-size:1.5em; letter-spacing:.14em;">ЧАЙ</span>
+          <sc-if value="{{ showTag }}">
+            <span style="margin-top:.5em; font-family:'IBM Plex Mono', monospace; font-size:.5em; letter-spacing:.24em; text-transform:uppercase; color:{{ green }}; white-space:nowrap;">Китайский чай · Владимир</span>
+          </sc-if>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
+  <sc-if value="{{ isLeafSeal }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex; align-items:center; gap:.8em;">
+      <div style="position:relative; width:2.9em; height:3.9em; flex:none; display:flex; align-items:center; justify-content:center;">
+        <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; transform:scaleX(1.62);">
+          <div style="width:2.75em; height:2.75em; background:{{ red }}; border-radius:0 100% 0 100%; transform:rotate(45deg);"></div>
+        </div>
+        <div style="position:relative; display:flex; flex-direction:column; align-items:center; gap:.18em; color:#F1EDE4; font-weight:600; font-size:.8em; letter-spacing:.08em; padding-left:.08em;">
+          <span>НСБ</span><span style="width:2.1em; height:.07em; background:{{ red }}; box-shadow:inset 0 0 0 1em #F1EDE4;"></span><span>ЧАЙ</span>
+        </div>
+      </div>
+      <sc-if value="{{ showTag }}">
+        <span style="display:flex; flex-direction:column; gap:.6em; font-family:'IBM Plex Mono', monospace; font-size:.5em; letter-spacing:.24em; text-transform:uppercase; color:{{ green }};"><span>Китайский чай</span><span>Владимир</span></span>
+      </sc-if>
+    </div>
+  </sc-if>
+  <sc-if value="{{ isChop }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex; align-items:center; gap:.75em;">
+      <div style="flex:none; background:{{ red }}; border-radius:7% 3% 6% 4% / 9% 14% 8% 12%; transform:rotate(-2.5deg); padding:.26em .4em; display:flex; align-items:center; gap:.3em; color:#F1EDE4; font-weight:600; font-size:1.25em; line-height:1;">
+        <span style="letter-spacing:.06em;">НСБ</span><span style="width:.06em; align-self:stretch; background:#F1EDE4; opacity:.8;"></span><span style="font-family:'Noto Serif SC', serif; font-weight:500; font-size:.9em;">茶</span>
+      </div>
+      <sc-if value="{{ showText }}">
+        <div style="display:flex; flex-direction:column; gap:.55em;">
+          <span style="font-weight:500; font-size:1.55em; letter-spacing:.07em; white-space:nowrap;">НСБ ЧАЙ</span>
+          <sc-if value="{{ showTag }}"><span style="font-family:'IBM Plex Mono', monospace; font-size:.5em; letter-spacing:.24em; text-transform:uppercase; color:{{ green }};">Китайский чай · Владимир</span></sc-if>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
+  <sc-if value="{{ isRound }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex; align-items:center; gap:.75em;">
+      <div style="position:relative; flex:none; width:3.4em; height:3.4em; border-radius:50%; background:{{ red }}; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.16em; color:#F1EDE4;">
+        <span style="position:absolute; inset:.2em; border:.06em solid #F1EDE4; border-radius:50%;"></span>
+        <span style="font-weight:600; font-size:1.05em; letter-spacing:.06em; padding-left:.06em;">НСБ</span>
+        <span style="font-weight:500; font-size:.42em; letter-spacing:.34em; padding-left:.34em;">ЧАЙ</span>
+      </div>
+      <sc-if value="{{ showText }}">
+        <div style="display:flex; flex-direction:column; gap:.55em;">
+          <span style="font-weight:500; font-size:1.55em; letter-spacing:.07em; white-space:nowrap;">НСБ ЧАЙ</span>
+          <sc-if value="{{ showTag }}"><span style="font-family:'IBM Plex Mono', monospace; font-size:.5em; letter-spacing:.24em; text-transform:uppercase; color:{{ green }};">Китайский чай · Владимир</span></sc-if>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
+  <sc-if value="{{ isBanner }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex; align-items:center; gap:.75em;">
+      <div style="flex:none; width:1.6em; height:5.3em; box-sizing:border-box; padding-top:.36em; background:{{ red }}; clip-path:polygon(0 0, 100% 0, 100% 100%, 50% 91%, 0 100%); display:flex; flex-direction:column; align-items:center; gap:.12em; color:#F1EDE4; font-weight:600; line-height:1;">
+        <span>Н</span><span>С</span><span>Б</span><span style="margin-top:.28em; font-family:'Noto Serif SC', serif; font-weight:500; font-size:.82em;">茶</span>
+      </div>
+      <sc-if value="{{ showText }}">
+        <div style="display:flex; flex-direction:column; gap:.55em;">
+          <span style="font-weight:500; font-size:1.55em; letter-spacing:.07em; white-space:nowrap;">НСБ ЧАЙ</span>
+          <sc-if value="{{ showTag }}"><span style="font-family:'IBM Plex Mono', monospace; font-size:.5em; letter-spacing:.24em; text-transform:uppercase; color:{{ green }};">Китайский чай · Владимир</span></sc-if>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
+  <sc-if value="{{ isChipped }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex; align-items:center; gap:.75em;">
+      <div style="flex:none; background:{{ red }}; padding:.22em; clip-path:polygon(0 0, 100% 0, 100% 64%, 74% 100%, 0 100%);">
+        <div style="border:.07em solid #F1EDE4; padding:.24em .3em; display:grid; grid-template-columns:repeat(3, 1fr); grid-template-rows:1fr 1fr; gap:.12em .1em; font-weight:600; font-size:1.1em; color:#F1EDE4; text-align:center;"><span>Н</span><span>С</span><span>Б</span><span>Ч</span><span>А</span><span>Й</span></div>
+      </div>
+      <sc-if value="{{ showText }}">
+        <div style="display:flex; flex-direction:column; gap:.55em;">
+          <span style="font-weight:500; font-size:1.55em; letter-spacing:.07em; white-space:nowrap;">НСБ ЧАЙ</span>
+          <sc-if value="{{ showTag }}"><span style="font-family:'IBM Plex Mono', monospace; font-size:.5em; letter-spacing:.24em; text-transform:uppercase; color:{{ green }};">Китайский чай · Владимир</span></sc-if>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
+  <sc-if value="{{ isArch }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex; align-items:center; gap:.75em;">
+      <div style="flex:none; background:{{ red }}; padding:.22em; border-radius:1.5em 1.5em .08em .08em;">
+        <div style="border:.07em solid #F1EDE4; border-radius:1.3em 1.3em 0 0; padding:.62em .34em .26em; display:grid; grid-template-columns:repeat(3, 1fr); grid-template-rows:1fr 1fr; gap:.12em .1em; font-weight:600; font-size:1.1em; color:#F1EDE4; text-align:center;">
+          <span>Н</span><span>С</span><span>Б</span><span>Ч</span><span>А</span><span style="position:relative;">И<span style="position:absolute; left:calc(50% - .15em); top:-.3em; width:.3em; height:.3em; background:#F1EDE4; border-radius:0 100% 0 100%; transform:rotate(-40deg);"></span></span>
+        </div>
+      </div>
+      <sc-if value="{{ showText }}">
+        <div style="display:flex; flex-direction:column; gap:.55em;">
+          <span style="font-weight:500; font-size:1.55em; letter-spacing:.07em; white-space:nowrap;">НСБ ЧАЙ</span>
+          <sc-if value="{{ showTag }}"><span style="font-family:'IBM Plex Mono', monospace; font-size:.5em; letter-spacing:.24em; text-transform:uppercase; color:{{ green }};">Китайский чай · Владимир</span></sc-if>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
+  <sc-if value="{{ isLattice }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex; align-items:center; gap:.75em;">
+      <div style="flex:none; position:relative; background:{{ red }}; padding:.6em .64em;">
+        <span style="position:absolute; background:#F1EDE4; left:.07em; right:.07em; top:.32em; height:.07em;"></span>
+        <span style="position:absolute; background:#F1EDE4; left:.07em; right:.07em; bottom:.32em; height:.07em;"></span>
+        <span style="position:absolute; background:#F1EDE4; top:.07em; bottom:.07em; left:.32em; width:.07em;"></span>
+        <span style="position:absolute; background:#F1EDE4; top:.07em; bottom:.07em; right:.32em; width:.07em;"></span>
+        <div style="display:grid; grid-template-columns:repeat(3, 1fr); grid-template-rows:1fr 1fr; gap:.12em .1em; font-weight:600; font-size:1.1em; color:#F1EDE4; text-align:center;"><span>Н</span><span>С</span><span>Б</span><span>Ч</span><span>А</span><span>Й</span></div>
+      </div>
+      <sc-if value="{{ showText }}">
+        <div style="display:flex; flex-direction:column; gap:.55em;">
+          <span style="font-weight:500; font-size:1.55em; letter-spacing:.07em; white-space:nowrap;">НСБ ЧАЙ</span>
+          <sc-if value="{{ showTag }}"><span style="font-family:'IBM Plex Mono', monospace; font-size:.5em; letter-spacing:.24em; text-transform:uppercase; color:{{ green }};">Китайский чай · Владимир</span></sc-if>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
+  <sc-if value="{{ isSplit }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex; align-items:center; gap:.75em;">
+      <div style="flex:none; border:.14em solid {{ red }}; display:flex; flex-direction:column; font-weight:600; font-size:1.1em; text-align:center;">
+        <span style="background:{{ red }}; color:#F1EDE4; padding:.22em .3em .2em .46em; letter-spacing:.16em;">НСБ</span>
+        <span style="background:#F1EDE4; color:{{ red }}; padding:.2em .3em .22em .46em; letter-spacing:.16em;">ЧАЙ</span>
+      </div>
+      <sc-if value="{{ showText }}">
+        <div style="display:flex; flex-direction:column; gap:.55em;">
+          <span style="font-weight:500; font-size:1.55em; letter-spacing:.07em; white-space:nowrap;">НСБ ЧАЙ</span>
+          <sc-if value="{{ showTag }}"><span style="font-family:'IBM Plex Mono', monospace; font-size:.5em; letter-spacing:.24em; text-transform:uppercase; color:{{ green }};">Китайский чай · Владимир</span></sc-if>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
+  <sc-if value="{{ isBowl }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex; align-items:center; gap:.75em;">
+      <div style="position:relative; width:3em; height:2.4em; flex:none;">
+        <div style="position:absolute; left:.78em; top:.12em; width:1.44em; height:1.44em; border-radius:50%; background:{{ red }};"></div>
+        <div style="position:absolute; left:0; right:0; top:.84em; height:1.16em; background:{{ green }}; border-radius:0 0 1.5em 1.5em / 0 0 1.16em 1.16em;"></div>
+        <div style="position:absolute; left:.95em; right:.95em; top:2.1em; height:.2em; background:{{ green }};"></div>
+      </div>
+      <sc-if value="{{ showText }}">
+        <div style="display:flex; flex-direction:column; gap:.55em;">
+          <span style="font-weight:500; font-size:1.55em; letter-spacing:.07em; white-space:nowrap;">НСБ ЧАЙ</span>
+          <sc-if value="{{ showTag }}">
+            <span style="font-family:'IBM Plex Mono', monospace; font-size:.5em; letter-spacing:.24em; text-transform:uppercase; color:{{ green }};">Китайский чай · Владимир</span>
+          </sc-if>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:420,&quot;height&quot;:180},&quot;variant&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;wordmark&quot;,&quot;seal&quot;,&quot;leaf&quot;,&quot;bowl&quot;],&quot;default&quot;:&quot;seal&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;size&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:16,&quot;min&quot;:6,&quot;max&quot;:60,&quot;tsType&quot;:&quot;number&quot;},&quot;tone&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;markOnly&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;tagline&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const v = this.props.variant ?? 'seal';
+    const dark = (this.props.tone ?? 'light') === 'dark';
+    const markOnly = !!this.props.markOnly;
+    return {
+      isWord: v === 'wordmark', isSeal: v === 'seal', isLeaf: v === 'leaf', isBowl: v === 'bowl',
+      isLeafSeal: v === 'leafseal', isChop: v === 'chop', isRound: v === 'round', isBanner: v === 'banner',
+      isChipped: v === 'chipped', isArch: v === 'arch', isLattice: v === 'lattice', isSplit: v === 'split',
+      markOnly, showText: !markOnly, showTag: !markOnly && !!this.props.tagline,
+      fs: (this.props.size ?? 16) + 'px',
+      ink: dark ? '#F1EDE4' : '#1D231B',
+      red: dark ? '#B9494C' : '#8E3236',
+      green: dark ? '#93AC85' : '#5C7650',
+    };
+  }
+}
+</script>
+</body>
+</html>

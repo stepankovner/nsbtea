@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><link href="https://fonts.googleapis.com/css2?family=Prata&family=Golos+Text:wght@400;500&family=IBM+Plex+Mono:wght@400;500&family=Noto+Serif+SC:wght@500&display=swap" rel="stylesheet"><script src="./image-slot.js"></script></helmet>
+<div style="display:flex; flex-direction:column; gap:14px; font-family:'Golos Text', sans-serif; color:#1D231B;">
+  <div style="position:relative; aspect-ratio:4 / 5; overflow:hidden; background:{{ tea.tileBg }}; color:{{ tea.tileFg }};">
+    <sc-if value="{{ photo }}" hint-placeholder-val="{{ true }}">
+      <div style="position:absolute; left:0; top:0; bottom:0; right:30%; background:#E4DDCE;">
+        <image-slot id="{{ tea.slotId }}" shape="rect" placeholder="{{ tea.slotLabel }}"></image-slot>
+      </div>
+      <button onClick="{{ tea.open }}" style="position:absolute; right:0; top:0; bottom:0; width:30%; border:0; padding:0; margin:0; background:transparent; color:inherit; cursor:pointer;" style-hover="opacity:.85;">
+        <span style="position:absolute; top:20px; left:50%; transform:translateX(-50%); writing-mode:vertical-rl; font-family:'Noto Serif SC', serif; font-weight:500; font-size:clamp(26px,2.4vw,34px); letter-spacing:.12em; line-height:1;">{{ tea.hanzi }}</span>
+        <span style="position:absolute; bottom:16px; left:0; right:0; text-align:center; font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.1em;">{{ tea.num }}</span>
+      </button>
+    </sc-if>
+    <sc-if value="{{ hanzi }}" hint-placeholder-val="{{ false }}">
+      <button onClick="{{ tea.open }}" style="position:absolute; inset:0; border:0; padding:0; margin:0; background:transparent; color:inherit; cursor:pointer;" style-hover="opacity:.9;">
+        <span style="position:absolute; top:24px; right:22px; writing-mode:vertical-rl; font-family:'Noto Serif SC', serif; font-weight:500; font-size:44px; letter-spacing:.14em; line-height:1;">{{ tea.hanzi }}</span>
+        <span style="position:absolute; left:20px; top:26px; font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.08em;">{{ tea.pinyin }}</span>
+        <span style="position:absolute; left:20px; bottom:20px; font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.12em;">{{ tea.num }}</span>
+      </button>
+    </sc-if>
+    <sc-if value="{{ tea.isSale }}">
+      <span style="position:absolute; left:12px; bottom:12px; pointer-events:none; background:#8E3236; color:#F1EDE4; padding:5px 10px; border-radius:999px; font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.04em;">{{ tea.saleBadge }}</span>
+    </sc-if>
+  </div>
+  <div style="display:flex; flex-direction:column; gap:6px;">
+    <button onClick="{{ tea.open }}" style="background:none; border:0; padding:0; text-align:left; cursor:pointer; font-family:'Prata', serif; font-size:22px; line-height:1.2; color:#1D231B;" style-hover="color:#8E3236;">{{ tea.name }}</button>
+    <span style="font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:#5C6656;">{{ tea.meta }}</span>
+  </div>
+  <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; padding-top:12px; border-top:1px solid #CFC7B6;">
+    <span style="display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; font-size:15px; font-weight:500; white-space:nowrap;">
+      <span style="color:{{ tea.priceColor }};">{{ tea.nowPriceLabel }}</span>
+      <sc-if value="{{ tea.saleNow }}"><span style="font-weight:400; font-size:13px; color:#5C6656; text-decoration:line-through;">{{ tea.priceLabel }}</span></sc-if>
+      <span style="font-weight:400; color:#5C6656;">/ 50 г</span>
+    </span>
+    <button onClick="{{ tea.add }}" style="background:transparent; border:1px solid #1D231B; border-radius:999px; color:#1D231B; padding:7px 14px; font:500 13px 'Golos Text', sans-serif; cursor:pointer; white-space:nowrap;" style-hover="background:#1D231B; color:#F1EDE4;">В корзину</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:300,&quot;height&quot;:520},&quot;tea&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;object&quot;},&quot;hanzi&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;photo&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}"></script>
+</body>
+</html>

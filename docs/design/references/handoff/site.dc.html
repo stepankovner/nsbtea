@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Prata&family=Spectral:wght@300;400;500;600&family=Golos+Text:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Noto+Serif+SC:wght@500&display=swap" rel="stylesheet"><style>body{margin:0;background:#F1EDE4;} a{color:#8E3236;} a:hover{color:#5C7650;} input,textarea{font:inherit;} input::placeholder,textarea::placeholder{color:#8A8F82;}</style><script src="./image-slot.js"></script></helmet>
+<div style="min-height:100vh; background:#F1EDE4; color:#1D231B; font-family:'Golos Text', sans-serif;">
+
+  <header style="position:sticky; top:0; z-index:30; background:#F1EDE4; border-bottom:1px solid #D9D2C3;">
+    <div style="max-width:1320px; margin:0 auto; padding:14px clamp(20px,4vw,56px); display:flex; align-items:center; justify-content:space-between; gap:16px 32px; flex-wrap:wrap;">
+      <button onClick="{{ goHome }}" style="background:none; border:0; padding:0; cursor:pointer; display:flex;">
+        <dc-import name="NsbLogo" variant="{{ logoVariant }}" size="{{ headerLogoSize }}" hint-size="150px,40px"></dc-import>
+      </button>
+      <nav style="display:flex; align-items:center; gap:4px 28px; flex-wrap:wrap; font-size:15px;">
+        <sc-for list="{{ nav }}" as="n" hint-placeholder-count="4">
+          <button onClick="{{ n.go }}" style="background:none; border:0; border-bottom:1px solid {{ n.line }}; padding:6px 0; cursor:pointer; font:inherit; color:#1D231B;" style-hover="color:#8E3236;">{{ n.label }}</button>
+        </sc-for>
+        <button onClick="{{ goCart }}" style="display:flex; align-items:center; gap:8px; background:none; border:1px solid #1D231B; padding:8px 14px; cursor:pointer; font:inherit; color:#1D231B;" style-hover="background:#1D231B; color:#F1EDE4;">Корзина <span style="font-family:'IBM Plex Mono', monospace; font-size:13px; color:#8E3236;">{{ cartCount }}</span></button>
+      </nav>
+    </div>
+  </header>
+
+  <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+    <section data-screen-label="Главная" style="max-width:1320px; margin:0 auto; padding:clamp(40px,6vw,96px) clamp(20px,4vw,56px) 0;">
+      <div style="display:flex; justify-content:space-between; gap:12px 24px; flex-wrap:wrap; font-family:'IBM Plex Mono', monospace; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:#5C7650; margin-bottom:28px;">
+        <span>Интернет-магазин · Владимир</span>
+        <span>Чай · Церемонии · Сплавы</span>
+      </div>
+      <h1 style="margin:0; font-family:'Prata', serif; font-weight:400; font-size:clamp(52px,9vw,148px); line-height:.95; letter-spacing:-.025em;">
+        <span style="display:block;">Китайский чай</span>
+        <span style="display:block; padding-left:clamp(0px,16vw,240px);">во Владимире</span>
+      </h1>
+    </section>
+    <section style="max-width:1320px; margin:0 auto; padding:clamp(40px,5vw,72px) clamp(20px,4vw,56px) clamp(80px,9vw,140px); display:flex; flex-wrap:wrap; gap:48px clamp(32px,5vw,72px); align-items:flex-end;">
+      <div style="flex:1 1 300px; max-width:420px; display:flex; flex-direction:column; gap:32px;">
+        <p style="margin:0; font-size:18px; line-height:1.6; color:#3B4237; text-wrap:pretty;">Интернет-магазин Никиты Булича. Пуэры, улуны, красные, белые и зелёные чаи с доставкой по Владимиру и России. Чайные церемонии, выездные церемонии и сплавы на сапах.</p>
+        <div style="display:flex; flex-wrap:wrap; gap:12px;">
+          <button onClick="{{ goCatalog }}" style="background:#8E3236; color:#F1EDE4; border:0; padding:16px 26px; font:500 16px 'Golos Text', sans-serif; cursor:pointer;" style-hover="background:#76292D;">Выбрать чай</button>
+          <button onClick="{{ goEvents }}" style="background:transparent; color:#1D231B; border:1px solid #1D231B; padding:15px 25px; font:500 16px 'Golos Text', sans-serif; cursor:pointer;" style-hover="background:#1D231B; color:#F1EDE4;">Записаться на церемонию</button>
+        </div>
+      </div>
+      <div style="flex:2 1 480px; position:relative;">
+        <div style="aspect-ratio:16 / 10; display:flex; align-items:center; justify-content:center; background:repeating-linear-gradient(135deg, #E4DDCE 0 12px, #DED6C5 12px 24px);">
+          <span style="font-family:'IBM Plex Mono', monospace; font-size:12px; color:#4E5649; background:#F1EDE4; padding:6px 10px;">фото: чайная церемония</span>
+        </div>
+        <div style="position:absolute; top:-26px; right:clamp(16px,3vw,40px); background:#8E3236; color:#F1EDE4; padding:16px 12px; font-family:'Noto Serif SC', serif; font-size:30px; line-height:1;">茶</div>
+      </div>
+    </section>
+
+    <section ref="{{ thuRef }}" data-screen-label="Чайный четверг" style="max-width:1320px; margin:0 auto; padding:0 clamp(20px,4vw,56px) clamp(80px,9vw,140px);">
+      <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:20px 48px; flex-wrap:wrap; margin-bottom:32px;">
+        <div style="display:flex; flex-direction:column; gap:14px;">
+          <span style="font-family:'IBM Plex Mono', monospace; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:#8E3236;">Чай недели · до {{ nextThuLabel }}</span>
+          <h2 style="margin:0; font-family:'Prata', serif; font-weight:400; font-size:clamp(40px,5vw,72px); line-height:1;">Три чая недели со скидкой 20%</h2>
+        </div>
+        <p style="margin:0; max-width:420px; font-size:16px; line-height:1.6; color:#3B4237;">{{ thuNote }}</p>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:16px;">
+        <sc-for list="{{ thuCards }}" as="t" hint-placeholder-count="3">
+          <div style="display:flex; flex-wrap:wrap; flex-direction:{{ t.dir }}; background:#E9E4D8;">
+            <button onClick="{{ t.open }}" style="flex:1 1 360px; min-height:clamp(360px,38vw,500px); position:relative; border:0; padding:0; margin:0; cursor:pointer; background:{{ t.tileBg }}; color:{{ t.tileFg }};">
+              <span style="position:absolute; top:clamp(28px,3.4vw,48px); right:clamp(28px,4.4vw,64px); writing-mode:vertical-rl; font-family:'Noto Serif SC', serif; font-weight:500; font-size:clamp(60px,7vw,108px); letter-spacing:.12em; line-height:1;">{{ t.hanzi }}</span>
+              <span style="position:absolute; left:clamp(20px,3.4vw,48px); top:clamp(24px,3vw,40px); padding:6px 12px; border-radius:999px; background:{{ t.badgeBg }}; color:{{ t.badgeFg }}; font-family:'IBM Plex Mono', monospace; font-size:13px; font-weight:500;">−20%</span>
+              <span style="position:absolute; left:clamp(20px,3.4vw,48px); bottom:clamp(20px,3vw,36px); font-family:'IBM Plex Mono', monospace; font-size:13px;">{{ t.pinyin }}</span>
+            </button>
+            <div style="flex:1.3 1 420px; box-sizing:border-box; padding:clamp(28px,4vw,64px); display:flex; flex-direction:column; justify-content:space-between; gap:36px;">
+              <div style="display:flex; flex-direction:column; gap:18px;">
+                <span style="font-family:'IBM Plex Mono', monospace; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:#5C7650;">{{ t.typeLabel }} · {{ t.region }} · {{ t.year }}</span>
+                <h3 style="margin:0; font-family:'Prata', serif; font-weight:400; font-size:clamp(36px,4vw,60px); line-height:1.04;">{{ t.name }}</h3>
+                <p style="margin:0; max-width:560px; font-size:17px; line-height:1.6; color:#3B4237; text-wrap:pretty;">{{ t.desc }}</p>
+              </div>
+              <div style="display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:16px; border-top:1px solid #1D231B; padding-top:24px;">
+            <div style="display:flex; flex-direction:column; gap:8px;"><span style="font-family:'Prata', serif; font-size:clamp(30px,3.2vw,48px); line-height:1;">{{ t.temp }}</span><span style="font-family:'IBM Plex Mono', monospace; font-size:12px; color:#5C6656;">вода</span></div>
+            <div style="display:flex; flex-direction:column; gap:8px;"><span style="font-family:'Prata', serif; font-size:clamp(30px,3.2vw,48px); line-height:1;">{{ t.grams }}</span><span style="font-family:'IBM Plex Mono', monospace; font-size:12px; color:#5C6656;">на 100 мл</span></div>
+            <div style="display:flex; flex-direction:column; gap:8px;"><span style="font-family:'Prata', serif; font-size:clamp(30px,3.2vw,48px); line-height:1;">{{ t.steeps }}</span><span style="font-family:'IBM Plex Mono', monospace; font-size:12px; color:#5C6656;">{{ t.steepsLabel }}</span></div>
+          </div>
+              <div style="display:flex; flex-wrap:wrap; align-items:center; gap:16px 28px;">
+                <span style="display:flex; align-items:baseline; gap:10px; white-space:nowrap;"><span style="font-size:24px; font-weight:500; color:#8E3236;">{{ t.salePriceLabel }}</span><span style="font-size:16px; color:#5C6656; text-decoration:line-through;">{{ t.priceLabel }}</span><span style="font-size:16px; color:#5C6656;">/ 50 г</span></span>
+                <button onClick="{{ t.add }}" style="background:#1D231B; color:#F1EDE4; border:0; border-radius:999px; padding:17px 28px; font:500 16px 'Golos Text', sans-serif; cursor:pointer;" style-hover="background:#8E3236;">В корзину</button>
+                <button onClick="{{ t.open }}" style="background:none; border:0; padding:0; font:16px 'Golos Text', sans-serif; color:#8E3236; cursor:pointer;">Подробнее →</button>
+              </div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <section style="max-width:1320px; margin:0 auto; padding:0 clamp(20px,4vw,56px) clamp(80px,9vw,140px);">
+      <h2 style="margin:0 0 32px; font-family:'Prata', serif; font-weight:400; font-size:clamp(32px,3.6vw,48px);">Не только чай</h2>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(min(100%,280px), 1fr)); gap:40px 24px;">
+        <sc-for list="{{ services }}" as="s" hint-placeholder-count="3">
+          <div style="display:flex; flex-direction:column; gap:18px;">
+            <div style="position:relative; aspect-ratio:4 / 5; background:#E4DDCE;">
+              <image-slot id="{{ s.slot }}" shape="rect" placeholder="{{ s.slotLabel }}"></image-slot>
+              <span style="position:absolute; top:16px; left:16px; pointer-events:none; padding:5px 11px; border-radius:999px; background:{{ s.chipBg }}; color:#F1EDE4; font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.06em;">{{ s.kicker }}</span>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+              <span style="font-family:'Prata', serif; font-size:clamp(26px,2.4vw,32px); line-height:1.1;">{{ s.title }}</span>
+              <span style="font-size:16px; line-height:1.55; color:#3B4237;">{{ s.text }}</span>
+            </div>
+            <button onClick="{{ s.go }}" style="align-self:flex-start; background:transparent; border:1px solid #1D231B; border-radius:999px; padding:10px 18px; font:500 14px 'Golos Text', sans-serif; color:#1D231B; cursor:pointer;" style-hover="background:#1D231B; color:#F1EDE4;">{{ s.cta }}</button>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    
+
+    <section style="max-width:1320px; margin:0 auto; padding:0 clamp(20px,4vw,56px) clamp(80px,9vw,140px);">
+      <div style="display:flex; justify-content:space-between; align-items:baseline; gap:16px; flex-wrap:wrap; margin-bottom:32px;">
+        <h2 style="margin:0; font-family:'Prata', serif; font-weight:400; font-size:clamp(32px,3.6vw,48px);">Сейчас в наличии</h2>
+        <button onClick="{{ goCatalog }}" style="background:none; border:0; padding:0; cursor:pointer; font:15px 'Golos Text', sans-serif; color:#8E3236;">Весь каталог →</button>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(min(100%, 190px), 1fr)); gap:48px 24px;">
+        <sc-for list="{{ featured }}" as="t" hint-placeholder-count="4">
+          <dc-import name="TeaCard" tea="{{ t }}" hanzi="{{ tileHanzi }}" photo="{{ tilePhoto }}" hint-size="100%,460px"></dc-import>
+        </sc-for>
+      </div>
+    </section>
+
+    <section style="background:#232B21; color:#F1EDE4;">
+      <div style="max-width:1320px; margin:0 auto; padding:clamp(64px,8vw,120px) clamp(20px,4vw,56px); display:flex; flex-wrap:wrap; gap:48px clamp(32px,6vw,96px);">
+        <div style="flex:1 1 280px; max-width:360px; display:flex; flex-direction:column; gap:24px;">
+          <span style="font-family:'IBM Plex Mono', monospace; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:#93AC85;">Расписание</span>
+          <h2 style="margin:0; font-family:'Prata', serif; font-weight:400; font-size:clamp(36px,4vw,56px); line-height:1.05;">Ближайшие церемонии и сплавы</h2>
+          <button onClick="{{ goEvents }}" style="align-self:flex-start; background:none; border:0; padding:0; cursor:pointer; font:15px 'Golos Text', sans-serif; color:#F1EDE4; border-bottom:1px solid #F1EDE4;">Все даты</button>
+        </div>
+        <div style="flex:2 1 520px;">
+          <sc-for list="{{ homeEvents }}" as="e" hint-placeholder-count="3">
+            <div style="display:flex; flex-wrap:wrap; align-items:center; gap:16px 32px; padding:24px 0; border-top:1px solid #46523F;">
+              <div style="display:flex; align-items:baseline; gap:12px; width:150px;">
+                <span style="font-family:'Prata', serif; font-weight:400; font-size:56px; line-height:1;">{{ e.day }}</span>
+                <span style="font-family:'IBM Plex Mono', monospace; font-size:12px; line-height:1.5; color:#C9CFC0;">{{ e.mon }}<br>{{ e.wd }}, {{ e.time }}</span>
+              </div>
+              <div style="flex:1 1 240px; display:flex; flex-direction:column; gap:6px;">
+                <span style="font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#93AC85;">{{ e.kindLabel }}</span>
+                <span style="font-family:'Prata', serif; font-size:24px; line-height:1.2;">{{ e.title }}</span>
+              </div>
+              <span style="font-size:15px; white-space:nowrap;">{{ e.priceLabel }}</span>
+              <button onClick="{{ e.bookFromHome }}" style="background:#F1EDE4; color:#1D231B; border:0; padding:11px 18px; font:500 14px 'Golos Text', sans-serif; cursor:pointer;" style-hover="background:#FFFFFF;">Записаться</button>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </section>
+
+    <section ref="{{ aboutRef }}" style="max-width:1320px; margin:0 auto; padding:clamp(80px,9vw,140px) clamp(20px,4vw,56px); display:flex; flex-wrap:wrap; gap:48px clamp(32px,6vw,96px); align-items:center;">
+      <div style="flex:1 1 320px; max-width:460px; aspect-ratio:4 / 5; display:flex; align-items:center; justify-content:center; background:repeating-linear-gradient(135deg, #E4DDCE 0 12px, #DED6C5 12px 24px);">
+        <span style="font-family:'IBM Plex Mono', monospace; font-size:12px; color:#4E5649; background:#F1EDE4; padding:6px 10px;">фото: Никита за чайным столом</span>
+      </div>
+      <div style="flex:1 1 360px; max-width:600px; display:flex; flex-direction:column; gap:28px;">
+        <span style="font-family:'IBM Plex Mono', monospace; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:#5C7650;">О магазине</span>
+        <p style="margin:0; font-family:'Prata', serif; font-weight:400; font-size:clamp(28px,3vw,42px); line-height:1.2; text-wrap:pretty;">НСБ — инициалы основателя, Никиты Сергеевича Булича.</p>
+        <p style="margin:0; font-size:17px; line-height:1.65; color:#3B4237; text-wrap:pretty;">Пока НСБ работает как интернет-магазин: заказ на сайте, доставка по Владимиру и по России. Про любой чай можно спросить в Telegram — расскажем, откуда он и как его заваривать.</p>
+      </div>
+    </section>
+
+    <section ref="{{ optRef }}" style="border-top:1px solid #CFC7B6; background:#E9E4D8;">
+      <div style="max-width:1320px; margin:0 auto; padding:clamp(64px,8vw,120px) clamp(20px,4vw,56px); display:flex; flex-wrap:wrap; gap:48px clamp(32px,6vw,96px);">
+        <div style="flex:1 1 320px; display:flex; flex-direction:column; gap:20px;">
+          <h2 style="margin:0; font-family:'Prata', serif; font-weight:400; font-size:clamp(48px,6vw,88px); line-height:1;">Оптовые заказы</h2>
+          <p style="margin:0; max-width:440px; font-size:17px; line-height:1.6; color:#3B4237;">Чай для кафе, ресторанов, магазинов и корпоративных подарков. Пришлём оптовый прайс и поможем собрать ассортимент.</p>
+        </div>
+        <div style="flex:1 1 380px; max-width:560px;">
+          <sc-if value="{{ optOpen }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex; flex-direction:column; gap:22px;">
+              <label style="display:flex; flex-direction:column; gap:6px;"><span style="font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#5C6656;">Организация</span><input value="{{ opt.org }}" onChange="{{ setOptOrg }}" placeholder="Кофейня «Ромашка»" style="width:100%; box-sizing:border-box; background:transparent; border:0; border-bottom:1px solid #1D231B; padding:10px 0; font-size:16px; color:#1D231B; outline:none;"></label>
+              <label style="display:flex; flex-direction:column; gap:6px;"><span style="font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#5C6656;">Телефон или почта</span><input value="{{ opt.contact }}" onChange="{{ setOptContact }}" placeholder="+7 900 000-00-00" style="width:100%; box-sizing:border-box; background:transparent; border:0; border-bottom:1px solid #1D231B; padding:10px 0; font-size:16px; color:#1D231B; outline:none;"></label>
+              <sc-if value="{{ optError }}"><span style="font-size:14px; color:#8E3236;">Укажите организацию и контакт</span></sc-if>
+              <button onClick="{{ submitOpt }}" style="align-self:flex-start; margin-top:8px; background:#8E3236; color:#F1EDE4; border:0; padding:16px 26px; font:500 16px 'Golos Text', sans-serif; cursor:pointer;" style-hover="background:#76292D;">Запросить прайс</button>
+            </div>
+          </sc-if>
+          <sc-if value="{{ optSent }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex; flex-direction:column; gap:12px; padding-top:8px;">
+              <span style="font-family:'Prata', serif; font-size:32px;">Спасибо, заявка у нас.</span>
+              <span style="font-size:16px; color:#3B4237;">Свяжемся с вами и пришлём прайс.</span>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </section>
+  </sc-if>
+
+  <sc-if value="{{ isCatalog }}" hint-placeholder-val="{{ false }}">
+    <section data-screen-label="Каталог" style="max-width:1320px; margin:0 auto; padding:clamp(40px,5vw,72px) clamp(20px,4vw,56px) clamp(80px,9vw,140px);">
+      <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:16px; flex-wrap:wrap; margin-bottom:32px;">
+        <h1 style="margin:0; font-family:'Prata', serif; font-weight:400; font-size:clamp(56px,7vw,104px); line-height:.95;">Чай</h1>
+        <span style="font-family:'IBM Plex Mono', monospace; font-size:12px; letter-spacing:.08em; color:#5C6656;">Цены за 50 г · доставка по Владимиру и России</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap; padding:14px 0; border-top:1px solid #1D231B; border-bottom:1px solid #CFC7B6; margin-bottom:48px;">
+        <div style="display:flex; flex-wrap:wrap; gap:6px;">
+          <sc-for list="{{ typeFilters }}" as="f" hint-placeholder-count="6">
+            <button onClick="{{ f.pick }}" style="display:flex; gap:8px; align-items:baseline; background:{{ f.bg }}; color:{{ f.fg }}; border:0; padding:8px 14px; font:15px 'Golos Text', sans-serif; cursor:pointer;">{{ f.label }}<span style="font-family:'IBM Plex Mono', monospace; font-size:11px; opacity:.75;">{{ f.count }}</span></button>
+          </sc-for>
+        </div>
+        <div style="display:flex; gap:18px; align-items:center; font-size:14px;">
+          <span style="font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#5C6656;">Порядок</span>
+          <sc-for list="{{ sorts }}" as="o" hint-placeholder-count="3">
+            <button onClick="{{ o.pick }}" style="background:none; border:0; border-bottom:1px solid {{ o.line }}; padding:4px 0; font:14px 'Golos Text', sans-serif; color:#1D231B; cursor:pointer;">{{ o.label }}</button>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(230px, 1fr)); gap:56px 24px;">
+        <sc-for list="{{ catalog }}" as="t" hint-placeholder-count="8">
+          <dc-import name="TeaCard" tea="{{ t }}" hanzi="{{ tileHanzi }}" photo="{{ tilePhoto }}" hint-size="100%,460px"></dc-import>
+        </sc-for>
+      </div>
+    </section>
+  </sc-if>
+
+  <sc-if value="{{ isProduct }}" hint-placeholder-val="{{ false }}">
+    <section data-screen-label="Карточка товара" style="display:flex; flex-wrap:wrap;">
+      <div style="flex:1 1 420px; position:relative; min-height:clamp(440px,80vh,820px); background:{{ tea.tileBg }}; color:{{ tea.tileFg }};">
+        <button onClick="{{ goCatalog }}" style="position:absolute; left:clamp(20px,3vw,40px); top:32px; background:none; border:0; padding:0; font:14px 'Golos Text', sans-serif; color:inherit; cursor:pointer;">← Каталог</button>
+        <span style="position:absolute; top:40px; right:clamp(24px,4vw,64px); writing-mode:vertical-rl; font-family:'Noto Serif SC', serif; font-weight:500; font-size:clamp(72px,10vw,150px); letter-spacing:.12em; line-height:1;">{{ tea.hanzi }}</span>
+        <sc-if value="{{ tea.isSale }}"><span style="position:absolute; left:clamp(20px,3vw,40px); top:76px; padding:6px 12px; border-radius:999px; background:{{ tea.badgeBg }}; color:{{ tea.badgeFg }}; font-family:'IBM Plex Mono', monospace; font-size:12px;">{{ tea.saleBadge }}</span></sc-if>
+        <span style="position:absolute; left:clamp(20px,3vw,40px); bottom:32px; font-family:'IBM Plex Mono', monospace; font-size:13px;">{{ tea.pinyin }}</span>
+      </div>
+      <div style="flex:1 1 460px; max-width:760px; box-sizing:border-box; padding:clamp(32px,5vw,72px) clamp(20px,4vw,64px); display:flex; flex-direction:column; gap:32px;">
+        <div style="display:flex; flex-direction:column; gap:14px;">
+          <span style="font-family:'IBM Plex Mono', monospace; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:#5C7650;">{{ tea.typeLabel }} · {{ tea.region }} · {{ tea.year }}</span>
+          <h1 style="margin:0; font-family:'Prata', serif; font-weight:400; font-size:clamp(42px,5vw,76px); line-height:1.02;">{{ tea.name }}</h1>
+        </div>
+        <p style="margin:0; font-size:17px; line-height:1.65; color:#3B4237; text-wrap:pretty;">{{ tea.desc }}</p>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <span style="font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#5C6656;">Во вкусе</span>
+          <span style="font-family:'Prata', serif; font-size:24px; line-height:1.3;">{{ tea.taste }}</span>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:16px; border-top:1px solid #1D231B; padding:24px 0; border-bottom:1px solid #1D231B;">
+            <div style="display:flex; flex-direction:column; gap:8px;"><span style="font-family:'Prata', serif; font-size:clamp(30px,3.2vw,48px); line-height:1;">{{ tea.temp }}</span><span style="font-family:'IBM Plex Mono', monospace; font-size:12px; color:#5C6656;">вода</span></div>
+            <div style="display:flex; flex-direction:column; gap:8px;"><span style="font-family:'Prata', serif; font-size:clamp(30px,3.2vw,48px); line-height:1;">{{ tea.grams }}</span><span style="font-family:'IBM Plex Mono', monospace; font-size:12px; color:#5C6656;">на 100 мл</span></div>
+            <div style="display:flex; flex-direction:column; gap:8px;"><span style="font-family:'Prata', serif; font-size:clamp(30px,3.2vw,48px); line-height:1;">{{ tea.steeps }}</span><span style="font-family:'IBM Plex Mono', monospace; font-size:12px; color:#5C6656;">{{ tea.steepsLabel }}</span></div>
+          </div>
+        <div style="display:flex; flex-wrap:wrap; gap:6px;">
+          <sc-for list="{{ weights }}" as="w" hint-placeholder-count="4">
+            <button onClick="{{ w.pick }}" style="min-width:76px; background:{{ w.bg }}; color:{{ w.fg }}; border:1px solid #1D231B; border-radius:999px; padding:10px 16px; font:15px 'Golos Text', sans-serif; cursor:pointer;">{{ w.label }}</button>
+          </sc-for>
+        </div>
+        <div style="display:flex; flex-wrap:wrap; align-items:center; gap:16px 24px;">
+          <div style="display:flex; align-items:center; border:1px solid #1D231B; border-radius:999px;">
+            <button onClick="{{ qtyDec }}" style="width:44px; height:46px; background:none; border:0; font-size:20px; cursor:pointer; color:#1D231B;">−</button>
+            <span style="width:28px; text-align:center;">{{ qty }}</span>
+            <button onClick="{{ qtyInc }}" style="width:44px; height:46px; background:none; border:0; font-size:20px; cursor:pointer; color:#1D231B;">+</button>
+          </div>
+          <span style="display:flex; align-items:baseline; gap:10px; min-width:130px;"><span style="font-family:'Prata', serif; font-size:34px; color:{{ tea.priceColor }};">{{ productTotal }}</span><sc-if value="{{ tea.saleNow }}"><span style="font-size:16px; color:#5C6656; text-decoration:line-through;">{{ productOld }}</span></sc-if></span>
+          <button onClick="{{ addProduct }}" style="flex:1 1 180px; background:#1D231B; color:#F1EDE4; border:0; border-radius:999px; padding:17px 28px; font:500 16px 'Golos Text', sans-serif; cursor:pointer;" style-hover="background:#8E3236;">В корзину</button>
+        </div>
+        <sc-if value="{{ tea.saleLater }}"><span style="font-size:14px; color:#8E3236;">{{ thuShort }}</span></sc-if>
+      </div>
+    </section>
+    <section style="max-width:1320px; margin:0 auto; padding:12px clamp(20px,4vw,56px) 0;">
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(min(100%,260px), 1fr)); gap:12px;">
+        <sc-for list="{{ productSlots }}" as="ps" hint-placeholder-count="3">
+          <div style="position:relative; aspect-ratio:4 / 3; background:#E4DDCE;"><image-slot id="{{ ps.id }}" shape="rect" placeholder="{{ ps.label }}"></image-slot></div>
+        </sc-for>
+      </div>
+    </section>
+    <section style="max-width:1320px; margin:0 auto; padding:clamp(80px,9vw,140px) clamp(20px,4vw,56px);">
+      <h2 style="margin:0 0 32px; font-family:'Prata', serif; font-weight:400; font-size:clamp(32px,3.6vw,48px);">{{ relatedTitle }}</h2>
+      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(230px, 1fr)); gap:48px 24px;">
+        <sc-for list="{{ related }}" as="t" hint-placeholder-count="4">
+          <dc-import name="TeaCard" tea="{{ t }}" hanzi="{{ tileHanzi }}" photo="{{ tilePhoto }}" hint-size="100%,460px"></dc-import>
+        </sc-for>
+      </div>
+    </section>
+  </sc-if>
+
+  <sc-if value="{{ isEvents }}" hint-placeholder-val="{{ false }}">
+    <section data-screen-label="Мероприятия" style="max-width:1320px; margin:0 auto; padding:clamp(40px,5vw,72px) clamp(20px,4vw,56px) clamp(64px,8vw,112px);">
+      <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:24px 48px; flex-wrap:wrap; margin-bottom:56px;">
+        <h1 style="margin:0; font-family:'Prata', serif; font-weight:400; font-size:clamp(52px,7vw,104px); line-height:.95;">Церемонии<br>и сплавы</h1>
+        <p style="margin:0; max-width:440px; font-size:17px; line-height:1.6; color:#3B4237;">Вечерние церемонии проходят во Владимире, сплавы — по Клязьме, с церемонией на берегу. Выездную церемонию можно заказать на любую дату.</p>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:32px; margin-bottom:72px;">
+        <div style="display:flex; flex-direction:column; gap:10px; padding-top:18px; border-top:1px solid #1D231B;">
+          <span style="font-family:'Prata', serif; font-size:26px;">Чайная церемония</span>
+          <span style="font-size:15px; line-height:1.55; color:#3B4237;">Два часа, три-четыре чая одной темы, до восьми гостей.</span>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:10px; padding-top:18px; border-top:1px solid #1D231B;">
+          <span style="font-family:'Prata', serif; font-size:26px;">Сплав на сапах</span>
+          <span style="font-size:15px; line-height:1.55; color:#3B4237;">Около четырёх часов по Клязьме. Сапы и инструктор включены, чай заваривается на берегу.</span>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:10px; padding-top:18px; border-top:1px solid #1D231B;">
+          <span style="font-family:'Prata', serif; font-size:26px;">Выездная церемония</span>
+          <span style="font-size:15px; line-height:1.55; color:#3B4237;">Привезём чай, посуду и мастера: домой, в офис, на праздник или на природу.</span>
+        </div>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap; padding:14px 0; border-top:1px solid #1D231B;">
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <sc-for list="{{ evFilters }}" as="f" hint-placeholder-count="3">
+            <button onClick="{{ f.pick }}" style="background:{{ f.bg }}; color:{{ f.fg }}; border:0; padding:8px 14px; font:15px 'Golos Text', sans-serif; cursor:pointer;">{{ f.label }}</button>
+          </sc-for>
+        </div>
+        <span style="font-family:'IBM Plex Mono', monospace; font-size:12px; color:#5C6656;">Октябрь 2026</span>
+      </div>
+      <sc-for list="{{ events }}" as="e" hint-placeholder-count="5">
+        <div style="border-top:1px solid #CFC7B6;">
+          <div style="display:flex; flex-wrap:wrap; align-items:center; gap:16px 32px; padding:28px 0;">
+            <div style="display:flex; align-items:baseline; gap:12px; width:160px;">
+              <span style="font-family:'Prata', serif; font-weight:400; font-size:64px; line-height:1;">{{ e.day }}</span>
+              <span style="font-family:'IBM Plex Mono', monospace; font-size:12px; line-height:1.5; color:#5C6656;">{{ e.mon }}<br>{{ e.wd }}, {{ e.time }}</span>
+            </div>
+            <div style="flex:1 1 300px; display:flex; flex-direction:column; gap:8px;">
+              <span style="display:flex; gap:12px; flex-wrap:wrap; font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.12em; text-transform:uppercase;"><span style="color:#5C7650;">{{ e.kindLabel }}</span><span style="color:#8E3236;">{{ e.note }}</span></span>
+              <span style="font-family:'Prata', serif; font-size:clamp(24px,2.4vw,30px); line-height:1.2;">{{ e.title }}</span>
+              <span style="font-size:14px; color:#5C6656;">{{ e.place }} · {{ e.dur }}</span>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:4px; min-width:130px;">
+              <span style="font-size:17px; font-weight:500;">{{ e.priceLabel }}</span>
+              <span style="font-size:13px; color:{{ e.leftColor }};">{{ e.leftLabel }}</span>
+            </div>
+            <sc-if value="{{ e.canBook }}">
+              <button onClick="{{ e.toggle }}" style="min-width:150px; background:{{ e.btnBg }}; color:{{ e.btnFg }}; border:1px solid #1D231B; padding:12px 18px; font:500 15px 'Golos Text', sans-serif; cursor:pointer;">{{ e.btnLabel }}</button>
+            </sc-if>
+            <sc-if value="{{ e.isBooked }}">
+              <span style="min-width:150px; font-size:15px; color:#5C7650;">Вы записаны ✓</span>
+            </sc-if>
+            <sc-if value="{{ e.soldOut }}">
+              <span style="min-width:150px; font-size:15px; color:#5C6656;">Лист ожидания — в Telegram</span>
+            </sc-if>
+          </div>
+          <sc-if value="{{ e.isOpen }}">
+            <div style="display:flex; flex-wrap:wrap; align-items:flex-end; gap:20px 28px; padding:28px; margin-bottom:28px; background:#E9E4D8;">
+              <label style="flex:1 1 200px; display:flex; flex-direction:column; gap:6px;"><span style="font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#5C6656;">Имя</span><input value="{{ bName }}" onChange="{{ setBName }}" placeholder="Как к вам обращаться" style="width:100%; box-sizing:border-box; background:transparent; border:0; border-bottom:1px solid #1D231B; padding:10px 0; font-size:16px; color:#1D231B; outline:none;"></label>
+              <label style="flex:1 1 200px; display:flex; flex-direction:column; gap:6px;"><span style="font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#5C6656;">Телефон</span><input value="{{ bPhone }}" onChange="{{ setBPhone }}" placeholder="+7 900 000-00-00" style="width:100%; box-sizing:border-box; background:transparent; border:0; border-bottom:1px solid #1D231B; padding:10px 0; font-size:16px; color:#1D231B; outline:none;"></label>
+              <div style="display:flex; flex-direction:column; gap:6px;">
+                <span style="font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#5C6656;">Гостей</span>
+                <div style="display:flex; align-items:center; border:1px solid #1D231B;">
+                  <button onClick="{{ bDec }}" style="width:44px; height:44px; background:none; border:0; font-size:18px; cursor:pointer; color:#1D231B;">−</button>
+                  <span style="width:28px; text-align:center;">{{ bCount }}</span>
+                  <button onClick="{{ e.bInc }}" style="width:44px; height:44px; background:none; border:0; font-size:18px; cursor:pointer; color:#1D231B;">+</button>
+                </div>
+              </div>
+              <button onClick="{{ e.submit }}" style="background:#8E3236; color:#F1EDE4; border:0; padding:14px 24px; font:500 15px 'Golos Text', sans-serif; cursor:pointer;" style-hover="background:#76292D;">Записаться · {{ e.bookTotal }}</button>
+              <sc-if value="{{ bookError }}"><span style="flex-basis:100%; font-size:14px; color:#8E3236;">Укажите имя и телефон — мы позвоним, чтобы подтвердить запись.</span></sc-if>
+            </div>
+          </sc-if>
+        </div>
+      </sc-for>
+      <div style="border-top:1px solid #CFC7B6; padding-top:20px; font-size:14px; color:#5C6656;">Сезон сплавов закрывается в октябре. Даты на 2027 год появятся весной.</div>
+    </section>
+    <section style="background:#232B21; color:#F1EDE4;">
+      <div style="max-width:1320px; margin:0 auto; padding:clamp(64px,8vw,120px) clamp(20px,4vw,56px); display:flex; flex-wrap:wrap; gap:48px clamp(32px,6vw,96px);">
+        <div style="flex:1 1 320px; display:flex; flex-direction:column; gap:20px;">
+          <span style="font-family:'IBM Plex Mono', monospace; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:#93AC85;">На заказ</span>
+          <h2 style="margin:0; font-family:'Prata', serif; font-weight:400; font-size:clamp(40px,5vw,72px); line-height:1;">Выездная церемония</h2>
+          <p style="margin:0; max-width:420px; font-size:17px; line-height:1.6; color:#C9CFC0;">Расскажите, где и когда. Перезвоним, предложим чаи и рассчитаем стоимость.</p>
+        </div>
+        <div style="flex:1 1 400px; max-width:600px;">
+          <sc-if value="{{ outOpen }}" hint-placeholder-val="{{ true }}">
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:24px 28px;">
+              <label style="display:flex; flex-direction:column; gap:6px;"><span style="font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#93AC85;">Дата</span><input value="{{ out.date }}" onChange="{{ setOutDate }}" placeholder="например, 14 ноября" style="width:100%; box-sizing:border-box; background:transparent; border:0; border-bottom:1px solid #F1EDE4; padding:10px 0; font-size:16px; color:#F1EDE4; outline:none;"></label>
+              <label style="display:flex; flex-direction:column; gap:6px;"><span style="font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#93AC85;">Гостей</span><input value="{{ out.guests }}" onChange="{{ setOutGuests }}" placeholder="12" style="width:100%; box-sizing:border-box; background:transparent; border:0; border-bottom:1px solid #F1EDE4; padding:10px 0; font-size:16px; color:#F1EDE4; outline:none;"></label>
+              <label style="display:flex; flex-direction:column; gap:6px;"><span style="font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#93AC85;">Где</span><input value="{{ out.place }}" onChange="{{ setOutPlace }}" placeholder="Дом, офис, база отдыха" style="width:100%; box-sizing:border-box; background:transparent; border:0; border-bottom:1px solid #F1EDE4; padding:10px 0; font-size:16px; color:#F1EDE4; outline:none;"></label>
+              <label style="display:flex; flex-direction:column; gap:6px;"><span style="font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#93AC85;">Телефон</span><input value="{{ out.phone }}" onChange="{{ setOutPhone }}" placeholder="+7 900 000-00-00" style="width:100%; box-sizing:border-box; background:transparent; border:0; border-bottom:1px solid #F1EDE4; padding:10px 0; font-size:16px; color:#F1EDE4; outline:none;"></label>
+              <div style="display:flex; flex-wrap:wrap; align-items:center; gap:16px;">
+                <button onClick="{{ submitOut }}" style="background:#F1EDE4; color:#1D231B; border:0; padding:16px 26px; font:500 16px 'Golos Text', sans-serif; cursor:pointer;" style-hover="background:#FFFFFF;">Отправить заявку</button>
+                <sc-if value="{{ outError }}"><span style="font-size:14px; color:#E39A97;">Нужен телефон</span></sc-if>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ outSent }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex; flex-direction:column; gap:12px;">
+              <span style="font-family:'Prata', serif; font-size:32px;">Заявка отправлена.</span>
+              <span style="font-size:16px; color:#C9CFC0;">Перезвоним, чтобы обсудить детали.</span>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </section>
+  </sc-if>
+
+  <sc-if value="{{ isCart }}" hint-placeholder-val="{{ false }}">
+    <section data-screen-label="Корзина" style="max-width:1320px; margin:0 auto; padding:clamp(40px,5vw,72px) clamp(20px,4vw,56px) clamp(80px,9vw,140px);">
+      <h1 style="margin:0 0 40px; font-family:'Prata', serif; font-weight:400; font-size:clamp(52px,7vw,104px); line-height:.95;">Корзина</h1>
+      <sc-if value="{{ cartEmpty }}">
+        <div style="display:flex; flex-direction:column; align-items:flex-start; gap:24px; padding:40px 0; border-top:1px solid #1D231B;">
+          <span style="font-size:18px; color:#3B4237;">Пока пусто.</span>
+          <button onClick="{{ goCatalog }}" style="background:#8E3236; color:#F1EDE4; border:0; padding:16px 26px; font:500 16px 'Golos Text', sans-serif; cursor:pointer;" style-hover="background:#76292D;">Перейти в каталог</button>
+        </div>
+      </sc-if>
+      <sc-if value="{{ hasCart }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex; flex-wrap:wrap; gap:48px clamp(32px,5vw,72px); align-items:flex-start;">
+          <div style="flex:3 1 480px; border-top:1px solid #1D231B;">
+            <sc-for list="{{ lines }}" as="l" hint-placeholder-count="2">
+              <div style="display:flex; flex-wrap:wrap; align-items:center; gap:16px 24px; padding:22px 0; border-bottom:1px solid #CFC7B6;">
+                <button onClick="{{ l.open }}" style="width:72px; height:90px; flex:none; display:flex; align-items:flex-start; justify-content:flex-end; padding:10px; box-sizing:border-box; border:0; cursor:pointer; background:{{ l.tileBg }}; color:{{ l.tileFg }}; font-family:'Noto Serif SC', serif; font-size:18px; writing-mode:vertical-rl;">{{ l.hanzi }}</button>
+                <div style="flex:1 1 180px; display:flex; flex-direction:column; gap:6px;">
+                  <span style="font-family:'Prata', serif; font-size:24px;">{{ l.name }}</span>
+                  <span style="font-family:'IBM Plex Mono', monospace; font-size:12px; color:#5C6656;">{{ l.wLabel }} · {{ l.unit }}</span>
+                </div>
+                <div style="display:flex; align-items:center; border:1px solid #1D231B;">
+                  <button onClick="{{ l.dec }}" style="width:40px; height:40px; background:none; border:0; font-size:18px; cursor:pointer; color:#1D231B;">−</button>
+                  <span style="width:28px; text-align:center;">{{ l.qty }}</span>
+                  <button onClick="{{ l.inc }}" style="width:40px; height:40px; background:none; border:0; font-size:18px; cursor:pointer; color:#1D231B;">+</button>
+                </div>
+                <span style="min-width:100px; text-align:right; font-size:17px; font-weight:500;">{{ l.total }}</span>
+                <button onClick="{{ l.remove }}" style="background:none; border:0; padding:4px; cursor:pointer; font-size:14px; color:#5C6656;" style-hover="color:#8E3236;">Убрать</button>
+              </div>
+            </sc-for>
+          </div>
+          <div style="flex:2 1 360px; max-width:520px; background:#E9E4D8; padding:clamp(24px,3vw,40px); display:flex; flex-direction:column; gap:26px; box-sizing:border-box;">
+            <h2 style="margin:0; font-family:'Prata', serif; font-weight:400; font-size:32px;">Оформление</h2>
+            <label style="display:flex; flex-direction:column; gap:6px;"><span style="font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#5C6656;">Имя</span><input value="{{ co.name }}" onChange="{{ setCoName }}" placeholder="Как к вам обращаться" style="width:100%; box-sizing:border-box; background:transparent; border:0; border-bottom:1px solid #1D231B; padding:10px 0; font-size:16px; color:#1D231B; outline:none;"><sc-if value="{{ errName }}"><span style="font-size:13px; color:#8E3236;">Укажите имя</span></sc-if></label>
+            <label style="display:flex; flex-direction:column; gap:6px;"><span style="font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#5C6656;">Телефон</span><input value="{{ co.phone }}" onChange="{{ setCoPhone }}" placeholder="+7 900 000-00-00" style="width:100%; box-sizing:border-box; background:transparent; border:0; border-bottom:1px solid #1D231B; padding:10px 0; font-size:16px; color:#1D231B; outline:none;"><sc-if value="{{ errPhone }}"><span style="font-size:13px; color:#8E3236;">Нужен номер из 10–11 цифр</span></sc-if></label>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <span style="font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#5C6656;">Получение</span>
+              <sc-for list="{{ deliveries }}" as="d" hint-placeholder-count="3">
+                <button onClick="{{ d.pick }}" style="display:flex; align-items:flex-start; gap:14px; width:100%; text-align:left; background:{{ d.bg }}; border:1px solid {{ d.border }}; padding:14px 16px; cursor:pointer; font:inherit; color:#1D231B;">
+                  <span style="width:12px; height:12px; margin-top:4px; flex:none; border:1px solid #1D231B; background:{{ d.dot }};"></span>
+                  <span style="display:flex; flex-direction:column; gap:3px;"><span style="font-size:15px; font-weight:500;">{{ d.label }}</span><span style="font-size:13px; color:#5C6656;">{{ d.note }}</span></span>
+                </button>
+              </sc-for>
+            </div>
+            <sc-if value="{{ needsAddress }}">
+              <label style="display:flex; flex-direction:column; gap:6px;"><span style="font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#5C6656;">Адрес</span><input value="{{ co.address }}" onChange="{{ setCoAddress }}" placeholder="Город, улица, дом, квартира" style="width:100%; box-sizing:border-box; background:transparent; border:0; border-bottom:1px solid #1D231B; padding:10px 0; font-size:16px; color:#1D231B; outline:none;"><sc-if value="{{ errAddress }}"><span style="font-size:13px; color:#8E3236;">Укажите адрес доставки</span></sc-if></label>
+            </sc-if>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <span style="font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#5C6656;">Оплата</span>
+              <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                <sc-for list="{{ pays }}" as="p" hint-placeholder-count="2">
+                  <button onClick="{{ p.pick }}" style="flex:1 1 140px; background:{{ p.bg }}; color:{{ p.fg }}; border:1px solid #1D231B; padding:11px 14px; font:15px 'Golos Text', sans-serif; cursor:pointer;">{{ p.label }}</button>
+                </sc-for>
+              </div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:10px; padding-top:18px; border-top:1px solid #CFC7B6; font-size:15px;">
+              <div style="display:flex; justify-content:space-between;"><span style="color:#5C6656;">Чай</span><span>{{ subtotalLabel }}</span></div>
+              <div style="display:flex; justify-content:space-between;"><span style="color:#5C6656;">Доставка</span><span>{{ deliveryLabel }}</span></div>
+              <div style="display:flex; justify-content:space-between; align-items:baseline; padding-top:8px;"><span style="font-size:17px;">Итого</span><span style="font-family:'Prata', serif; font-size:36px;">{{ totalLabel }}</span></div>
+            </div>
+            <button onClick="{{ submitOrder }}" style="background:#8E3236; color:#F1EDE4; border:0; padding:18px 26px; font:500 16px 'Golos Text', sans-serif; cursor:pointer;" style-hover="background:#76292D;">{{ submitLabel }}</button>
+          </div>
+        </div>
+      </sc-if>
+    </section>
+  </sc-if>
+
+  <sc-if value="{{ isDone }}" hint-placeholder-val="{{ false }}">
+    <section data-screen-label="Заказ принят" style="max-width:1320px; margin:0 auto; padding:clamp(64px,9vw,140px) clamp(20px,4vw,56px); display:flex; flex-direction:column; align-items:flex-start; gap:28px;">
+      <span style="font-family:'IBM Plex Mono', monospace; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:#5C7650;">Заказ № {{ orderNo }}</span>
+      <h1 style="margin:0; font-family:'Prata', serif; font-weight:400; font-size:clamp(48px,7vw,104px); line-height:.95;">Спасибо,<br>заказ принят</h1>
+      <p style="margin:0; max-width:520px; font-size:17px; line-height:1.6; color:#3B4237;">Позвоним по номеру {{ orderPhone }}, чтобы подтвердить состав и время. Если что-то нужно поменять — напишите нам в Telegram.</p>
+      <button onClick="{{ goCatalog }}" style="background:transparent; color:#1D231B; border:1px solid #1D231B; padding:15px 25px; font:500 16px 'Golos Text', sans-serif; cursor:pointer;" style-hover="background:#1D231B; color:#F1EDE4;">Вернуться в каталог</button>
+    </section>
+  </sc-if>
+
+  <footer style="background:#1D231B; color:#F1EDE4;">
+    <div style="max-width:1320px; margin:0 auto; padding:clamp(56px,7vw,96px) clamp(20px,4vw,56px) 32px; display:flex; flex-direction:column; gap:56px;">
+      <div style="display:flex; flex-wrap:wrap; justify-content:space-between; gap:40px;">
+        <dc-import name="NsbLogo" variant="{{ logoVariant }}" size="14" tone="dark" tagline="{{ true }}" hint-size="220px,60px"></dc-import>
+        <div style="display:flex; flex-wrap:wrap; gap:40px 72px; font-size:15px; line-height:1.7;">
+          <div style="display:flex; flex-direction:column;">
+            <span style="font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#93AC85; margin-bottom:10px;">Магазин</span>
+            <span>Владимир</span>
+            <span style="color:#C9CFC0;">Доставка по России</span>
+          </div>
+          <div style="display:flex; flex-direction:column;">
+            <span style="font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#93AC85; margin-bottom:10px;">Связь</span>
+            <span>[телефон]</span>
+            <a href="#" style="color:#F1EDE4;">Telegram</a>
+            <a href="#" style="color:#F1EDE4;">ВКонтакте</a>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:flex-start;">
+            <span style="font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#93AC85; margin-bottom:10px;">Разделы</span>
+            <sc-for list="{{ nav }}" as="n" hint-placeholder-count="4">
+              <button onClick="{{ n.go }}" style="background:none; border:0; padding:0; font:15px/1.7 'Golos Text', sans-serif; color:#F1EDE4; cursor:pointer;" style-hover="color:#93AC85;">{{ n.label }}</button>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:12px; padding-top:20px; border-top:1px solid #3A4436; font-family:'IBM Plex Mono', monospace; font-size:11px; color:#A3AA9B;">
+        <span>© 2026 НСБ Чай</span>
+        <span>Владимир</span>
+      </div>
+    </div>
+  </footer>
+
+  <sc-if value="{{ hasToast }}">
+    <div style="position:fixed; left:24px; bottom:24px; z-index:50; display:flex; align-items:center; gap:20px; background:#1D231B; color:#F1EDE4; padding:14px 18px; font-size:15px;">
+      <span>{{ toast }}</span>
+      <button onClick="{{ goCart }}" style="background:none; border:0; padding:0; color:#E39A97; font:inherit; cursor:pointer;">В корзину →</button>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;tiles&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;С фото&quot;,&quot;Только иероглиф&quot;],&quot;default&quot;:&quot;С фото&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Каталог&quot;},&quot;logo&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Печать (1b)&quot;,&quot;Шрифтовой (1a)&quot;],&quot;default&quot;:&quot;Печать (1b)&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Бренд&quot;}}">
+const TEAS = [
+  { id: 'dhp', name: 'Да Хун Пао', hanzi: '大红袍', pinyin: 'dà hóng páo', type: 'oolong', region: 'Уишань, Фуцзянь', year: '2025', price: 1400, taste: 'жареный орех, сухофрукты, минеральность', brew: '95 °C · 6 г на 100 мл · 7+ проливов', desc: 'Утёсный улун сильной обжарки с гор Уишань. Плотный, тёплый, с долгим минеральным послевкусием.' },
+  { id: 'tgy', name: 'Те Гуань Инь', hanzi: '铁观音', pinyin: 'tiě guān yīn', type: 'oolong', region: 'Аньси, Фуцзянь', year: 'весна 2026', price: 900, taste: 'сирень, сливки, свежая зелень', brew: '90 °C · 6 г на 100 мл · 6 проливов', desc: 'Светлый улун слабой ферментации. Цветочный аромат раскрывается с первого пролива.' },
+  { id: 'dc', name: 'Фэн Хуан Дань Цун', hanzi: '凤凰单丛', pinyin: 'fèng huáng dān cóng', type: 'oolong', region: 'Чаочжоу, Гуандун', year: '2025', price: 1200, taste: 'медовая орхидея, персик', brew: '95 °C · 5 г на 100 мл · 8 проливов', desc: 'Улун с горы Фэнхуан, сорт «Ми Лань Сян». Яркий медово-цветочный аромат.' },
+  { id: 'shu', name: 'Шу пуэр «Гунтин»', hanzi: '宫廷熟普', pinyin: 'gōng tíng shú pǔ', type: 'puer', region: 'Мэнхай, Юньнань', year: '2019', price: 650, taste: 'тёмный хлеб, орех, влажная земля', brew: '98 °C · 6 г на 100 мл · 10 проливов', desc: 'Шу пуэр из мелких почек. Мягкий, сладкий, без резкости — хороший первый пуэр.' },
+  { id: 'shen', name: 'Шэн пуэр «Иу»', hanzi: '易武生普', pinyin: 'yì wǔ shēng pǔ', type: 'puer', region: 'Иу, Сишуанбаньна', year: '2021', price: 1100, taste: 'мёд, абрикос, лёгкая горчинка', brew: '90 °C · 5 г на 100 мл · 12 проливов', desc: 'Шэн пуэр из района Иу. Мягкий для шэна, с медовой сладостью и долгим послевкусием.' },
+  { id: 'dh', name: 'Дянь Хун «Цзинь Я»', hanzi: '滇红金芽', pinyin: 'diān hóng jīn yá', type: 'red', region: 'Фэнцин, Юньнань', year: '2026', price: 750, taste: 'мёд, сухофрукты, какао', brew: '90 °C · 4 г на 100 мл · 6 проливов', desc: 'Юньнаньский красный чай из золотых почек. Сладкий и густой, хорошо держит проливы.' },
+  { id: 'jjm', name: 'Цзинь Цзюнь Мэй', hanzi: '金骏眉', pinyin: 'jīn jùn méi', type: 'red', region: 'Уишань, Фуцзянь', year: '2026', price: 1600, taste: 'мёд, ржаной хлеб, цветы', brew: '85 °C · 4 г на 100 мл · 7 проливов', desc: 'Красный чай из почек с гор Уишань. Тонкий, сладкий, с хлебными нотами.' },
+  { id: 'lap', name: 'Чжэн Шань Сяо Чжун', hanzi: '正山小种', pinyin: 'zhèng shān xiǎo zhǒng', type: 'red', region: 'Тунму, Фуцзянь', year: '2025', price: 800, taste: 'дым сосны, смола, сушёная слива', brew: '95 °C · 4 г на 100 мл · 5 проливов', desc: 'Красный чай, копчённый на сосновых дровах. В Европе его знают как лапсанг сушонг.' },
+  { id: 'bmd', name: 'Бай Му Дань', hanzi: '白牡丹', pinyin: 'bái mǔ dān', type: 'white', region: 'Фудин, Фуцзянь', year: '2024', price: 700, taste: 'луговые травы, дыня, мёд', brew: '85 °C · 5 г на 100 мл · 6 проливов', desc: 'Белый чай из почки и двух листьев. Лёгкий, прозрачный, с травяной сладостью.' },
+  { id: 'sm', name: 'Шоу Мэй, блин', hanzi: '寿眉', pinyin: 'shòu méi', type: 'white', region: 'Фудин, Фуцзянь', year: '2018', price: 550, taste: 'чернослив, сухофрукты, мёд', brew: '95 °C · 5 г на 100 мл · 8 проливов', desc: 'Прессованный белый чай восьмилетней выдержки. С возрастом стал густым и сладким.' },
+  { id: 'lj', name: 'Си Ху Лун Цзин', hanzi: '西湖龙井', pinyin: 'xī hú lóng jǐng', type: 'green', region: 'Ханчжоу, Чжэцзян', year: 'весна 2026', price: 1300, taste: 'жареный каштан, бобы, свежесть', brew: '80 °C · 3 г на 100 мл · 4 пролива', desc: 'Плоский зелёный чай с озера Сиху, сбор до праздника Цинмин. Ореховый и мягкий.' },
+  { id: 'blc', name: 'Би Ло Чунь', hanzi: '碧螺春', pinyin: 'bì luó chūn', type: 'green', region: 'Дунтин, Цзянсу', year: 'весна 2026', price: 950, taste: 'цветы, фрукты, весенняя зелень', brew: '75 °C · 3 г на 100 мл · 4 пролива', desc: 'Скрученный зелёный чай с берегов озера Тайху. Ароматный, с фруктовыми нотами.' },
+];
+const TYPES = [['all', 'Все'], ['puer', 'Пуэр'], ['oolong', 'Улун'], ['red', 'Красный'], ['white', 'Белый'], ['green', 'Зелёный']];
+const TYPE_LABEL = { puer: 'Пуэр', oolong: 'Улун', red: 'Красный чай', white: 'Белый чай', green: 'Зелёный чай' };
+const RELATED = { puer: 'Ещё пуэры', oolong: 'Ещё улуны', red: 'Ещё красные чаи', white: 'Ещё белые чаи', green: 'Ещё зелёные чаи' };
+const TILE = { puer: ['#1D231B', '#F1EDE4'], oolong: ['#34402F', '#F1EDE4'], red: ['#8E3236', '#F1EDE4'], white: ['#E2DACA', '#1D231B'], green: ['#5C7650', '#F1EDE4'] };
+const WEIGHTS = [25, 50, 100, 200];
+const EVENTS = [
+  { id: 'e1', kind: 'ceremony', day: '10', mon: 'октября', wd: 'Сб', time: '18:00', title: 'Шэн и шу: два возраста пуэра', place: 'Владимир', dur: '2 часа', price: 1200, left: 3 },
+  { id: 'e2', kind: 'sup', day: '11', mon: 'октября', wd: 'Вс', time: '10:00', title: 'Сплав по Клязьме с чаем на берегу', note: 'Закрытие сезона', place: 'Клязьма', dur: 'около 4 часов', price: 3500, left: 4 },
+  { id: 'e3', kind: 'ceremony', day: '17', mon: 'октября', wd: 'Сб', time: '18:00', title: 'Утёсные улуны Уишаня', place: 'Владимир', dur: '2 часа', price: 1200, left: 6 },
+  { id: 'e4', kind: 'ceremony', day: '24', mon: 'октября', wd: 'Сб', time: '17:00', title: 'Первая церемония: для тех, кто только знакомится с китайским чаем', place: 'Владимир', dur: '2 часа', price: 900, left: 8 },
+  { id: 'e5', kind: 'ceremony', day: '31', mon: 'октября', wd: 'Сб', time: '18:00', title: 'Красные чаи Юньнани', place: 'Владимир', dur: '2 часа', price: 1200, left: 0 },
+];
+const KIND = { ceremony: 'Церемония', sup: 'Сплав на сапах' };
+const fmt = n => n.toLocaleString('ru-RU') + ' ₽';
+const SALE = ['dhp', 'dh', 'bmd'];
+let THU = true;
+const disc = t => SALE.includes(t.id);
+const priceFor = (t, w, base) => Math.round(t.price * w / 50 * (!base && disc(t) ? 0.8 : 1) / 10) * 10;
+const MONTHS = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+const plural = n => (n % 10 === 1 && n % 100 !== 11) ? 'место' : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20)) ? 'места' : 'мест';
+const INK = '#1D231B', PAPER = '#F1EDE4';
+
+class Component extends DCLogic {
+  state = {
+    page: 'home', teaId: 'dhp', filter: 'all', sort: 'default', cart: [], weight: 50, qty: 1, toast: '',
+    evFilter: 'all', openEvent: null, bName: '', bPhone: '', bCount: 1, booked: {}, bookError: false,
+    out: { date: '', guests: '', place: '', phone: '' }, outSent: false, outError: false,
+    opt: { org: '', contact: '' }, optSent: false, optError: false,
+    co: { name: '', phone: '', address: '' }, delivery: 'pickup', pay: 'card', errors: {}, orderNo: null, orderPhone: '',
+  };
+  optRef = React.createRef();
+  aboutRef = React.createRef();
+  thuRef = React.createRef();
+
+  componentDidMount() {
+    try {
+      const s = JSON.parse(localStorage.getItem('nsb-final') || 'null');
+      if (s) this.setState({ page: s.page === 'done' ? 'home' : (s.page || 'home'), teaId: s.teaId || 'dhp', cart: s.cart || [] });
+    } catch (e) {}
+  }
+  componentDidUpdate() {
+    try { localStorage.setItem('nsb-final', JSON.stringify({ page: this.state.page, teaId: this.state.teaId, cart: this.state.cart })); } catch (e) {}
+  }
+  go = (page, extra = {}) => { this.setState({ page, ...extra }); window.scrollTo(0, 0); };
+  goAnchor = ref => {
+    this.setState({ page: 'home' }, () => setTimeout(() => {
+      const el = ref.current;
+      if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 70, behavior: 'smooth' });
+    }, 60));
+  };
+  openTea = id => this.go('product', { teaId: id, weight: 50, qty: 1 });
+  add = (id, w, qty = 1) => {
+    this.setState(s => {
+      const cart = [...s.cart];
+      const i = cart.findIndex(l => l.id === id && l.w === w);
+      if (i >= 0) cart[i] = { ...cart[i], qty: cart[i].qty + qty }; else cart.push({ id, w, qty });
+      return { cart };
+    });
+    const t = TEAS.find(x => x.id === id);
+    clearTimeout(this._t);
+    this.setState({ toast: `${t.name}, ${w} г × ${qty}` });
+    this._t = setTimeout(() => this.setState({ toast: '' }), 2600);
+  };
+  setLine = (idx, d) => this.setState(s => {
+    const cart = [...s.cart];
+    const q = cart[idx].qty + d;
+    if (q <= 0) cart.splice(idx, 1); else cart[idx] = { ...cart[idx], qty: q };
+    return { cart };
+  });
+  field = (group, key) => e => { const v = e.target.value; this.setState(s => ({ [group]: { ...s[group], [key]: v } })); };
+
+  tile(t) {
+    const i = TEAS.indexOf(t);
+    return {
+      ...t, num: String(i + 1).padStart(2, '0'),
+      meta: `${TYPE_LABEL[t.type].split(' ')[0]} · ${t.region.split(',')[0]} · ${t.year}`,
+      priceLabel: fmt(t.price), tileBg: TILE[t.type][0], tileFg: TILE[t.type][1],
+      typeLabel: TYPE_LABEL[t.type], photoLabel: `фото: ${t.name}`,
+      slotId: `tea-${t.id}`, slotLabel: `фото: ${t.name}, сухой лист`,
+      isSale: SALE.includes(t.id), saleNow: disc(t), saleLater: false,
+      saleBadge: '−20% до четверга', saleWhen: '',
+      salePriceLabel: fmt(Math.round(t.price * 0.8 / 10) * 10), nowPriceLabel: fmt(priceFor(t, 50)),
+      priceColor: disc(t) ? '#8E3236' : '#1D231B',
+      badgeBg: t.type === 'red' ? '#F1EDE4' : '#8E3236', badgeFg: t.type === 'red' ? '#8E3236' : '#F1EDE4',
+      temp: t.brew.split(' · ')[0].replace(' °C', '°'), grams: t.brew.split(' · ')[1].split(' на')[0],
+      steeps: t.brew.split(' · ')[2].split(' ')[0], steepsLabel: t.brew.split(' · ')[2].split(' ').slice(1).join(' '),
+      open: () => this.openTea(t.id), add: () => this.add(t.id, 50),
+    };
+  }
+
+  submitOrder = () => {
+    const { co, delivery } = this.state;
+    const errors = {
+      name: !co.name.trim(),
+      phone: co.phone.replace(/\D/g, '').length < 10,
+      address: delivery !== 'pickup' && !co.address.trim(),
+    };
+    if (errors.name || errors.phone || errors.address) { this.setState({ errors }); return; }
+    this.go('done', { orderNo: 1040 + Math.floor(Math.random() * 60), orderPhone: co.phone, cart: [], errors: {}, co: { name: '', phone: '', address: '' } });
+  };
+
+  renderVals() {
+    const s = this.state;
+    const p = this.props;
+    const now = new Date();
+    const toThu = (4 - now.getDay() + 7) % 7 || 7;
+    const nextThu = new Date(now.getFullYear(), now.getMonth(), now.getDate() + toThu);
+    const nextThuLabel = `${nextThu.getDate()} ${MONTHS[nextThu.getMonth()]}`;
+    const logoVariant = { 'Шрифтовой (1a)': 'wordmark', 'Печать (1b)': 'seal', 'Лист (1c)': 'leaf', 'Пиала (1d)': 'bowl', 'Лист-печать (2a)': 'leafseal', 'Ручная печать (2b)': 'chop', 'Круглая печать (2c)': 'round', 'Вывеска (2d)': 'banner' }[p.logo] || 'seal';
+    const headerLogoSize = { leafseal: 14, banner: 8, chop: 13, seal: 12 }[logoVariant] || 11;
+    const tilePhoto = (p.tiles ?? 'С фото') === 'С фото';
+
+    const nav = [
+      { label: 'Чай', go: () => this.go('catalog'), active: s.page === 'catalog' || s.page === 'product' },
+      { label: 'Чай недели −20%', go: () => this.goAnchor(this.thuRef), active: false },
+      { label: 'Церемонии и сплавы', go: () => this.go('events'), active: s.page === 'events' },
+      { label: 'Оптовые заказы', go: () => this.goAnchor(this.optRef), active: false },
+      { label: 'О магазине', go: () => this.goAnchor(this.aboutRef), active: false },
+    ].map(n => ({ ...n, line: n.active ? INK : 'transparent' }));
+
+    const services = [
+      { kicker: 'Во Владимире', chipBg: '#1D231B', title: 'Чайные церемонии', text: 'Вечерние встречи: несколько чаёв одной темы, посуда, неспешный разговор.', cta: 'Расписание', slot: 'svc-ceremony', slotLabel: 'фото: церемония', go: () => this.go('events', { evFilter: 'ceremony' }) },
+      { kicker: 'На воде', chipBg: '#5C7650', title: 'Сплавы на сапах', text: 'Несколько часов по Клязьме и чайная церемония на берегу.', cta: 'Даты сплавов', slot: 'svc-sup', slotLabel: 'фото: сплав по Клязьме', go: () => this.go('events', { evFilter: 'sup' }) },
+      { kicker: 'На выезде', chipBg: '#8E3236', title: 'Церемония на заказ', text: 'Привезём чай, посуду и мастера на праздник, в офис или на природу.', cta: 'Оставить заявку', slot: 'svc-outing', slotLabel: 'фото: выездная церемония', go: () => this.go('events') },
+    ];
+
+    const featured = ['shu', 'lj', 'tgy', 'jjm'].map(id => this.tile(TEAS.find(t => t.id === id)));
+
+    let list = s.filter === 'all' ? TEAS : TEAS.filter(t => t.type === s.filter);
+    if (s.sort === 'asc') list = [...list].sort((a, b) => a.price - b.price);
+    if (s.sort === 'desc') list = [...list].sort((a, b) => b.price - a.price);
+    const typeFilters = TYPES.map(([key, label]) => ({
+      label, count: key === 'all' ? TEAS.length : TEAS.filter(t => t.type === key).length,
+      bg: s.filter === key ? INK : 'transparent', fg: s.filter === key ? PAPER : INK,
+      pick: () => this.setState({ filter: key }),
+    }));
+    const sorts = [['default', 'по порядку'], ['asc', 'дешевле'], ['desc', 'дороже']].map(([key, label]) => ({
+      label, line: s.sort === key ? INK : 'transparent', pick: () => this.setState({ sort: key }),
+    }));
+
+    const teaRaw = TEAS.find(t => t.id === s.teaId) || TEAS[0];
+    const tea = this.tile(teaRaw);
+    const same = TEAS.filter(t => t.type === teaRaw.type && t.id !== teaRaw.id);
+    const others = TEAS.filter(t => t.type !== teaRaw.type);
+    const related = [...same, ...others].slice(0, 4).map(t => this.tile(t));
+    const weights = WEIGHTS.map(w => ({
+      label: `${w} г`, bg: s.weight === w ? INK : 'transparent', fg: s.weight === w ? PAPER : INK,
+      pick: () => this.setState({ weight: w }),
+    }));
+
+    const evRow = e => {
+      const isOpen = s.openEvent === e.id, isBooked = !!s.booked[e.id], soldOut = e.left === 0 && !isBooked;
+      return {
+        ...e, note: e.note || '', kindLabel: KIND[e.kind], priceLabel: fmt(e.price),
+        leftLabel: isBooked ? 'место за вами' : e.left === 0 ? 'Мест нет' : `Осталось ${e.left} ${plural(e.left)}`,
+        leftColor: e.left > 0 && e.left <= 3 ? '#8E3236' : '#5C6656',
+        isOpen, isBooked, soldOut, canBook: !isBooked && e.left > 0,
+        btnLabel: isOpen ? 'Свернуть' : 'Записаться', btnBg: isOpen ? 'transparent' : INK, btnFg: isOpen ? INK : PAPER,
+        bookTotal: fmt(e.price * s.bCount),
+        toggle: () => this.setState({ openEvent: isOpen ? null : e.id, bCount: 1, bookError: false }),
+        bookFromHome: () => this.go('events', { evFilter: 'all', openEvent: e.id, bCount: 1 }),
+        bInc: () => this.setState(st => ({ bCount: Math.min(e.left, st.bCount + 1) })),
+        submit: () => {
+          if (!s.bName.trim() || s.bPhone.replace(/\D/g, '').length < 10) { this.setState({ bookError: true }); return; }
+          this.setState(st => ({ booked: { ...st.booked, [e.id]: true }, openEvent: null, bookError: false }));
+        },
+      };
+    };
+    const events = EVENTS.filter(e => s.evFilter === 'all' || e.kind === s.evFilter).map(evRow);
+    const evFilters = [['all', 'Все'], ['ceremony', 'Церемонии'], ['sup', 'Сплавы']].map(([key, label]) => ({
+      label, bg: s.evFilter === key ? INK : 'transparent', fg: s.evFilter === key ? PAPER : INK,
+      pick: () => this.setState({ evFilter: key }),
+    }));
+
+    const lines = s.cart.map((l, idx) => {
+      const t = TEAS.find(x => x.id === l.id);
+      const unit = priceFor(t, l.w);
+      return {
+        name: t.name, hanzi: t.hanzi.slice(0, 2), tileBg: TILE[t.type][0], tileFg: TILE[t.type][1],
+        wLabel: `${l.w} г`, unit: fmt(unit), qty: l.qty, total: fmt(unit * l.qty),
+        inc: () => this.setLine(idx, 1), dec: () => this.setLine(idx, -1),
+        remove: () => this.setState(st => ({ cart: st.cart.filter((_, j) => j !== idx) })),
+        open: () => this.openTea(t.id),
+      };
+    });
+    const subtotal = s.cart.reduce((sum, l) => sum + priceFor(TEAS.find(x => x.id === l.id), l.w) * l.qty, 0);
+    const dList = [
+      { key: 'pickup', label: 'Самовывоз во Владимире', note: 'по договорённости · бесплатно', cost: 0 },
+      { key: 'courier', label: 'Курьер по Владимиру', note: '300 ₽ · бесплатно от 3 000 ₽', cost: subtotal >= 3000 ? 0 : 300 },
+      { key: 'cdek', label: 'СДЭК по России', note: 'от 350 ₽, точная сумма — при подтверждении', cost: 350 },
+    ];
+    const dSel = dList.find(d => d.key === s.delivery);
+    const deliveries = dList.map(d => ({
+      ...d, bg: d.key === s.delivery ? PAPER : 'transparent', border: d.key === s.delivery ? INK : '#CFC7B6',
+      dot: d.key === s.delivery ? '#8E3236' : 'transparent', pick: () => this.setState({ delivery: d.key }),
+    }));
+    const pays = [['card', 'Картой онлайн'], ['cash', 'При получении']].map(([key, label]) => ({
+      label, bg: s.pay === key ? INK : 'transparent', fg: s.pay === key ? PAPER : INK, pick: () => this.setState({ pay: key }),
+    }));
+    const total = subtotal + dSel.cost;
+
+    return {
+      logoVariant, headerLogoSize, thuRef: this.thuRef, nextThuLabel,
+      thuCards: SALE.map((id, i) => ({ ...this.tile(TEAS.find(t => t.id === id)), dir: i % 2 ? 'row-reverse' : 'row' })),
+      thuNote: `Каждый четверг Никита выбирает три чая. Скидка 20% держится всю неделю — до четверга, ${nextThuLabel}. Потом будут новые три.`,
+      thuShort: `−20% на этот чай в четверг, ${nextThuLabel}`,
+      productOld: fmt(priceFor(teaRaw, s.weight, true) * s.qty),
+      productSlots: [
+        { id: `tea-${teaRaw.id}`, label: 'фото: сухой лист' },
+        { id: `tea-${teaRaw.id}-infusion`, label: 'фото: настой' },
+        { id: `tea-${teaRaw.id}-spent`, label: 'фото: лист после заваривания' },
+      ],
+      tileHanzi: !tilePhoto, tilePhoto, nav, services, featured,
+      isHome: s.page === 'home', isCatalog: s.page === 'catalog', isProduct: s.page === 'product',
+      isEvents: s.page === 'events', isCart: s.page === 'cart', isDone: s.page === 'done',
+      goHome: () => this.go('home'), goCatalog: () => this.go('catalog'), goEvents: () => this.go('events'), goCart: () => this.go('cart'),
+      cartCount: s.cart.reduce((n, l) => n + l.qty, 0),
+      aboutRef: this.aboutRef, optRef: this.optRef,
+      homeEvents: EVENTS.slice(0, 3).map(evRow),
+      opt: s.opt, optOpen: !s.optSent, optSent: s.optSent, optError: s.optError,
+      setOptOrg: this.field('opt', 'org'), setOptContact: this.field('opt', 'contact'),
+      submitOpt: () => (s.opt.org.trim() && s.opt.contact.trim()) ? this.setState({ optSent: true, optError: false }) : this.setState({ optError: true }),
+      typeFilters, sorts, catalog: list.map(t => this.tile(t)),
+      tea, related, relatedTitle: RELATED[teaRaw.type], weights, qty: s.qty,
+      qtyInc: () => this.setState(st => ({ qty: st.qty + 1 })), qtyDec: () => this.setState(st => ({ qty: Math.max(1, st.qty - 1) })),
+      productTotal: fmt(priceFor(teaRaw, s.weight) * s.qty),
+      addProduct: () => this.add(teaRaw.id, s.weight, s.qty),
+      events, evFilters, bName: s.bName, bPhone: s.bPhone, bCount: s.bCount, bookError: s.bookError,
+      setBName: e => this.setState({ bName: e.target.value }), setBPhone: e => this.setState({ bPhone: e.target.value }),
+      bDec: () => this.setState(st => ({ bCount: Math.max(1, st.bCount - 1) })),
+      out: s.out, outOpen: !s.outSent, outSent: s.outSent, outError: s.outError,
+      setOutDate: this.field('out', 'date'), setOutGuests: this.field('out', 'guests'), setOutPlace: this.field('out', 'place'), setOutPhone: this.field('out', 'phone'),
+      submitOut: () => s.out.phone.replace(/\D/g, '').length >= 10 ? this.setState({ outSent: true, outError: false }) : this.setState({ outError: true }),
+      cartEmpty: s.cart.length === 0, hasCart: s.cart.length > 0, lines, deliveries, pays,
+      co: s.co, setCoName: this.field('co', 'name'), setCoPhone: this.field('co', 'phone'), setCoAddress: this.field('co', 'address'),
+      needsAddress: s.delivery !== 'pickup',
+      errName: !!s.errors.name, errPhone: !!s.errors.phone, errAddress: !!s.errors.address,
+      subtotalLabel: fmt(subtotal), deliveryLabel: dSel.cost === 0 ? 'бесплатно' : fmt(dSel.cost), totalLabel: fmt(total),
+      submitLabel: s.pay === 'card' ? `Оплатить ${fmt(total)}` : 'Оформить заказ',
+      submitOrder: this.submitOrder, orderNo: s.orderNo, orderPhone: s.orderPhone,
+      hasToast: !!s.toast, toast: s.toast ? `Добавлено: ${s.toast}` : '',
+    };
+  }
+}
+</script>
+</body>
+</html>
