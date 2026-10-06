@@ -167,7 +167,7 @@ async def _checklist(db: Db, user: AdminUser) -> list[ChecklistItem]:
             title="Подключите Telegram",
             hint="Сюда будут приходить заказы и коды входа.",
             done=user.telegram_chat_id is not None,
-            href="/admin/settings/telegram",
+            href="/admin/profile",
         ),
         ChecklistItem(
             key="requisites",
@@ -181,7 +181,7 @@ async def _checklist(db: Db, user: AdminUser) -> list[ChecklistItem]:
             title="Опубликуйте оферту, политику и согласие",
             hint="Без них покупатель не сможет подтвердить согласие при оформлении.",
             done=len(legal) == len(LEGAL_SLUGS),
-            href="/admin/pages",
+            href="/admin/content/pages",
         ),
         ChecklistItem(
             key="products",
