@@ -15,7 +15,13 @@ from app.schemas.content import (
     PageOut,
     SiteOut,
 )
-from app.schemas.storefront import CatalogPage, ProductPage, PublicCategory, SuggestItem
+from app.schemas.storefront import (
+    CatalogPage,
+    CustomPriceOut,
+    ProductPage,
+    PublicCategory,
+    SuggestItem,
+)
 from app.services import content_public, storefront
 
 router = APIRouter(tags=["витрина"])
@@ -71,6 +77,17 @@ async def products(
 @router.get("/catalog/products/{slug}", response_model=ProductPage, summary="Карточка товара")
 async def product(slug: str, db: Db, container: Deps) -> ProductPage:
     return await storefront.product_page(db, container, slug)
+
+
+@router.get(
+    "/catalog/products/{slug}/price",
+    response_model=CustomPriceOut,
+    summary="Цена своего веса",
+)
+async def custom_price(
+    slug: str, db: Db, container: Deps, grams: Annotated[int, Query(ge=1, le=100_000)]
+) -> CustomPriceOut:
+    return await storefront.custom_weight_price(db, container, slug, grams)
 
 
 @router.get("/catalog/suggest", response_model=list[SuggestItem], summary="Подсказки поиска")

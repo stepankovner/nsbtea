@@ -20,10 +20,17 @@ from app.domain.catalog_labels import (
     TeaEffect,
     TeaShape,
 )
-from app.domain.errors import MovedError, NotFoundError
+from app.domain.errors import DomainError, MovedError, NotFoundError
 from app.domain.inventory import StockLevel, stock_level
 from app.domain.orders import REVENUE_STATUSES
-from app.domain.pricing import ProductType, listing_price, pack_price_kop, weight_options
+from app.domain.pricing import (
+    ProductType,
+    VariantKind,
+    listing_price,
+    pack_price_kop,
+    validate_tea_variant,
+    weight_options,
+)
 from app.domain.texts import normalize_search, plural
 from app.models import (
     Category,
@@ -44,6 +51,7 @@ from app.schemas.storefront import (
     BrewingSummary,
     CatalogPage,
     Crumb,
+    CustomPriceOut,
     CustomWeight,
     FacetOption,
     Facets,
@@ -564,6 +572,43 @@ def _brewing(product: Product) -> BrewingOut | None:
             label = str(m.get("method"))
         out.append(BrewingMethodOut(method_label=label, **m))
     return BrewingOut(methods=out, master_note=note)
+
+
+async def custom_weight_price(
+    db: AsyncSession, container: Container, slug: str, grams: int
+) -> CustomPriceOut:
+    """Цена «своего веса» с учётом скидок — та же логика, что в корзине."""
+    product = await _visible_product(db, slug, container.clock.now())
+    pricing = tea_pricing(product)
+    if pricing is None:
+        return CustomPriceOut(
+            grams=grams,
+            price_kop=None,
+            old_price_kop=None,
+            available=False,
+            message="Этот товар продаётся поштучно",
+        )
+    try:
+        validate_tea_variant(pricing, VariantKind.CUSTOM, grams)
+    except DomainError as exc:
+        return CustomPriceOut(
+            grams=grams, price_kop=None, old_price_kop=None, available=False, message=exc.message
+        )
+    ctx = await card_context(db, container)
+    priced = price_with_discount(
+        ctx.promo,
+        product,
+        amount_kop=pack_price_kop(pricing, VariantKind.CUSTOM, grams),
+        grams_total=grams,
+    )
+    over_stock = grams > product.stock
+    return CustomPriceOut(
+        grams=grams,
+        price_kop=priced.price_kop,
+        old_price_kop=priced.old_price_kop,
+        available=not over_stock,
+        message=f"Доступно не больше {product.stock} г" if over_stock else None,
+    )
 
 
 async def product_page(db: AsyncSession, container: Container, slug: str) -> ProductPage:

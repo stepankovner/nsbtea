@@ -111,6 +111,14 @@ class CustomWeight(ApiModel):
     max: int
 
 
+class CustomPriceOut(ApiModel):
+    grams: int
+    price_kop: int | None
+    old_price_kop: int | None
+    available: bool
+    message: str | None
+
+
 class AttributeItem(ApiModel):
     key: str
     label: str

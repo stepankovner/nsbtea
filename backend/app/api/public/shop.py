@@ -422,6 +422,7 @@ async def delivery_cities(q: str, request: Request, container: Deps) -> list[Cit
     methods=["GET", "POST"],
     summary="Прокси для виджета ПВЗ СДЭК",
     response_model=None,
+    include_in_schema=False,  # непрозрачный прокси (аналог service.php), в типах фронтенда не нужен
 )
 async def cdek_widget_service(
     request: Request, container: Deps, body: Annotated[dict[str, Any] | None, Body()] = None
