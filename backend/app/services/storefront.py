@@ -697,6 +697,7 @@ async def product_page(db: AsyncSession, container: Container, slug: str) -> Pro
         weight_options=weight_opts,
         custom_weight=custom,
         max_qty=product.stock if product.type == ProductType.UNIT.value else 0,
+        available_grams=product.stock if product.type == ProductType.TEA.value else None,
         low_stock=level is StockLevel.LOW,
         upcoming_thursday=upcoming.note if upcoming and not card.old_price_kop else None,
         promotion_title=priced_promotion.promotion.title

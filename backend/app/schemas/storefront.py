@@ -172,6 +172,7 @@ class ProductPage(ProductCard):
     weight_options: list[WeightOptionPublic]
     custom_weight: CustomWeight | None
     max_qty: int
+    available_grams: int | None  # для чая: сколько граммов можно купить сейчас
     low_stock: bool
     upcoming_thursday: str | None
     promotion_title: str | None
