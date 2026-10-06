@@ -49,6 +49,7 @@ async def test_product_lookup_for_promotions(client: AsyncClient, db: AsyncSessi
     found = (await client.get("/api/admin/lookup/products", params={"q": "хун"})).json()
     assert [p["name"] for p in found] == ["Да Хун Пао"]
     assert found[0]["id"] == str(tea.id)
+    assert found[0]["slug"] == tea.slug  # для карточки товара в тексте страницы
     assert found[0]["type"] == "tea"
     assert found[0]["stock_label"] == "40 г"
 
