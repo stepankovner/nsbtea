@@ -33,6 +33,15 @@ async def test_dashboard(client: AsyncClient, db: AsyncSession, container: Conta
     assert checklist["telegram"] is False
     assert checklist["legal_pages"] is False
     assert checklist["products"] is True
+    # ссылки ведут на существующие экраны админки
+    hrefs = {item["key"]: item["href"] for item in body["launch_checklist"]}
+    assert hrefs == {
+        "telegram": "/admin/profile",
+        "requisites": "/admin/settings/store",
+        "legal_pages": "/admin/content/pages",
+        "products": "/admin/products/new",
+        "contacts": "/admin/settings/store",
+    }
 
 
 async def test_staff_dashboard_hides_revenue(client: AsyncClient, db: AsyncSession) -> None:
