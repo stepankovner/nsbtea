@@ -47,6 +47,7 @@ function CartLine({ line, onChange }: { line: Line; onChange: (next: Promise<Car
         </Link>
         <span className="flex flex-wrap gap-x-2 font-mono text-xs text-muted">
           {variant ? <span>{variant}</span> : null}
+          {variant ? <span aria-hidden="true">·</span> : null}
           <span>{formatRub(line.unit_price_kop)} за {line.type === "tea" ? "пачку" : "шт."}</span>
         </span>
         {line.promotion_label ? <span className="text-[13px] text-red">{line.promotion_label}</span> : null}
@@ -285,9 +286,7 @@ export function CartView({ loggedIn }: { loggedIn: boolean }) {
           <PromoCode cart={cart} run={run} />
           <Points cart={cart} loggedIn={loggedIn} run={run} />
           {cart.welcome?.tentative ? (
-            <p className="text-[15px] text-green">
-              −{cart.welcome.percent}% на первый заказ — применится, если по этой почте ещё не было оплаченных заказов.
-            </p>
+            <p className="text-[15px] text-green">−{cart.welcome.percent}% на первый заказ</p>
           ) : null}
           {cart.notes.length ? (
             <ul className="flex flex-col gap-1 text-[13px] text-muted">
