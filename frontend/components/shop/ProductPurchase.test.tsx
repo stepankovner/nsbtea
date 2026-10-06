@@ -12,8 +12,9 @@ vi.mock("@/lib/shop-api", () => ({
   shopApi: { addToCart: vi.fn(), getCart: vi.fn(), customPrice: vi.fn() },
 }));
 
-const NBSP = " ";
-const rub = (n: string) => `${n.replace(/ /g, NBSP)}${NBSP}₽`;
+const NBSP = "\u00a0";
+// в тексте testing-library сводит неразрывные пробелы к обычным (в доступных именах — нет)
+const rub = (n: string) => `${n} ₽`;
 
 function renderPurchase(product = productPage()) {
   return render(
@@ -34,7 +35,7 @@ describe("ProductPurchase — выбор веса, количества и «В 
     const group = screen.getByRole("radiogroup", { name: "Вес" });
     expect(group).toBeInTheDocument();
     expect(screen.getByRole("radio", { name: `50${NBSP}г` })).toBeChecked();
-    const big = screen.getByRole("radio", { name: /200 г.*нет в наличии/ });
+    const big = screen.getByRole("radio", { name: /200\s+г.*нет в наличии/ });
     expect(big).toBeDisabled();
   });
 

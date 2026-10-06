@@ -19,8 +19,9 @@ vi.mock("@/lib/shop-api", () => ({
   },
 }));
 
-const NBSP = " ";
-const rub = (n: string) => `${n.replace(/ /g, NBSP)}${NBSP}₽`;
+const NBSP = "\u00a0";
+const rub = (n: string) => `${n.replace(/ /g, NBSP)}${NBSP}₽`; // в доступном имени кнопки
+const rubText = (n: string) => `${n} ₽`; // в тексте (testing-library сводит пробелы)
 const assign = vi.fn();
 
 function renderForm(options: { siteData?: ReturnType<typeof site>; customer?: { name: string; phone: string; email: string } | null } = {}) {
@@ -158,7 +159,7 @@ describe("CheckoutForm — оформление на одной странице
       pvz_code: "MSK1",
       pvz_address: "Москва, Тверская, 1",
     });
-    expect(await screen.findByTestId("checkout-delivery")).toHaveTextContent(rub("350"));
+    expect(await screen.findByTestId("checkout-delivery")).toHaveTextContent(rubText("350"));
     expect(screen.getByText("2–4 дн.")).toBeInTheDocument();
     await acceptConsents();
     await userEvent.click(screen.getByRole("button", { name: `Оплатить ${rub("3 150")}` }));

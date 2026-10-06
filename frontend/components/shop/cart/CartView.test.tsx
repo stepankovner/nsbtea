@@ -19,7 +19,8 @@ vi.mock("@/lib/shop-api", () => ({
   },
 }));
 
-const NBSP = " ";
+// testing-library сводит неразрывные пробелы в тексте к обычным (в доступных именах — нет)
+const NBSP = " ";
 const rub = (n: string) => `${n.replace(/ /g, NBSP)}${NBSP}₽`;
 
 function renderCart(initial = cart(), loggedIn = false) {

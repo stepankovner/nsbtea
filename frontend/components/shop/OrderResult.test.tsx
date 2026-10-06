@@ -9,7 +9,8 @@ import { OrderResult } from "./OrderResult";
 
 vi.mock("@/lib/shop-api", () => ({ shopApi: { orderStatus: vi.fn(), retryPayment: vi.fn() } }));
 
-const NBSP = " ";
+// testing-library сводит неразрывные пробелы в тексте к обычным (в доступных именах — нет)
+const NBSP = " ";
 
 function status(overrides: Partial<Schemas["OrderStatusOut"]> = {}): Schemas["OrderStatusOut"] {
   return {

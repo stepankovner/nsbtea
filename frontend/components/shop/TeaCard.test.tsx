@@ -12,7 +12,8 @@ import { TeaCard } from "./TeaCard";
 
 vi.mock("@/lib/shop-api", () => ({ shopApi: { addToCart: vi.fn(), getCart: vi.fn() } }));
 
-const NBSP = " ";
+// testing-library сводит неразрывные пробелы в тексте к обычным (в доступных именах — нет)
+const NBSP = " ";
 
 function renderCard(product = productCard()) {
   return render(
