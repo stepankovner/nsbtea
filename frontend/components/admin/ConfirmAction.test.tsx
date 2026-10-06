@@ -15,6 +15,7 @@ describe("ConfirmAction — опасные действия с объяснен�
         title="Отменить заказ NSB-10001?"
         description="Товары вернутся на склад, покупателю уйдёт письмо об отмене."
         confirm="Да, отменить"
+        cancel="Не отменять"
         onConfirm={action}
       />,
     );
