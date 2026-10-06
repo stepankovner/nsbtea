@@ -353,3 +353,63 @@ class TestCategoriesTree:
         assert [c["name"] for c in tree] == ["Пуэр"]
         assert tree[0]["children"][0]["name"] == "Шу пуэр"
         assert tree[0]["products_count"] == 1
+
+
+class TestCustomWeightPrice:
+    """«Свой вес»: цену и ограничения считает сервер — та же логика, что и в корзине."""
+
+    async def test_price_for_custom_weight(self, client: AsyncClient, db: AsyncSession) -> None:
+        tea = await make_tea(
+            db, "Да Хун Пао", price_per_gram_kop=2_850, stock=300, custom_weight_enabled=True
+        )
+        response = await client.get(f"/api/catalog/products/{tea.slug}/price", params={"grams": 75})
+        assert response.status_code == 200, response.text
+        # 75 г × 28,50 ₽ = 2137,50 ₽ → округление до рубля вверх (half-up) = 2138 ₽
+        assert response.json() == {
+            "grams": 75,
+            "price_kop": 213_800,
+            "old_price_kop": None,
+            "available": True,
+            "message": None,
+        }
+
+    async def test_discount_applies_to_custom_weight(
+        self, client: AsyncClient, db: AsyncSession
+    ) -> None:
+        tea = await make_tea(
+            db, "Да Хун Пао", price_per_gram_kop=2_800, stock=300, custom_weight_enabled=True
+        )
+        await plan_thursday(db, [tea])  # неделя после четверга 1 октября: −20%
+        body = (
+            await client.get(f"/api/catalog/products/{tea.slug}/price", params={"grams": 60})
+        ).json()
+        assert body["old_price_kop"] == 168_000
+        assert body["price_kop"] == 134_400
+
+    async def test_rules_are_explained(self, client: AsyncClient, db: AsyncSession) -> None:
+        tea = await make_tea(db, stock=120, custom_weight_enabled=True)
+        url = f"/api/catalog/products/{tea.slug}/price"
+
+        too_small = (await client.get(url, params={"grams": 5})).json()
+        assert too_small["available"] is False
+        assert too_small["message"] == "Вес должен быть не меньше 10 г"
+
+        not_step = (await client.get(url, params={"grams": 22})).json()
+        assert not_step["available"] is False
+        assert not_step["message"] == "Вес должен быть кратен 5 г"
+
+        too_much = (await client.get(url, params={"grams": 150})).json()
+        assert too_much["available"] is False
+        assert too_much["message"] == "Доступно не больше 120 г"
+
+    async def test_custom_weight_disabled(self, client: AsyncClient, db: AsyncSession) -> None:
+        tea = await make_tea(db, custom_weight_enabled=False)
+        body = (
+            await client.get(f"/api/catalog/products/{tea.slug}/price", params={"grams": 50})
+        ).json()
+        assert body["available"] is False
+        assert body["message"] == "Свой вес для этого чая недоступен"
+
+    async def test_unknown_product(self, client: AsyncClient) -> None:
+        response = await client.get("/api/catalog/products/net-takogo/price", params={"grams": 50})
+        assert response.status_code == 404
