@@ -340,7 +340,16 @@ class TestProductPage:
         assert page["type"] == "unit"
         assert page["price_kop"] == 90_000
         assert page["max_qty"] == 3
+        assert page["available_grams"] is None
         assert page["weight_options"] == []
+
+    async def test_tea_page_tells_available_grams(
+        self, client: AsyncClient, db: AsyncSession
+    ) -> None:
+        """Чтобы степпер количества не дал выбрать больше остатка (3 × 50 г при остатке 120 г)."""
+        tea = await make_tea(db, stock=120, presets=[50])
+        page = (await client.get(f"/api/catalog/products/{tea.slug}")).json()
+        assert page["available_grams"] == 120
 
 
 class TestCategoriesTree:
