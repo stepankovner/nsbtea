@@ -5,11 +5,13 @@ reset-password      — сменить пароль сотруднику (есл
 seed                — начальные категории, блоки главной и служебные страницы
 set-telegram-webhook — зарегистрировать вебхук бота
 register-tochka-webhook — подписаться на вебхук оплаты в Точке
+export-openapi      — схема API в JSON (из неё генерируются типы фронтенда)
 """
 
 import argparse
 import asyncio
 import getpass
+import json
 import sys
 
 from sqlalchemy import select
@@ -96,6 +98,16 @@ async def _register_tochka_webhook() -> None:
     print(response.status_code, response.text)
 
 
+def _export_openapi() -> None:
+    from app.config import Settings
+    from app.main import create_app
+
+    # схема не зависит от окружения; заглушки — чтобы не требовались ключи и сеть
+    container = build_container(Settings(_env_file=None))
+    spec = create_app(container).openapi()
+    sys.stdout.write(json.dumps(spec, ensure_ascii=False, indent=1, sort_keys=True) + "\n")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(prog="python -m app.cli", description="Команды НСБ Чай")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -107,6 +119,7 @@ def main() -> None:
     sub.add_parser("seed", help="начальное наполнение")
     sub.add_parser("set-telegram-webhook", help="вебхук Telegram-бота")
     sub.add_parser("register-tochka-webhook", help="вебхук оплаты Точки")
+    sub.add_parser("export-openapi", help="схема API (JSON) в stdout")
     args = parser.parse_args()
 
     if args.command == "create-owner":
@@ -119,6 +132,8 @@ def main() -> None:
         asyncio.run(_set_telegram_webhook())
     elif args.command == "register-tochka-webhook":
         asyncio.run(_register_tochka_webhook())
+    elif args.command == "export-openapi":
+        _export_openapi()
 
 
 if __name__ == "__main__":

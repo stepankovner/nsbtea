@@ -68,6 +68,7 @@ class SiteOut(ApiModel):
     allow_pay_on_delivery: bool
     pages: list[PageLink]
     telegram_bot_username: str | None
+    yandex_maps_api_key: str | None
 
 
 class EventOut(ApiModel):

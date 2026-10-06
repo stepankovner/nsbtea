@@ -135,6 +135,7 @@ async def site_info(db: AsyncSession, container: Container) -> SiteOut:
         allow_pay_on_delivery=payment.allow_pay_on_delivery,
         pages=[PageLink(slug=p.slug, title=p.title, kind=p.kind) for p in pages],
         telegram_bot_username=container.settings.telegram_bot_username,
+        yandex_maps_api_key=container.settings.yandex_maps_api_key,
     )
 
 

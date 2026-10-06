@@ -16,9 +16,10 @@ from app.api.deps import (
     client_ip,
 )
 from app.container import Container
-from app.domain.errors import DomainError
+from app.domain.errors import DomainError, ExternalServiceError
 from app.domain.orders import DELIVERY_LABELS, DeliveryMethod, OrderStatus
 from app.domain.promotions import OrderDiscountSource
+from app.integrations.delivery import DeliveryGatewayError
 from app.models import Cart, Customer, Order
 from app.schemas.checkout import (
     CartItemIn,
@@ -27,6 +28,7 @@ from app.schemas.checkout import (
     CartOut,
     CheckoutIn,
     CheckoutOut,
+    CityOut,
     OrderItemPublic,
     OrderStatusOut,
     PointsIn,
@@ -396,6 +398,23 @@ async def delivery_quote(
     return QuoteOut(
         method=quote.method.value, price_kop=quote.price_kop, free=quote.free, period=quote.period
     )
+
+
+@router.get("/delivery/cities", response_model=list[CityOut], summary="Поиск города (СДЭК)")
+async def delivery_cities(q: str, request: Request, container: Deps) -> list[CityOut]:
+    query = q.strip()
+    if len(query) < 2:
+        return []
+    await container.rate_limiter.hit(
+        f"cdek-cities:{client_ip(request)}", limit=120, window_seconds=60
+    )
+    try:
+        cities = await container.cdek.suggest_cities(query[:100])
+    except DeliveryGatewayError as exc:
+        raise ExternalServiceError(
+            "СДЭК сейчас не отвечает. Попробуйте через минуту или выберите другой способ доставки."
+        ) from exc
+    return [CityOut(code=c.code, name=c.name, region=c.region) for c in cities[:20]]
 
 
 @router.api_route(

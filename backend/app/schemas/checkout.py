@@ -105,6 +105,12 @@ class DeliveryIn(ApiModel):
     courier_time: str | None = Field(default=None, max_length=120)
 
 
+class CityOut(ApiModel):
+    code: int
+    name: str
+    region: str | None
+
+
 class QuoteIn(ApiModel):
     delivery: DeliveryIn
 

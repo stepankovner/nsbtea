@@ -191,6 +191,8 @@ class CdekClient:
         elif action == "calculate":
             payload.setdefault("type", ONLINE_SHOP_TYPE)
             response = await self._send("POST", "/calculator/tarifflist", json_body=payload)
+        elif action == "byCoordinate":  # виджет v4: ПВЗ в видимой области карты
+            response = await self._send("GET", "/deliverypoints/byPolygons", params=payload)
         else:
             return 400, {"message": "Unknown action"}, {}
         headers = {k.lower(): v for k, v in response.headers.items() if k.lower().startswith("x-")}

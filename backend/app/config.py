@@ -75,6 +75,8 @@ class Settings(BaseSettings):
     cdek_mode: IntegrationMode = IntegrationMode.FAKE
     cdek_client_id: str | None = None
     cdek_client_secret: SecretStr | None = None
+    # Публичный ключ JavaScript API Яндекс Карт — карта в виджете ПВЗ. Без ключа — список ПВЗ.
+    yandex_maps_api_key: str | None = None
 
     # Telegram
     telegram_bot_token: SecretStr | None = None

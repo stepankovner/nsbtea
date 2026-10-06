@@ -65,13 +65,15 @@ class FakeCdekGateway:
         )
 
     async def suggest_cities(self, query: str) -> list[CdekCity]:
+        if self.fail:
+            raise DeliveryGatewayError("СДЭК недоступен (тестовая ошибка)")
         cities = [CdekCity(94, "Владимир", "Владимирская область"), CdekCity(44, "Москва", None)]
         return [c for c in cities if c.name.lower().startswith(query.strip().lower())]
 
     async def proxy_widget(
         self, action: str, params: dict[str, Any]
     ) -> tuple[int, Any, dict[str, str]]:
-        if action == "offices":
+        if action in ("offices", "byCoordinate"):
             office = {
                 "code": "VLD2",
                 "name": "Владимир, Большая Московская",
