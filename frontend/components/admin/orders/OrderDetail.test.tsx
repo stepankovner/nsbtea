@@ -66,11 +66,20 @@ describe("OrderDetail — карточка заказа", () => {
     renderWithAdmin(<OrderDetail id="o1" />);
     await userEvent.click(await screen.findByRole("button", { name: "Отменить заказ" }));
     const dialog = await screen.findByRole("alertdialog");
-    expect(within(dialog).getByText(/деньги не вернутся автоматически/i)).toBeInTheDocument();
+    // оплаченный онлайн заказ: при отмене банк сам вернёт деньги
+    expect(within(dialog).getByText(/3 150 ₽ вернутся покупателю/)).toBeInTheDocument();
     expect(within(dialog).getByRole("checkbox", { name: "Вернуть товары на склад" })).toBeChecked();
     await userEvent.type(within(dialog).getByLabelText("Причина (увидите только вы)"), "Клиент передумал");
     await userEvent.click(within(dialog).getByRole("button", { name: "Да, отменить" }));
     expect(ordersApi.cancel).toHaveBeenCalledWith("o1", { restock: true, reason: "Клиент передумал" });
+  });
+
+  it("оплаченный заказ сотрудник отменить не может — только владелец", async () => {
+    vi.mocked(ordersApi.get).mockResolvedValue(adminOrder());
+    renderWithAdmin(<OrderDetail id="o1" />, { owner: false, permissions: ["orders"] });
+    expect(await screen.findByRole("heading", { name: /NSB-10001/ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Отменить заказ" })).not.toBeInTheDocument();
+    expect(screen.getByText(/Отменить оплаченный заказ может только владелец/)).toBeInTheDocument();
   });
 
   it("возврат денег — только владельцу", async () => {
