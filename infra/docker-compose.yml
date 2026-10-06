@@ -1,0 +1,160 @@
+# НСБ Чай — все сервисы на одном сервере.
+# Запуск (из папки infra): docker compose --env-file ../.env up -d --build
+# Переменные — в ../.env (образец: ../.env.example).
+
+name: nsbtea
+
+x-backend: &backend
+  build:
+    context: ..
+    dockerfile: backend/Dockerfile
+  image: nsbtea-backend:${IMAGE_TAG:-latest}
+  env_file: ../.env
+  environment:
+    DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-nsb}:${POSTGRES_PASSWORD:?задайте POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-nsbtea}
+    REDIS_URL: redis://redis:6379/0
+    MEDIA_LOCAL_DIR: /app/media
+  volumes:
+    - media:/app/media
+  restart: unless-stopped
+  logging: &logging
+    driver: json-file
+    options:
+      max-size: "20m"
+      max-file: "5"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-nsb}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?задайте POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-nsbtea}
+      TZ: UTC
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    logging: *logging
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes", "--save", "60", "1"]
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    logging: *logging
+
+  # Миграции БД — выполняются перед стартом API и воркера, затем контейнер завершается.
+  migrate:
+    <<: *backend
+    command: ["alembic", "upgrade", "head"]
+    restart: "no"
+    healthcheck:
+      disable: true
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    <<: *backend
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
+  worker:
+    <<: *backend
+    command: ["arq", "app.workers.main.WorkerSettings"]
+    healthcheck:
+      test: ["CMD", "arq", "--check", "app.workers.main.WorkerSettings"]
+      interval: 2m
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ..
+      dockerfile: frontend/Dockerfile
+      args:
+        NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}
+    image: nsbtea-web:${IMAGE_TAG:-latest}
+    environment:
+      API_INTERNAL_URL: http://api:8000
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL}
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+    logging: *logging
+
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-localhost}
+      ACME_EMAIL: ${ACME_EMAIL:-}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - media:/srv/media:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+      - api
+    restart: unless-stopped
+    logging: *logging
+
+  # Ежедневная резервная копия БД (03:00 МСК), хранится 14 дней локально и в S3 (если задан).
+  backup:
+    build:
+      context: ./backup
+    image: nsbtea-backup:${IMAGE_TAG:-latest}
+    environment:
+      PGHOST: postgres
+      PGUSER: ${POSTGRES_USER:-nsb}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: ${POSTGRES_DB:-nsbtea}
+      BACKUP_KEEP_DAYS: ${BACKUP_KEEP_DAYS:-14}
+      BACKUP_S3_BUCKET: ${BACKUP_S3_BUCKET:-}
+      BACKUP_S3_ENDPOINT: ${BACKUP_S3_ENDPOINT:-}
+      AWS_ACCESS_KEY_ID: ${BACKUP_S3_ACCESS_KEY:-}
+      AWS_SECRET_ACCESS_KEY: ${BACKUP_S3_SECRET_KEY:-}
+      AWS_DEFAULT_REGION: ${BACKUP_S3_REGION:-ru-central1}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      BACKUP_ALERT_CHAT_ID: ${BACKUP_ALERT_CHAT_ID:-}
+    volumes:
+      - backups:/backups
+      - media:/media:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    logging: *logging
+
+volumes:
+  pgdata:
+  redisdata:
+  media:
+  backups:
+  caddy_data:
+  caddy_config:

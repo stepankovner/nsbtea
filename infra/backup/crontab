@@ -1,0 +1,2 @@
+# Каждый день в 00:00 UTC (03:00 МСК)
+0 0 * * * /usr/local/bin/backup.sh >> /proc/1/fd/1 2>&1
