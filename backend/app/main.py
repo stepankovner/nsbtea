@@ -23,7 +23,7 @@ from app.api.errors import install_error_handlers
 from app.api.public import catalog as public_catalog_api
 from app.api.public import shop as shop_api
 from app.api.webhooks import telegram as telegram_webhook_api
-from app.config import Environment, get_settings
+from app.config import Environment, ensure_production_ready, get_settings
 from app.container import Container, build_container
 from app.integrations.storage import LocalStorage
 
@@ -51,7 +51,10 @@ def _api_router() -> APIRouter:
 
 
 def create_app(container: Container | None = None) -> FastAPI:
-    container = container or build_container(get_settings())
+    if container is None:
+        settings = get_settings()
+        ensure_production_ready(settings)
+        container = build_container(settings)
     settings = container.settings
 
     if settings.sentry_dsn:

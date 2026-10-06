@@ -26,7 +26,7 @@ def _prod(**overrides: object) -> Settings:
         "telegram_webhook_secret": "w" * 32,
     }
     values.update(overrides)
-    return Settings(_env_file=None, **values)  # type: ignore[call-arg, arg-type]
+    return Settings(_env_file=None, **values)  # type: ignore[arg-type]
 
 
 def test_complete_production_settings_have_no_problems() -> None:
@@ -35,7 +35,7 @@ def test_complete_production_settings_have_no_problems() -> None:
 
 
 def test_dev_settings_are_not_checked() -> None:
-    settings = Settings(_env_file=None, environment="dev")  # type: ignore[call-arg]
+    settings = Settings(_env_file=None, environment="dev")
     assert production_problems(settings) == []
     ensure_production_ready(settings)
 
@@ -58,7 +58,9 @@ def test_dev_settings_are_not_checked() -> None:
         ({"telegram_bot_token": "123:abc", "telegram_webhook_secret": None}, "TELEGRAM"),
     ],
 )
-def test_each_missing_production_setting_is_named(overrides: dict[str, object], needle: str) -> None:
+def test_each_missing_production_setting_is_named(
+    overrides: dict[str, object], needle: str
+) -> None:
     problems = production_problems(_prod(**overrides))
     assert any(needle in problem for problem in problems), problems
 

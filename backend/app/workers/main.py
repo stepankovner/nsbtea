@@ -15,7 +15,7 @@ from typing import Any
 from arq import cron, func
 from arq.connections import RedisSettings
 
-from app.config import get_settings
+from app.config import ensure_production_ready, get_settings
 from app.container import Container, build_container
 from app.workers import jobs
 
@@ -29,6 +29,7 @@ def _container(ctx: dict[str, Any]) -> Container:
 
 async def startup(ctx: dict[str, Any]) -> None:
     settings = get_settings()
+    ensure_production_ready(settings)
     if settings.sentry_dsn:
         import sentry_sdk
 

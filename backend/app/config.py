@@ -34,11 +34,16 @@ class EmailMode(StrEnum):
     SMTP = "smtp"
 
 
+DEV_SECRET_KEY = "dev-secret-change-me-dev-secret-change-me"  # noqa: S105 — только для разработки
+MIN_SECRET_KEY_LENGTH = 32
+
+
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    # пустая переменная в .env (`TOCHKA_JWT=`) = «не задано», а не пустая строка
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore", env_ignore_empty=True)
 
     environment: Environment = Environment.DEV
-    secret_key: SecretStr = SecretStr("dev-secret-change-me-dev-secret-change-me")
+    secret_key: SecretStr = SecretStr(DEV_SECRET_KEY)
     public_base_url: str = "http://localhost:3000"
     cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:3000"])
 
@@ -98,6 +103,55 @@ class Settings(BaseSettings):
     @property
     def secure_cookies(self) -> bool:
         return self.public_base_url.startswith("https://")
+
+
+def production_problems(settings: Settings) -> list[str]:
+    """Чего не хватает для боевого запуска. Для dev/test/staging — пусто: там можно заглушки."""
+    if not settings.is_production:
+        return []
+    problems: list[str] = []
+    secret = settings.secret_key.get_secret_value()
+    if secret == DEV_SECRET_KEY or len(secret) < MIN_SECRET_KEY_LENGTH:
+        problems.append(
+            f"SECRET_KEY: задайте случайную строку не короче {MIN_SECRET_KEY_LENGTH} символов"
+        )
+    if not settings.public_base_url.startswith("https://"):
+        problems.append("PUBLIC_BASE_URL: нужен адрес с https://")
+
+    if settings.tochka_mode is not IntegrationMode.PRODUCTION:
+        problems.append("TOCHKA_MODE: в боевом режиме должно быть production")
+    for name in ("tochka_jwt", "tochka_customer_code"):
+        if not getattr(settings, name):
+            problems.append(f"{name.upper()}: не задан — оплата не заработает")
+
+    if settings.cdek_mode is not IntegrationMode.PRODUCTION:
+        problems.append("CDEK_MODE: в боевом режиме должно быть production")
+    for name in ("cdek_client_id", "cdek_client_secret"):
+        if not getattr(settings, name):
+            problems.append(f"{name.upper()}: не задан — расчёт доставки СДЭК не заработает")
+
+    if settings.email_mode is not EmailMode.SMTP:
+        problems.append("EMAIL_MODE: в боевом режиме должно быть smtp — иначе письма не уходят")
+    elif not settings.smtp_host:
+        problems.append("SMTP_HOST: не задан — письма покупателям не уйдут")
+
+    if settings.media_storage is MediaStorage.S3:
+        for name in ("s3_bucket", "s3_access_key", "s3_secret_key"):
+            if not getattr(settings, name):
+                problems.append(f"{name.upper()}: не задан, а MEDIA_STORAGE=s3")
+
+    if settings.telegram_bot_token and not settings.telegram_webhook_secret:
+        problems.append("TELEGRAM_WEBHOOK_SECRET: нужен, когда задан TELEGRAM_BOT_TOKEN")
+    return problems
+
+
+def ensure_production_ready(settings: Settings) -> None:
+    """Остановить запуск, если боевой сервер настроен не полностью, — сразу со всем списком."""
+    problems = production_problems(settings)
+    if problems:
+        raise RuntimeError(
+            "Сайт не запущен: не хватает настроек в .env:\n- " + "\n- ".join(problems)
+        )
 
 
 @lru_cache
