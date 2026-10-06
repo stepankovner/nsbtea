@@ -212,3 +212,17 @@ async def test_persistent_network_error() -> None:
     )
     with pytest.raises(DeliveryGatewayError, match="недоступен"):
         await cdek.suggest_cities("Влад")
+
+
+async def test_widget_offices_by_coordinates_proxy() -> None:
+    recorder = Recorder([token_response(), httpx.Response(200, json=[{"code": "VLD2"}])])
+    status, body, _ = await client(recorder).proxy_widget(
+        "byCoordinate", {"action": "byCoordinate", "latitude": "56.1", "longitude": "40.4"}
+    )
+    request = recorder.requests[1]
+    assert request.method == "GET"
+    assert request.url.path.endswith("/deliverypoints/byPolygons")
+    assert request.url.params["latitude"] == "56.1"
+    assert "action" not in request.url.params
+    assert status == 200
+    assert body == [{"code": "VLD2"}]

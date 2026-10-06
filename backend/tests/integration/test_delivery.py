@@ -108,3 +108,31 @@ async def test_widget_proxy(client: AsyncClient) -> None:
         json={"action": "calculate", "from_location": {"code": 94}, "to_location": {"code": 44}},
     )
     assert calc.status_code == 200
+
+
+async def test_widget_proxy_offices_by_coordinates(client: AsyncClient) -> None:
+    """Виджет СДЭК v4 подгружает ПВЗ по видимой области карты (action=byCoordinate)."""
+    response = await client.get(
+        "/api/delivery/cdek/service?action=byCoordinate&latitude=56.1&longitude=40.4"
+    )
+    assert response.status_code == 200, response.text
+    assert response.json()[0]["code"] == "VLD2"
+
+
+async def test_city_suggest_for_checkout(client: AsyncClient) -> None:
+    response = await client.get("/api/delivery/cities", params={"q": "влад"})
+    assert response.status_code == 200, response.text
+    assert response.json() == [{"code": 94, "name": "Владимир", "region": "Владимирская область"}]
+
+
+async def test_city_suggest_needs_two_letters(client: AsyncClient) -> None:
+    response = await client.get("/api/delivery/cities", params={"q": "в"})
+    assert response.status_code == 200
+    assert response.json() == []
+
+
+async def test_city_suggest_when_cdek_is_down(client: AsyncClient, container: Container) -> None:
+    cdek(container).fail = True
+    response = await client.get("/api/delivery/cities", params={"q": "Москва"})
+    assert response.status_code == 502
+    assert "СДЭК" in response.json()["detail"]

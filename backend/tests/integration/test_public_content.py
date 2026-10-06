@@ -63,6 +63,16 @@ class TestSite:
         assert body["welcome"] == {"enabled": True, "percent": 10}
         assert body["delivery"]["pickup_enabled"] is True
         assert "secret" not in str(body).lower()
+        assert body["yandex_maps_api_key"] is None  # не задан — витрина покажет список ПВЗ
+
+    async def test_yandex_maps_key_is_public(
+        self, client: AsyncClient, container: Container
+    ) -> None:
+        container.settings = container.settings.model_copy(
+            update={"yandex_maps_api_key": "maps-key"}
+        )
+        body = (await client.get("/api/site")).json()
+        assert body["yandex_maps_api_key"] == "maps-key"
 
 
 class TestHome:
