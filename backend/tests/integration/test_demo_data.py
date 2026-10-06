@@ -25,10 +25,20 @@ async def test_demo_catalog_is_visible_and_idempotent(
     page = (await client.get("/api/catalog/products?per_page=100")).json()
     assert page["total"] == created
     teas = [p for p in page["items"] if p["type"] == "tea"]
-    assert teas and all(p["hanzi"] for p in teas)
+    assert teas
+    assert all(p["hanzi"] for p in teas)
     assert any(p["type"] == "unit" for p in page["items"])
 
-    # остатки заведены через журнал движения, как требует правило 3
-    products = int(await db.scalar(select(func.count()).select_from(Product)) or 0)
-    movements = int(await db.scalar(select(func.count()).select_from(InventoryMovement)) or 0)
-    assert movements == products
+    # остатки заведены через журнал движения (правило 3): остаток = сумма движений
+    sums = dict(
+        (
+            await db.execute(
+                select(InventoryMovement.product_id, func.sum(InventoryMovement.delta)).group_by(
+                    InventoryMovement.product_id
+                )
+            )
+        ).all()
+    )
+    for product in (await db.scalars(select(Product))).all():
+        assert product.stock == sums.get(product.id, 0), product.name
+    assert any(p["in_stock"] is False for p in page["items"])  # есть пример «нет в наличии»

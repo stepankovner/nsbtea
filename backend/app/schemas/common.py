@@ -44,7 +44,9 @@ Text = Annotated[str, AfterValidator(_strip), Field(max_length=5000)]
 class ApiModel(BaseModel):
     # в схеме ответа поля со значением по умолчанию — обязательные (сервер их всегда отдаёт),
     # иначе в типах фронтенда они выглядели бы необязательными
-    model_config = ConfigDict(from_attributes=True, json_schema_serialization_defaults_required=True)
+    model_config = ConfigDict(
+        from_attributes=True, json_schema_serialization_defaults_required=True
+    )
 
 
 class Ok(ApiModel):

@@ -6,6 +6,7 @@ seed                — начальные категории, блоки гла
 set-telegram-webhook — зарегистрировать вебхук бота
 register-tochka-webhook — подписаться на вебхук оплаты в Точке
 export-openapi      — схема API в JSON (из неё генерируются типы фронтенда)
+demo-data           — демо-товары для тестового сервера (не для боевого)
 """
 
 import argparse
@@ -21,7 +22,7 @@ from app.container import build_container
 from app.core.security import hash_password
 from app.models import AdminUser
 from app.services.admin_auth import create_owner, validate_password
-from app.services.seed import seed_categories, seed_content
+from app.services.seed import seed_categories, seed_content, seed_demo_catalog
 
 
 def _password(prompt: str) -> str:
@@ -98,6 +99,19 @@ async def _register_tochka_webhook() -> None:
     print(response.status_code, response.text)
 
 
+async def _demo_data() -> None:
+    settings = get_settings()
+    if settings.is_production:
+        sys.exit("Демо-данные нельзя добавлять на боевой сервер")
+    container = build_container(settings)
+    async with container.session_factory() as db:
+        await seed_categories(db)
+        await seed_content(db)
+        created = await seed_demo_catalog(db, container)
+        await db.commit()
+    print(f"Добавлено демо-товаров: {created}")
+
+
 def _export_openapi() -> None:
     from app.config import Settings
     from app.main import create_app
@@ -120,6 +134,7 @@ def main() -> None:
     sub.add_parser("set-telegram-webhook", help="вебхук Telegram-бота")
     sub.add_parser("register-tochka-webhook", help="вебхук оплаты Точки")
     sub.add_parser("export-openapi", help="схема API (JSON) в stdout")
+    sub.add_parser("demo-data", help="демо-товары (только не на боевом сервере)")
     args = parser.parse_args()
 
     if args.command == "create-owner":
@@ -134,6 +149,8 @@ def main() -> None:
         asyncio.run(_register_tochka_webhook())
     elif args.command == "export-openapi":
         _export_openapi()
+    elif args.command == "demo-data":
+        asyncio.run(_demo_data())
 
 
 if __name__ == "__main__":
