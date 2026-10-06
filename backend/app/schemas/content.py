@@ -127,6 +127,8 @@ class PageOut(ApiModel):
     seo_title: str | None
     seo_description: str | None
     updated_at: datetime
+    # товары, вставленные в текст карточками (productCard), — с актуальной ценой; ключ — slug
+    products: dict[str, ProductCard] = Field(default_factory=dict)
 
 
 class PageListItem(ApiModel):

@@ -258,7 +258,37 @@ async def get_page(db: AsyncSession, container: Container, slug: str) -> PageOut
     )
     if page is None:
         raise NotFoundError("Страница не найдена")
-    return page_out(container, page)
+    out = page_out(container, page)
+    slugs = product_card_slugs(page.content)
+    if slugs:
+        products = (
+            await db.scalars(
+                select(Product).where(
+                    Product.slug.in_(slugs), *visible_condition(container.clock.now())
+                )
+            )
+        ).all()
+        ctx = await card_context(db, container)
+        out.products = {p.slug: make_card(ctx, p) for p in products}
+    return out
+
+
+def product_card_slugs(doc: Any, limit: int = 50) -> list[str]:
+    """Slug'и товаров, вставленных в текст карточками."""
+    found: list[str] = []
+
+    def walk(node: Any) -> None:
+        if not isinstance(node, dict) or len(found) >= limit:
+            return
+        if node.get("type") == "productCard":
+            slug = (node.get("attrs") or {}).get("slug")
+            if isinstance(slug, str) and slug and slug not in found:
+                found.append(slug)
+        for child in node.get("content") or []:
+            walk(child)
+
+    walk(doc)
+    return found
 
 
 async def list_pages(
