@@ -447,6 +447,7 @@ async def upload_media(
 
 class LookupProduct(ApiModel):
     id: uuid.UUID
+    slug: str
     name: str
     type: str
     status: str
@@ -476,6 +477,7 @@ async def lookup_products(
     return [
         LookupProduct(
             id=p.id,
+            slug=p.slug,
             name=p.name,
             type=p.type,
             status=p.status,
