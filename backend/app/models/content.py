@@ -42,12 +42,27 @@ class HomeBlockKind(StrEnum):
     HERO = "hero"
     THURSDAY = "thursday"
     SERVICES = "services"
+    FEATURED = "featured"
     NEW_PRODUCTS = "new_products"
     SETS = "sets"
     EVENTS = "events"
     ABOUT = "about"
     ADVANTAGES = "advantages"
     WHOLESALE = "wholesale"
+
+
+HOME_BLOCK_LABELS: dict[HomeBlockKind, str] = {
+    HomeBlockKind.HERO: "Главный баннер",
+    HomeBlockKind.THURSDAY: "Чай недели",
+    HomeBlockKind.SERVICES: "Не только чай (церемонии, сплавы, выезд)",
+    HomeBlockKind.FEATURED: "Сейчас в наличии",
+    HomeBlockKind.NEW_PRODUCTS: "Новинки",
+    HomeBlockKind.SETS: "Наборы",
+    HomeBlockKind.EVENTS: "Ближайшие события",
+    HomeBlockKind.ABOUT: "О магазине и мастере",
+    HomeBlockKind.ADVANTAGES: "Преимущества",
+    HomeBlockKind.WHOLESALE: "Оптовые заказы",
+}
 
 
 class HomeBlock(IdMixin, TimestampMixin, Base):

@@ -27,6 +27,7 @@ from app.domain.inventory import (
     validate_writeoff,
 )
 from app.domain.pricing import ProductType
+from app.domain.texts import normalize_search
 from app.models import AdminUser, InventoryMovement, Product, StockAlertState, Supply
 from app.models.system import NotificationEvent
 from app.services import audit
@@ -339,7 +340,7 @@ async def stock_rows(
         .order_by(Product.name)
     )
     if q:
-        query = query.where(Product.search_text.ilike(f"%{q.strip().lower()}%"))
+        query = query.where(Product.search_text.ilike(f"%{normalize_search(q)}%"))
     if category_id:
         query = query.where(Product.category_id == category_id)
     rows: list[StockRow] = []

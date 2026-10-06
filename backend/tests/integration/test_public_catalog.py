@@ -114,22 +114,21 @@ class TestFilters:
         honey = Tag(name="Мёд", slug="med")
         db.add_all([nut, honey])
         await db.commit()
-        a = await make_tea(
+        await make_tea(
             db,
             "Бодрый",
             price_per_gram_kop=1_000,
             attributes={"effect": "energizing", "region": "Юньнань", "shape": "cake"},
+            tags=[nut],
         )
-        a.tags = [nut]
-        b = await make_tea(
+        await make_tea(
             db,
             "Спокойный",
             price_per_gram_kop=3_000,
             stock=0,
             attributes={"effect": "calming", "region": "Фуцзянь", "shape": "loose"},
+            tags=[honey, nut],
         )
-        b.tags = [honey, nut]
-        await db.commit()
 
         async def names(query: str) -> list[str]:
             response = await client.get(f"/api/catalog/products?{query}&sort=name")
@@ -195,7 +194,7 @@ class TestSearch:
 class TestDiscountedPrices:
     async def test_thursday_week_mode(self, client: AsyncClient, db: AsyncSession) -> None:
         tea = await make_tea(db, "Да Хун Пао", price_per_gram_kop=2_800, presets=[50])
-        # четверг 1 октября запланирован; сейчас понедельник 5 октября → режим «неделя» ещё действует
+        # запланирован четверг 1 октября; сейчас пн 5 октября → режим «неделя» ещё действует
         await plan_thursday(db, [tea])
         card = (await client.get("/api/catalog/products")).json()["items"][0]
         assert card["price_kop"] == 112_000
@@ -319,17 +318,11 @@ class TestProductPage:
         )
         db.add_all([nut, honey, fruit])
         await db.commit()
-        main = await make_tea(db, "Главный", category=cat)
-        main.tags = [nut, honey]
-        two_common = await make_tea(db, "Два общих", category=cat)
-        two_common.tags = [nut, honey]
-        one_common = await make_tea(db, "Один общий", category=cat)
-        one_common.tags = [nut]
-        no_stock = await make_tea(db, "Нет в наличии", category=cat, stock=0)
-        no_stock.tags = [nut, honey]
-        other_cat = await make_tea(db, "Другая категория")
-        other_cat.tags = [nut, honey, fruit]
-        await db.commit()
+        main = await make_tea(db, "Главный", category=cat, tags=[nut, honey])
+        await make_tea(db, "Два общих", category=cat, tags=[nut, honey])
+        await make_tea(db, "Один общий", category=cat, tags=[nut])
+        await make_tea(db, "Нет в наличии", category=cat, stock=0, tags=[nut, honey])
+        other_cat = await make_tea(db, "Другая категория", tags=[nut, honey, fruit])
         page = (await client.get(f"/api/catalog/products/{main.slug}")).json()
         assert [p["name"] for p in page["similar"]] == ["Два общих", "Один общий"]
 
@@ -338,7 +331,7 @@ class TestProductPage:
         db.add(ProductRelation(product_id=main.id, related_id=cup.id, kind="goes_with"))
         await db.commit()
         page = (await client.get(f"/api/catalog/products/{main.slug}")).json()
-        assert [p["name"] for p in page["similar"]][0] == "Другая категория"
+        assert page["similar"][0]["name"] == "Другая категория"
         assert [p["name"] for p in page["goes_with"]] == ["Чаша"]
 
     async def test_unit_page(self, client: AsyncClient, db: AsyncSession) -> None:

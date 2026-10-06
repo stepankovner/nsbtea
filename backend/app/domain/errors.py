@@ -11,10 +11,18 @@ class DomainError(Exception):
     code: str = "domain_error"
     http_status: int = 422
 
-    def __init__(self, message: str, *, code: str | None = None, field: str | None = None) -> None:
+    def __init__(
+        self,
+        message: str,
+        *,
+        code: str | None = None,
+        field: str | None = None,
+        extra: dict[str, object] | None = None,
+    ) -> None:
         super().__init__(message)
         self.message = message
         self.field = field
+        self.extra = extra or {}
         if code is not None:
             self.code = code
 
@@ -54,3 +62,12 @@ class InvalidCodeError(DomainError):
 
     code = "invalid_code"
     http_status = 400
+
+
+class MovedError(NotFoundError):
+    """Адрес сменился: витрина делает постоянный редирект на `location`."""
+
+    code = "moved"
+
+    def __init__(self, location: str) -> None:
+        super().__init__("Страница переехала", extra={"location": location})

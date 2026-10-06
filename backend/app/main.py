@@ -14,6 +14,7 @@ from app.api.admin import catalog as admin_catalog_api
 from app.api.admin import inventory as admin_inventory_api
 from app.api.admin import settings as admin_settings_api
 from app.api.errors import install_error_handlers
+from app.api.public import catalog as public_catalog_api
 from app.config import Environment, get_settings
 from app.container import Container, build_container
 from app.integrations.storage import LocalStorage
@@ -24,6 +25,7 @@ logger = logging.getLogger(__name__)
 def _api_router() -> APIRouter:
     router = APIRouter(prefix="/api")
     router.include_router(health.router)
+    router.include_router(public_catalog_api.router)
     router.include_router(admin_auth_api.router)
     router.include_router(admin_auth_api.staff_router)
     router.include_router(admin_settings_api.router)

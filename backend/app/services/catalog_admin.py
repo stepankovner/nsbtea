@@ -21,6 +21,7 @@ from app.domain.pricing import (
     weight_options,
 )
 from app.domain.slugs import slugify
+from app.domain.texts import normalize_search
 from app.models import (
     AdminUser,
     Category,
@@ -324,7 +325,7 @@ def build_search_text(product: Product) -> str:
             parts.append(str(value))
     if product.category is not None:
         parts.append(product.category.name)
-    return " ".join(" ".join(parts).lower().split())
+    return normalize_search(" ".join(parts))
 
 
 def publish_problems(product: Product) -> list[str]:
@@ -841,7 +842,7 @@ def _apply_filters(query: Select[Product], filters: ListFilters) -> Select[Produ
         Product.archived_at.is_not(None) if filters.archived else Product.archived_at.is_(None)
     )
     if filters.q:
-        term = filters.q.strip().lower()
+        term = normalize_search(filters.q)
         query = query.where(
             or_(Product.search_text.ilike(f"%{term}%"), Product.slug.ilike(f"%{term}%"))
         )

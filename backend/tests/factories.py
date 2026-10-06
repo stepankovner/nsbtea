@@ -8,6 +8,7 @@ from PIL import Image
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.slugs import slugify
+from app.domain.texts import normalize_search
 from app.models import Category, Product
 from app.models.catalog import ProductStatus
 
@@ -54,7 +55,7 @@ async def make_tea(
         price_per_gram_kop=price_per_gram_kop,
         stock=stock,
         weight_presets=presets if presets is not None else [25, 50, 100],
-        search_text=name.lower(),
+        search_text=normalize_search(name),
         **fields,
     )
     db.add(product)
@@ -81,7 +82,7 @@ async def make_unit(
         unit_price_kop=unit_price_kop,
         stock=stock,
         weight_grams=fields.pop("weight_grams", 300),
-        search_text=name.lower(),
+        search_text=normalize_search(name),
         **fields,
     )
     db.add(product)

@@ -90,7 +90,8 @@ def install_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(DomainError)
     async def domain_error(_: Request, exc: DomainError) -> JSONResponse:
         return JSONResponse(
-            error_body(exc.message, exc.code, field=exc.field), status_code=exc.http_status
+            error_body(exc.message, exc.code, field=exc.field, **exc.extra),
+            status_code=exc.http_status,
         )
 
     @app.exception_handler(RequestValidationError)
