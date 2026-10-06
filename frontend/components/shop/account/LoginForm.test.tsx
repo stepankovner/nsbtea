@@ -14,7 +14,7 @@ describe("LoginForm — вход без пароля: код на почту", (
   beforeEach(() => navigate.mockReset());
 
   it("почта → код → вход и возврат туда, откуда пришли", async () => {
-    vi.mocked(shopApi.requestCode).mockResolvedValue({ message: "Отправили код на nikita@nsbtea.ru. Он действует 10 минут." });
+    vi.mocked(shopApi.requestCode).mockResolvedValue({ ok: true, message: "Отправили код на nikita@nsbtea.ru. Он действует 10 минут." });
     vi.mocked(shopApi.verifyCode).mockResolvedValue({ ok: true });
     render(<LoginForm next="/cart" navigate={navigate} />);
     await userEvent.type(screen.getByLabelText("Почта"), "nikita@nsbtea.ru");
@@ -36,7 +36,7 @@ describe("LoginForm — вход без пароля: код на почту", (
   });
 
   it("неверный код — текст сервера, можно ввести снова", async () => {
-    vi.mocked(shopApi.requestCode).mockResolvedValue({ message: "Отправили код" });
+    vi.mocked(shopApi.requestCode).mockResolvedValue({ ok: true, message: "Отправили код" });
     vi.mocked(shopApi.verifyCode).mockRejectedValue(new ApiError(400, "Неверный код. Осталось попыток: 4", "invalid_code"));
     render(<LoginForm next="/account" navigate={navigate} />);
     await userEvent.type(screen.getByLabelText("Почта"), "a@b.ru");
@@ -49,7 +49,7 @@ describe("LoginForm — вход без пароля: код на почту", (
   });
 
   it("адрес возврата — только внутри сайта", async () => {
-    vi.mocked(shopApi.requestCode).mockResolvedValue({ message: "ok" });
+    vi.mocked(shopApi.requestCode).mockResolvedValue({ ok: true, message: "ok" });
     vi.mocked(shopApi.verifyCode).mockResolvedValue({ ok: true });
     render(<LoginForm next="https://evil.example/" navigate={navigate} />);
     await userEvent.type(screen.getByLabelText("Почта"), "a@b.ru");

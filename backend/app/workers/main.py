@@ -17,6 +17,7 @@ from arq.connections import RedisSettings
 
 from app.config import ensure_production_ready, get_settings
 from app.container import Container, build_container
+from app.logging_setup import configure_logging
 from app.workers import jobs
 
 logger = logging.getLogger(__name__)
@@ -28,6 +29,7 @@ def _container(ctx: dict[str, Any]) -> Container:
 
 
 async def startup(ctx: dict[str, Any]) -> None:
+    configure_logging()
     settings = get_settings()
     ensure_production_ready(settings)
     if settings.sentry_dsn:

@@ -79,6 +79,16 @@ export const shopApi = {
   telegramLogin: (body: Schemas["TelegramIn"]) => must(api.POST("/api/auth/telegram", { body })),
   logout: () => must(api.POST("/api/auth/logout")),
 
+  me: () => must(api.GET("/api/account/me")),
+  updateProfile: (body: Schemas["ProfileIn"]) => must(api.PATCH("/api/account/profile", { body })),
+  linkTelegram: (body: Schemas["TelegramIn"]) => must(api.POST("/api/account/telegram", { body })),
+  repeatOrder: (id: string) =>
+    must(api.POST("/api/account/orders/{order_id}/repeat", { params: { path: { order_id: id } } })),
+  addAddress: (body: Schemas["AddressIn"]) => must(api.POST("/api/account/addresses", { body })),
+  deleteAddress: (id: string) =>
+    must(api.DELETE("/api/account/addresses/{address_id}", { params: { path: { address_id: id } } })),
+  deleteAccount: () => must(api.DELETE("/api/account", { body: { confirm: true } })),
+
   favoriteOn: (productId: string) =>
     must(api.PUT("/api/account/favorites/{product_id}", { params: { path: { product_id: productId } } })),
   favoriteOff: (productId: string) =>

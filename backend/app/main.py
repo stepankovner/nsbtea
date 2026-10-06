@@ -26,6 +26,7 @@ from app.api.webhooks import telegram as telegram_webhook_api
 from app.config import Environment, ensure_production_ready, get_settings
 from app.container import Container, build_container
 from app.integrations.storage import LocalStorage
+from app.logging_setup import configure_logging
 
 logger = logging.getLogger(__name__)
 
@@ -116,4 +117,5 @@ def create_app(container: Container | None = None) -> FastAPI:
 
 
 def app_factory() -> FastAPI:  # pragma: no cover - для uvicorn --factory
+    configure_logging()
     return create_app()
