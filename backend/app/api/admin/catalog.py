@@ -4,11 +4,13 @@ import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, File, Query, UploadFile, status
-from sqlalchemy import select
+from sqlalchemy import or_, select
 
-from app.api.deps import Db, Deps, ProductsAccess
+from app.api.deps import Db, Deps, MediaAccess, ProductLookupAccess, ProductsAccess
 from app.container import Container
+from app.domain.inventory import format_qty
 from app.domain.pricing import ProductType, price_per_100g_kop
+from app.domain.texts import normalize_search
 from app.models import Product, Tag
 from app.models.catalog import RelationKind
 from app.models.system import MediaFile
@@ -31,7 +33,7 @@ from app.schemas.catalog import (
     TagOut,
     WeightOptionOut,
 )
-from app.schemas.common import Ok
+from app.schemas.common import ApiModel, Ok
 from app.services import catalog_admin as svc
 from app.services.catalog_admin import CategoryNode, ListFilters
 from app.services.inventory import threshold_for
@@ -432,7 +434,7 @@ async def list_tags(_: Products, db: Db, q: str | None = None) -> list[TagOut]:
 
 @router.post("/media", response_model=MediaOut, summary="Загрузить картинку")
 async def upload_media(
-    _: Products,
+    _: MediaAccess,
     db: Db,
     container: Deps,
     file: Annotated[UploadFile, File(description="Картинка")],
@@ -441,3 +443,44 @@ async def upload_media(
     out = media_out(container, media)
     assert out is not None
     return out
+
+
+class LookupProduct(ApiModel):
+    id: uuid.UUID
+    name: str
+    type: str
+    status: str
+    image_url: str | None
+    stock_label: str
+
+
+@router.get("/lookup/products", response_model=list[LookupProduct], summary="Выбор товаров (поиск)")
+async def lookup_products(
+    _: ProductLookupAccess,
+    db: Db,
+    container: Deps,
+    q: Annotated[str | None, Query(max_length=100)] = None,
+    ids: Annotated[str | None, Query(max_length=4000, description="id через запятую")] = None,
+    limit: Annotated[int, Query(ge=1, le=100)] = 30,
+) -> list[LookupProduct]:
+    query = select(Product).where(Product.archived_at.is_(None))
+    if ids:
+        wanted = [uuid.UUID(i) for i in ids.split(",") if i.strip()]
+        query = query.where(Product.id.in_(wanted))
+    elif q and q.strip():
+        term = normalize_search(q.strip())
+        query = query.where(
+            or_(Product.search_text.ilike(f"%{term}%"), Product.name.ilike(f"%{q.strip()}%"))
+        )
+    products = (await db.scalars(query.order_by(Product.name).limit(limit))).all()
+    return [
+        LookupProduct(
+            id=p.id,
+            name=p.name,
+            type=p.type,
+            status=p.status,
+            image_url=main_image_url(container, p),
+            stock_label=format_qty(ProductType(p.type), p.stock),
+        )
+        for p in products
+    ]

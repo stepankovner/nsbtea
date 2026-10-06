@@ -1,10 +1,11 @@
 """Общие инструменты админки: загрузка картинок и выбор товаров из разных разделов."""
 
+from datetime import UTC, datetime
+
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.admin import AdminRole
-from app.models.catalog import ProductStatus
 from tests.factories import jpeg_bytes, make_tea, make_unit
 from tests.helpers import create_admin, login
 
@@ -41,7 +42,7 @@ async def test_orders_only_staff_cannot_upload_images(
 
 async def test_product_lookup_for_promotions(client: AsyncClient, db: AsyncSession) -> None:
     tea = await make_tea(db, "Да Хун Пао", stock=40)
-    await make_tea(db, "Снятый в архив", status=ProductStatus.ARCHIVED)
+    await make_tea(db, "Снятый в архив", archived_at=datetime(2026, 10, 1, tzinfo=UTC))
     cup = await make_unit(db, "Гайвань", stock=0)
     await staff(client, db, ["promotions"])
 

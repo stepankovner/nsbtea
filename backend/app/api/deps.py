@@ -75,6 +75,19 @@ def require(
     return dependency
 
 
+def require_any(
+    *permissions: AdminPermission,
+) -> Callable[[AdminContext], Coroutine[Any, Any, AdminContext]]:
+    """Доступ, если есть хотя бы одно из прав (общие инструменты разных разделов)."""
+
+    async def dependency(context: Admin) -> AdminContext:
+        if not any(context.user.has_permission(p) for p in permissions):
+            context.require(permissions[0])
+        return context
+
+    return dependency
+
+
 async def require_owner(context: Admin) -> AdminContext:
     context.require_owner()
     return context
@@ -90,6 +103,23 @@ CustomersAccess = Annotated[AdminContext, Depends(require(AdminPermission.CUSTOM
 PromotionsAccess = Annotated[AdminContext, Depends(require(AdminPermission.PROMOTIONS))]
 ContentAccess = Annotated[AdminContext, Depends(require(AdminPermission.CONTENT))]
 ApplicationsAccess = Annotated[AdminContext, Depends(require(AdminPermission.APPLICATIONS))]
+# загрузка картинок: товары и страницы сайта
+MediaAccess = Annotated[
+    AdminContext, Depends(require_any(AdminPermission.PRODUCTS, AdminPermission.CONTENT))
+]
+# выбор товаров в акциях, контенте, складе и заказах
+ProductLookupAccess = Annotated[
+    AdminContext,
+    Depends(
+        require_any(
+            AdminPermission.PRODUCTS,
+            AdminPermission.PROMOTIONS,
+            AdminPermission.CONTENT,
+            AdminPermission.INVENTORY,
+            AdminPermission.ORDERS,
+        )
+    ),
+]
 
 
 async def get_customer_optional(request: Request, db: Db, container: Deps) -> Customer | None:
