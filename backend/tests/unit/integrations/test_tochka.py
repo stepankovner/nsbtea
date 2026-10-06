@@ -183,7 +183,9 @@ async def test_unknown_status_is_not_paid() -> None:
         [
             httpx.Response(
                 200,
-                json={"Data": {"Operation": [{"operationId": "op", "status": "WEIRD", "amount": 1}]}},
+                json={
+                    "Data": {"Operation": [{"operationId": "op", "status": "WEIRD", "amount": 1}]}
+                },
             )
         ]
     )
@@ -233,7 +235,9 @@ class TestWebhook:
         assert notice.payment_link_id == "NSB-10001-1"
         assert notice.status is PaymentStatus.APPROVED
 
-    async def test_forged_signature(self, keypair: tuple[rsa.RSAPrivateKey, dict[str, Any]]) -> None:
+    async def test_forged_signature(
+        self, keypair: tuple[rsa.RSAPrivateKey, dict[str, Any]]
+    ) -> None:
         _, public_jwk = keypair
         other = rsa.generate_private_key(public_exponent=65537, key_size=2048)
         body = jwt.encode({"operationId": "op-1", "status": "APPROVED"}, other, algorithm="RS256")

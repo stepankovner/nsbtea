@@ -50,9 +50,7 @@ async def test_calculate_uses_total_sum_and_caches_token() -> None:
         [token_response(), httpx.Response(200, json=tariff), httpx.Response(200, json=tariff)]
     )
     cdek = client(recorder)
-    quote = await cdek.calculate(
-        tariff_code=136, from_city_code=94, to={"code": 44}, parcel=PARCEL
-    )
+    quote = await cdek.calculate(tariff_code=136, from_city_code=94, to={"code": 44}, parcel=PARCEL)
     await cdek.calculate(tariff_code=136, from_city_code=94, to={"code": 44}, parcel=PARCEL)
 
     assert quote.price_kop == 25_240
@@ -185,3 +183,32 @@ async def test_widget_unknown_action() -> None:
     status, body, _ = await client(Recorder([])).proxy_widget("hack", {})
     assert status == 400
     assert body == {"message": "Unknown action"}
+
+
+async def test_transient_network_error_is_retried() -> None:
+    calls = {"n": 0}
+
+    def flaky(request: httpx.Request) -> httpx.Response:
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise httpx.ConnectError("сбой")
+        if request.url.path.endswith("/oauth/token"):
+            return token_response()
+        return httpx.Response(200, json=[{"code": 94, "full_name": "Владимир"}])
+
+    cdek = CdekClient(
+        base_url=BASE, client_id="id", client_secret="s", transport=httpx.MockTransport(flaky)
+    )
+    cities = await cdek.suggest_cities("Влад")
+    assert cities[0].code == 94
+
+
+async def test_persistent_network_error() -> None:
+    def broken(_: httpx.Request) -> httpx.Response:
+        raise httpx.ConnectError("нет сети")
+
+    cdek = CdekClient(
+        base_url=BASE, client_id="id", client_secret="s", transport=httpx.MockTransport(broken)
+    )
+    with pytest.raises(DeliveryGatewayError, match="недоступен"):
+        await cdek.suggest_cities("Влад")
