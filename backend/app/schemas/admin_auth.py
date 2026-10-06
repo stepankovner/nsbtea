@@ -49,7 +49,7 @@ class TwoFactorIn(ApiModel):
     code: str = Field(min_length=4, max_length=12)
 
 
-class MeOut(ApiModel):
+class AdminMeOut(ApiModel):
     user: AdminUserOut
     csrf_token: str
 

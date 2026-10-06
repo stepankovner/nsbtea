@@ -2089,7 +2089,7 @@ export interface components {
         /** AddressOut */
         AddressOut: {
             /** Data */
-            data?: {
+            data: {
                 [key: string]: unknown;
             };
             /**
@@ -2109,6 +2109,31 @@ export interface components {
             kind: "cdek_pvz" | "cdek_door" | "courier";
             /** Label */
             label: string;
+        };
+        /** AdminHomeBlockOut */
+        AdminHomeBlockOut: {
+            /** Data */
+            data: {
+                [key: string]: unknown;
+            };
+            /** Images */
+            images: {
+                [key: string]: components["schemas"]["MediaOut"];
+            };
+            /** Is Visible */
+            is_visible: boolean;
+            /** Kind */
+            kind: string;
+            /** Label */
+            label: string;
+            /** Sort Order */
+            sort_order: number;
+        };
+        /** AdminMeOut */
+        AdminMeOut: {
+            /** Csrf Token */
+            csrf_token: string;
+            user: components["schemas"]["AdminUserOut"];
         };
         /** AdminOrderOut */
         AdminOrderOut: {
@@ -2504,25 +2529,25 @@ export interface components {
         /** BrewingMethodOut */
         BrewingMethodOut: {
             /** First Steep Sec */
-            first_steep_sec?: number | null;
+            first_steep_sec: number | null;
             /** Grams */
-            grams?: number | null;
+            grams: number | null;
             /** Method */
             method: string;
             /** Method Label */
             method_label: string;
             /** Next Steep Sec */
-            next_steep_sec?: number | null;
+            next_steep_sec: number | null;
             /** Note */
-            note?: string | null;
+            note: string | null;
             /** Steeps */
-            steeps?: number | null;
+            steeps: number | null;
             /** Temp C */
-            temp_c?: number | null;
+            temp_c: number | null;
             /** Vessel */
-            vessel?: string | null;
+            vessel: string | null;
             /** Volume Ml */
-            volume_ml?: number | null;
+            volume_ml: number | null;
         };
         /** BrewingOut */
         BrewingOut: {
@@ -2666,7 +2691,7 @@ export interface components {
         };
         /** CatalogPage */
         CatalogPage: {
-            category?: components["schemas"]["PublicCategory"] | null;
+            category: components["schemas"]["PublicCategory"] | null;
             facets: components["schemas"]["Facets"];
             /** Items */
             items: components["schemas"]["ProductCard"][];
@@ -2754,7 +2779,7 @@ export interface components {
             /** Archived At */
             archived_at: string | null;
             /** Children */
-            children?: components["schemas"]["CategoryOut"][];
+            children: components["schemas"]["CategoryOut"][];
             cover: components["schemas"]["MediaOut"] | null;
             /** Description */
             description: string | null;
@@ -3033,6 +3058,30 @@ export interface components {
             items: components["schemas"]["CustomerRow"][];
             /** Total */
             total: number;
+        };
+        /** CustomerMeOut */
+        CustomerMeOut: {
+            /** Email */
+            email: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Marketing Consent */
+            marketing_consent: boolean;
+            /** Name */
+            name: string | null;
+            /** Phone */
+            phone: string | null;
+            /** Points Balance */
+            points_balance: number;
+            /** Points Pending */
+            points_pending: number;
+            /** Telegram Linked */
+            telegram_linked: boolean;
+            /** Telegram Username */
+            telegram_username: string | null;
         };
         /** CustomerOrderRow */
         CustomerOrderRow: {
@@ -3534,6 +3583,24 @@ export interface components {
          * @enum {string}
          */
         HomeBlockKind: "hero" | "thursday" | "services" | "featured" | "new_products" | "sets" | "events" | "about" | "advantages" | "wholesale";
+        /** HomeBlockOut */
+        HomeBlockOut: {
+            /** Data */
+            data: {
+                [key: string]: unknown;
+            };
+            /** Events */
+            events: components["schemas"]["EventOut"][];
+            /** Images */
+            images: {
+                [key: string]: components["schemas"]["MediaOut"];
+            };
+            /** Kind */
+            kind: string;
+            /** Products */
+            products: components["schemas"]["ProductCard"][];
+            thursday: components["schemas"]["ThursdayBlockInfo"] | null;
+        };
         /** HomeBlockPatch */
         HomeBlockPatch: {
             /** Data */
@@ -3546,7 +3613,7 @@ export interface components {
         /** HomeOut */
         HomeOut: {
             /** Blocks */
-            blocks: components["schemas"]["app__schemas__content__HomeBlockOut"][];
+            blocks: components["schemas"]["HomeBlockOut"][];
         };
         /** IdsIn */
         IdsIn: {
@@ -3582,15 +3649,15 @@ export interface components {
         /** LoginOut */
         LoginOut: {
             /** Challenge Id */
-            challenge_id?: string | null;
+            challenge_id: string | null;
             /** Csrf Token */
-            csrf_token?: string | null;
+            csrf_token: string | null;
             /**
              * Status
              * @enum {string}
              */
             status: "ok" | "two_factor_required";
-            user?: components["schemas"]["AdminUserOut"] | null;
+            user: components["schemas"]["AdminUserOut"] | null;
         };
         /** LowStockRow */
         LowStockRow: {
@@ -4009,7 +4076,7 @@ export interface components {
             /** Kind */
             kind: string;
             /** Products */
-            products?: {
+            products: {
                 [key: string]: components["schemas"]["ProductCard"];
             };
             /** Seo Description */
@@ -4587,6 +4654,11 @@ export interface components {
             /** Phone */
             phone?: string | null;
         };
+        /** PromoCodeIn */
+        PromoCodeIn: {
+            /** Code */
+            code: string;
+        };
         /** PromoCodeOut */
         PromoCodeOut: {
             /** Amount Kop */
@@ -4654,6 +4726,49 @@ export interface components {
             percent?: number | null;
             /** Product Ids */
             product_ids?: string[] | null;
+            /** Starts At */
+            starts_at?: string | null;
+        };
+        /** PromoCodeSaveIn */
+        PromoCodeSaveIn: {
+            /** Amount Kop */
+            amount_kop?: number | null;
+            /**
+             * Applies To Discounted
+             * @default false
+             */
+            applies_to_discounted: boolean;
+            /** Category Ids */
+            category_ids?: string[];
+            /** Code */
+            code: string;
+            /** Description */
+            description?: string | null;
+            /** Ends At */
+            ends_at?: string | null;
+            /**
+             * First Order Only
+             * @default false
+             */
+            first_order_only: boolean;
+            /**
+             * Is Active
+             * @default true
+             */
+            is_active: boolean;
+            /** Max Uses */
+            max_uses?: number | null;
+            /** Max Uses Per Customer */
+            max_uses_per_customer?: number | null;
+            /**
+             * Min Order Kop
+             * @default 0
+             */
+            min_order_kop: number;
+            /** Percent */
+            percent?: number | null;
+            /** Product Ids */
+            product_ids?: string[];
             /** Starts At */
             starts_at?: string | null;
         };
@@ -4737,7 +4852,7 @@ export interface components {
         /** PublicCategory */
         PublicCategory: {
             /** Children */
-            children?: components["schemas"]["PublicCategory"][];
+            children: components["schemas"]["PublicCategory"][];
             cover: components["schemas"]["MediaOut"] | null;
             /** Description */
             description: string | null;
@@ -5584,121 +5699,6 @@ export interface components {
             /** Lines */
             lines: components["schemas"]["MovementLineOut"][];
         };
-        /** HomeBlockOut */
-        app__api__admin__content__HomeBlockOut: {
-            /** Data */
-            data: {
-                [key: string]: unknown;
-            };
-            /** Images */
-            images: {
-                [key: string]: components["schemas"]["MediaOut"];
-            };
-            /** Is Visible */
-            is_visible: boolean;
-            /** Kind */
-            kind: string;
-            /** Label */
-            label: string;
-            /** Sort Order */
-            sort_order: number;
-        };
-        /** PromoCodeIn */
-        app__api__admin__marketing__PromoCodeIn: {
-            /** Amount Kop */
-            amount_kop?: number | null;
-            /**
-             * Applies To Discounted
-             * @default false
-             */
-            applies_to_discounted: boolean;
-            /** Category Ids */
-            category_ids?: string[];
-            /** Code */
-            code: string;
-            /** Description */
-            description?: string | null;
-            /** Ends At */
-            ends_at?: string | null;
-            /**
-             * First Order Only
-             * @default false
-             */
-            first_order_only: boolean;
-            /**
-             * Is Active
-             * @default true
-             */
-            is_active: boolean;
-            /** Max Uses */
-            max_uses?: number | null;
-            /** Max Uses Per Customer */
-            max_uses_per_customer?: number | null;
-            /**
-             * Min Order Kop
-             * @default 0
-             */
-            min_order_kop: number;
-            /** Percent */
-            percent?: number | null;
-            /** Product Ids */
-            product_ids?: string[];
-            /** Starts At */
-            starts_at?: string | null;
-        };
-        /** MeOut */
-        app__schemas__account__MeOut: {
-            /** Email */
-            email: string | null;
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Marketing Consent */
-            marketing_consent: boolean;
-            /** Name */
-            name: string | null;
-            /** Phone */
-            phone: string | null;
-            /** Points Balance */
-            points_balance: number;
-            /** Points Pending */
-            points_pending: number;
-            /** Telegram Linked */
-            telegram_linked: boolean;
-            /** Telegram Username */
-            telegram_username: string | null;
-        };
-        /** MeOut */
-        app__schemas__admin_auth__MeOut: {
-            /** Csrf Token */
-            csrf_token: string;
-            user: components["schemas"]["AdminUserOut"];
-        };
-        /** PromoCodeIn */
-        app__schemas__checkout__PromoCodeIn: {
-            /** Code */
-            code: string;
-        };
-        /** HomeBlockOut */
-        app__schemas__content__HomeBlockOut: {
-            /** Data */
-            data: {
-                [key: string]: unknown;
-            };
-            /** Events */
-            events?: components["schemas"]["EventOut"][];
-            /** Images */
-            images?: {
-                [key: string]: components["schemas"]["MediaOut"];
-            };
-            /** Kind */
-            kind: string;
-            /** Products */
-            products?: components["schemas"]["ProductCard"][];
-            thursday?: components["schemas"]["ThursdayBlockInfo"] | null;
-        };
     };
     responses: never;
     parameters: never;
@@ -5957,7 +5957,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__account__MeOut"];
+                    "application/json": components["schemas"]["CustomerMeOut"];
                 };
             };
         };
@@ -6083,7 +6083,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__account__MeOut"];
+                    "application/json": components["schemas"]["CustomerMeOut"];
                 };
             };
             /** @description Validation Error */
@@ -6116,7 +6116,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__account__MeOut"];
+                    "application/json": components["schemas"]["CustomerMeOut"];
                 };
             };
             /** @description Validation Error */
@@ -6429,7 +6429,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__admin_auth__MeOut"];
+                    "application/json": components["schemas"]["AdminMeOut"];
                 };
             };
         };
@@ -7097,7 +7097,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__api__admin__content__HomeBlockOut"][];
+                    "application/json": components["schemas"]["AdminHomeBlockOut"][];
                 };
             };
         };
@@ -7156,7 +7156,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__api__admin__content__HomeBlockOut"];
+                    "application/json": components["schemas"]["AdminHomeBlockOut"];
                 };
             };
             /** @description Validation Error */
@@ -8421,7 +8421,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["app__api__admin__marketing__PromoCodeIn"];
+                "application/json": components["schemas"]["PromoCodeSaveIn"];
             };
         };
         responses: {
@@ -9532,7 +9532,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["app__schemas__checkout__PromoCodeIn"];
+                "application/json": components["schemas"]["PromoCodeIn"];
             };
         };
         responses: {

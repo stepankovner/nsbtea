@@ -244,9 +244,70 @@
     "required": [
      "kind",
      "label",
+     "data",
+     "is_default",
      "id"
     ],
     "title": "AddressOut",
+    "type": "object"
+   },
+   "AdminHomeBlockOut": {
+    "properties": {
+     "data": {
+      "additionalProperties": true,
+      "title": "Data",
+      "type": "object"
+     },
+     "images": {
+      "additionalProperties": {
+       "$ref": "#/components/schemas/MediaOut"
+      },
+      "title": "Images",
+      "type": "object"
+     },
+     "is_visible": {
+      "title": "Is Visible",
+      "type": "boolean"
+     },
+     "kind": {
+      "title": "Kind",
+      "type": "string"
+     },
+     "label": {
+      "title": "Label",
+      "type": "string"
+     },
+     "sort_order": {
+      "title": "Sort Order",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "kind",
+     "label",
+     "data",
+     "images",
+     "sort_order",
+     "is_visible"
+    ],
+    "title": "AdminHomeBlockOut",
+    "type": "object"
+   },
+   "AdminMeOut": {
+    "properties": {
+     "csrf_token": {
+      "title": "Csrf Token",
+      "type": "string"
+     },
+     "user": {
+      "$ref": "#/components/schemas/AdminUserOut"
+     }
+    },
+    "required": [
+     "user",
+     "csrf_token"
+    ],
+    "title": "AdminMeOut",
     "type": "object"
    },
    "AdminOrderOut": {
@@ -669,6 +730,7 @@
      }
     },
     "required": [
+     "ok",
      "message"
     ],
     "title": "ApplicationCreated",
@@ -1570,7 +1632,15 @@
     },
     "required": [
      "method",
-     "method_label"
+     "method_label",
+     "vessel",
+     "grams",
+     "volume_ml",
+     "temp_c",
+     "first_steep_sec",
+     "next_steep_sec",
+     "steeps",
+     "note"
     ],
     "title": "BrewingMethodOut",
     "type": "object"
@@ -2030,7 +2100,8 @@
      "total",
      "page",
      "per_page",
-     "facets"
+     "facets",
+     "category"
     ],
     "title": "CatalogPage",
     "type": "object"
@@ -2318,7 +2389,8 @@
      "tile_color",
      "cover",
      "products_count",
-     "archived_at"
+     "archived_at",
+     "children"
     ],
     "title": "CategoryOut",
     "type": "object"
@@ -3097,6 +3169,88 @@
      "total"
     ],
     "title": "CustomerListOut",
+    "type": "object"
+   },
+   "CustomerMeOut": {
+    "properties": {
+     "email": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Email"
+     },
+     "id": {
+      "format": "uuid",
+      "title": "Id",
+      "type": "string"
+     },
+     "marketing_consent": {
+      "title": "Marketing Consent",
+      "type": "boolean"
+     },
+     "name": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Name"
+     },
+     "phone": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Phone"
+     },
+     "points_balance": {
+      "title": "Points Balance",
+      "type": "integer"
+     },
+     "points_pending": {
+      "title": "Points Pending",
+      "type": "integer"
+     },
+     "telegram_linked": {
+      "title": "Telegram Linked",
+      "type": "boolean"
+     },
+     "telegram_username": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Telegram Username"
+     }
+    },
+    "required": [
+     "id",
+     "email",
+     "name",
+     "phone",
+     "telegram_username",
+     "telegram_linked",
+     "marketing_consent",
+     "points_balance",
+     "points_pending"
+    ],
+    "title": "CustomerMeOut",
     "type": "object"
    },
    "CustomerOrderRow": {
@@ -4659,6 +4813,60 @@
     "title": "HomeBlockKind",
     "type": "string"
    },
+   "HomeBlockOut": {
+    "properties": {
+     "data": {
+      "additionalProperties": true,
+      "title": "Data",
+      "type": "object"
+     },
+     "events": {
+      "items": {
+       "$ref": "#/components/schemas/EventOut"
+      },
+      "title": "Events",
+      "type": "array"
+     },
+     "images": {
+      "additionalProperties": {
+       "$ref": "#/components/schemas/MediaOut"
+      },
+      "title": "Images",
+      "type": "object"
+     },
+     "kind": {
+      "title": "Kind",
+      "type": "string"
+     },
+     "products": {
+      "items": {
+       "$ref": "#/components/schemas/ProductCard"
+      },
+      "title": "Products",
+      "type": "array"
+     },
+     "thursday": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/ThursdayBlockInfo"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     }
+    },
+    "required": [
+     "kind",
+     "data",
+     "images",
+     "products",
+     "events",
+     "thursday"
+    ],
+    "title": "HomeBlockOut",
+    "type": "object"
+   },
    "HomeBlockPatch": {
     "properties": {
      "data": {
@@ -4692,7 +4900,7 @@
     "properties": {
      "blocks": {
       "items": {
-       "$ref": "#/components/schemas/app__schemas__content__HomeBlockOut"
+       "$ref": "#/components/schemas/HomeBlockOut"
       },
       "title": "Blocks",
       "type": "array"
@@ -4830,7 +5038,10 @@
      }
     },
     "required": [
-     "status"
+     "status",
+     "user",
+     "csrf_token",
+     "challenge_id"
     ],
     "title": "LoginOut",
     "type": "object"
@@ -4976,6 +5187,7 @@
      }
     },
     "required": [
+     "ok",
      "message"
     ],
     "title": "MessageOut",
@@ -5226,6 +5438,9 @@
       "type": "boolean"
      }
     },
+    "required": [
+     "ok"
+    ],
     "title": "Ok",
     "type": "object"
    },
@@ -5972,7 +6187,8 @@
      "cover",
      "seo_title",
      "seo_description",
-     "updated_at"
+     "updated_at",
+     "products"
     ],
     "title": "PageOut",
     "type": "object"
@@ -7957,6 +8173,21 @@
     "title": "ProfileIn",
     "type": "object"
    },
+   "PromoCodeIn": {
+    "properties": {
+     "code": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Code",
+      "type": "string"
+     }
+    },
+    "required": [
+     "code"
+    ],
+    "title": "PromoCodeIn",
+    "type": "object"
+   },
    "PromoCodeOut": {
     "properties": {
      "amount_kop": {
@@ -8284,6 +8515,145 @@
      }
     },
     "title": "PromoCodePatch",
+    "type": "object"
+   },
+   "PromoCodeSaveIn": {
+    "properties": {
+     "amount_kop": {
+      "anyOf": [
+       {
+        "exclusiveMinimum": 0.0,
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Amount Kop"
+     },
+     "applies_to_discounted": {
+      "default": false,
+      "title": "Applies To Discounted",
+      "type": "boolean"
+     },
+     "category_ids": {
+      "items": {
+       "format": "uuid",
+       "type": "string"
+      },
+      "maxItems": 100,
+      "title": "Category Ids",
+      "type": "array"
+     },
+     "code": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Code",
+      "type": "string"
+     },
+     "description": {
+      "anyOf": [
+       {
+        "maxLength": 500,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Description"
+     },
+     "ends_at": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Ends At"
+     },
+     "first_order_only": {
+      "default": false,
+      "title": "First Order Only",
+      "type": "boolean"
+     },
+     "is_active": {
+      "default": true,
+      "title": "Is Active",
+      "type": "boolean"
+     },
+     "max_uses": {
+      "anyOf": [
+       {
+        "minimum": 1.0,
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Max Uses"
+     },
+     "max_uses_per_customer": {
+      "anyOf": [
+       {
+        "minimum": 1.0,
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Max Uses Per Customer"
+     },
+     "min_order_kop": {
+      "default": 0,
+      "minimum": 0.0,
+      "title": "Min Order Kop",
+      "type": "integer"
+     },
+     "percent": {
+      "anyOf": [
+       {
+        "maximum": 99.0,
+        "minimum": 1.0,
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Percent"
+     },
+     "product_ids": {
+      "items": {
+       "format": "uuid",
+       "type": "string"
+      },
+      "maxItems": 500,
+      "title": "Product Ids",
+      "type": "array"
+     },
+     "starts_at": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Starts At"
+     }
+    },
+    "required": [
+     "code"
+    ],
+    "title": "PromoCodeSaveIn",
     "type": "object"
    },
    "PromoStateOut": {
@@ -8694,7 +9064,8 @@
      "seo_description",
      "tile_color",
      "cover",
-     "products_count"
+     "products_count",
+     "children"
     ],
     "title": "PublicCategory",
     "type": "object"
@@ -10897,351 +11268,6 @@
     ],
     "title": "WriteoffOut",
     "type": "object"
-   },
-   "app__api__admin__content__HomeBlockOut": {
-    "properties": {
-     "data": {
-      "additionalProperties": true,
-      "title": "Data",
-      "type": "object"
-     },
-     "images": {
-      "additionalProperties": {
-       "$ref": "#/components/schemas/MediaOut"
-      },
-      "title": "Images",
-      "type": "object"
-     },
-     "is_visible": {
-      "title": "Is Visible",
-      "type": "boolean"
-     },
-     "kind": {
-      "title": "Kind",
-      "type": "string"
-     },
-     "label": {
-      "title": "Label",
-      "type": "string"
-     },
-     "sort_order": {
-      "title": "Sort Order",
-      "type": "integer"
-     }
-    },
-    "required": [
-     "kind",
-     "label",
-     "data",
-     "images",
-     "sort_order",
-     "is_visible"
-    ],
-    "title": "HomeBlockOut",
-    "type": "object"
-   },
-   "app__api__admin__marketing__PromoCodeIn": {
-    "properties": {
-     "amount_kop": {
-      "anyOf": [
-       {
-        "exclusiveMinimum": 0.0,
-        "type": "integer"
-       },
-       {
-        "type": "null"
-       }
-      ],
-      "title": "Amount Kop"
-     },
-     "applies_to_discounted": {
-      "default": false,
-      "title": "Applies To Discounted",
-      "type": "boolean"
-     },
-     "category_ids": {
-      "items": {
-       "format": "uuid",
-       "type": "string"
-      },
-      "maxItems": 100,
-      "title": "Category Ids",
-      "type": "array"
-     },
-     "code": {
-      "maxLength": 64,
-      "minLength": 1,
-      "title": "Code",
-      "type": "string"
-     },
-     "description": {
-      "anyOf": [
-       {
-        "maxLength": 500,
-        "type": "string"
-       },
-       {
-        "type": "null"
-       }
-      ],
-      "title": "Description"
-     },
-     "ends_at": {
-      "anyOf": [
-       {
-        "format": "date-time",
-        "type": "string"
-       },
-       {
-        "type": "null"
-       }
-      ],
-      "title": "Ends At"
-     },
-     "first_order_only": {
-      "default": false,
-      "title": "First Order Only",
-      "type": "boolean"
-     },
-     "is_active": {
-      "default": true,
-      "title": "Is Active",
-      "type": "boolean"
-     },
-     "max_uses": {
-      "anyOf": [
-       {
-        "minimum": 1.0,
-        "type": "integer"
-       },
-       {
-        "type": "null"
-       }
-      ],
-      "title": "Max Uses"
-     },
-     "max_uses_per_customer": {
-      "anyOf": [
-       {
-        "minimum": 1.0,
-        "type": "integer"
-       },
-       {
-        "type": "null"
-       }
-      ],
-      "title": "Max Uses Per Customer"
-     },
-     "min_order_kop": {
-      "default": 0,
-      "minimum": 0.0,
-      "title": "Min Order Kop",
-      "type": "integer"
-     },
-     "percent": {
-      "anyOf": [
-       {
-        "maximum": 99.0,
-        "minimum": 1.0,
-        "type": "integer"
-       },
-       {
-        "type": "null"
-       }
-      ],
-      "title": "Percent"
-     },
-     "product_ids": {
-      "items": {
-       "format": "uuid",
-       "type": "string"
-      },
-      "maxItems": 500,
-      "title": "Product Ids",
-      "type": "array"
-     },
-     "starts_at": {
-      "anyOf": [
-       {
-        "format": "date-time",
-        "type": "string"
-       },
-       {
-        "type": "null"
-       }
-      ],
-      "title": "Starts At"
-     }
-    },
-    "required": [
-     "code"
-    ],
-    "title": "PromoCodeIn",
-    "type": "object"
-   },
-   "app__schemas__account__MeOut": {
-    "properties": {
-     "email": {
-      "anyOf": [
-       {
-        "type": "string"
-       },
-       {
-        "type": "null"
-       }
-      ],
-      "title": "Email"
-     },
-     "id": {
-      "format": "uuid",
-      "title": "Id",
-      "type": "string"
-     },
-     "marketing_consent": {
-      "title": "Marketing Consent",
-      "type": "boolean"
-     },
-     "name": {
-      "anyOf": [
-       {
-        "type": "string"
-       },
-       {
-        "type": "null"
-       }
-      ],
-      "title": "Name"
-     },
-     "phone": {
-      "anyOf": [
-       {
-        "type": "string"
-       },
-       {
-        "type": "null"
-       }
-      ],
-      "title": "Phone"
-     },
-     "points_balance": {
-      "title": "Points Balance",
-      "type": "integer"
-     },
-     "points_pending": {
-      "title": "Points Pending",
-      "type": "integer"
-     },
-     "telegram_linked": {
-      "title": "Telegram Linked",
-      "type": "boolean"
-     },
-     "telegram_username": {
-      "anyOf": [
-       {
-        "type": "string"
-       },
-       {
-        "type": "null"
-       }
-      ],
-      "title": "Telegram Username"
-     }
-    },
-    "required": [
-     "id",
-     "email",
-     "name",
-     "phone",
-     "telegram_username",
-     "telegram_linked",
-     "marketing_consent",
-     "points_balance",
-     "points_pending"
-    ],
-    "title": "MeOut",
-    "type": "object"
-   },
-   "app__schemas__admin_auth__MeOut": {
-    "properties": {
-     "csrf_token": {
-      "title": "Csrf Token",
-      "type": "string"
-     },
-     "user": {
-      "$ref": "#/components/schemas/AdminUserOut"
-     }
-    },
-    "required": [
-     "user",
-     "csrf_token"
-    ],
-    "title": "MeOut",
-    "type": "object"
-   },
-   "app__schemas__checkout__PromoCodeIn": {
-    "properties": {
-     "code": {
-      "maxLength": 64,
-      "minLength": 1,
-      "title": "Code",
-      "type": "string"
-     }
-    },
-    "required": [
-     "code"
-    ],
-    "title": "PromoCodeIn",
-    "type": "object"
-   },
-   "app__schemas__content__HomeBlockOut": {
-    "properties": {
-     "data": {
-      "additionalProperties": true,
-      "title": "Data",
-      "type": "object"
-     },
-     "events": {
-      "items": {
-       "$ref": "#/components/schemas/EventOut"
-      },
-      "title": "Events",
-      "type": "array"
-     },
-     "images": {
-      "additionalProperties": {
-       "$ref": "#/components/schemas/MediaOut"
-      },
-      "title": "Images",
-      "type": "object"
-     },
-     "kind": {
-      "title": "Kind",
-      "type": "string"
-     },
-     "products": {
-      "items": {
-       "$ref": "#/components/schemas/ProductCard"
-      },
-      "title": "Products",
-      "type": "array"
-     },
-     "thursday": {
-      "anyOf": [
-       {
-        "$ref": "#/components/schemas/ThursdayBlockInfo"
-       },
-       {
-        "type": "null"
-       }
-      ]
-     }
-    },
-    "required": [
-     "kind",
-     "data"
-    ],
-    "title": "HomeBlockOut",
-    "type": "object"
    }
   }
  },
@@ -11567,7 +11593,7 @@
       "content": {
        "application/json": {
         "schema": {
-         "$ref": "#/components/schemas/app__schemas__account__MeOut"
+         "$ref": "#/components/schemas/CustomerMeOut"
         }
        }
       },
@@ -11730,7 +11756,7 @@
       "content": {
        "application/json": {
         "schema": {
-         "$ref": "#/components/schemas/app__schemas__account__MeOut"
+         "$ref": "#/components/schemas/CustomerMeOut"
         }
        }
       },
@@ -11771,7 +11797,7 @@
       "content": {
        "application/json": {
         "schema": {
-         "$ref": "#/components/schemas/app__schemas__account__MeOut"
+         "$ref": "#/components/schemas/CustomerMeOut"
         }
        }
       },
@@ -12259,7 +12285,7 @@
       "content": {
        "application/json": {
         "schema": {
-         "$ref": "#/components/schemas/app__schemas__admin_auth__MeOut"
+         "$ref": "#/components/schemas/AdminMeOut"
         }
        }
       },
@@ -13172,7 +13198,7 @@
        "application/json": {
         "schema": {
          "items": {
-          "$ref": "#/components/schemas/app__api__admin__content__HomeBlockOut"
+          "$ref": "#/components/schemas/AdminHomeBlockOut"
          },
          "title": "Response List Blocks Api Admin Home Blocks Get",
          "type": "array"
@@ -13257,7 +13283,7 @@
       "content": {
        "application/json": {
         "schema": {
-         "$ref": "#/components/schemas/app__api__admin__content__HomeBlockOut"
+         "$ref": "#/components/schemas/AdminHomeBlockOut"
         }
        }
       },
@@ -15270,7 +15296,7 @@
      "content": {
       "application/json": {
        "schema": {
-        "$ref": "#/components/schemas/app__api__admin__marketing__PromoCodeIn"
+        "$ref": "#/components/schemas/PromoCodeSaveIn"
        }
       }
      },
@@ -16725,7 +16751,7 @@
      "content": {
       "application/json": {
        "schema": {
-        "$ref": "#/components/schemas/app__schemas__checkout__PromoCodeIn"
+        "$ref": "#/components/schemas/PromoCodeIn"
        }
       }
      },

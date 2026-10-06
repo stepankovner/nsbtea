@@ -17,8 +17,8 @@ from app.schemas.account import (
     AccountOrderItem,
     AddressIn,
     AddressOut,
+    CustomerMeOut,
     DeleteAccountIn,
-    MeOut,
     PointsHistoryItem,
     ProfileIn,
     RepeatOut,
@@ -36,8 +36,8 @@ from app.services.storefront import card_context, make_card, visible_condition
 router = APIRouter(prefix="/account", tags=["личный кабинет"])
 
 
-async def _me(db: Db, customer: CurrentCustomer) -> MeOut:
-    return MeOut(
+async def _me(db: Db, customer: CurrentCustomer) -> CustomerMeOut:
+    return CustomerMeOut(
         id=customer.id,
         email=customer.email,
         name=customer.name,
@@ -50,13 +50,13 @@ async def _me(db: Db, customer: CurrentCustomer) -> MeOut:
     )
 
 
-@router.get("/me", response_model=MeOut, summary="Профиль")
-async def me(customer: CurrentCustomer, db: Db) -> MeOut:
+@router.get("/me", response_model=CustomerMeOut, summary="Профиль")
+async def me(customer: CurrentCustomer, db: Db) -> CustomerMeOut:
     return await _me(db, customer)
 
 
-@router.patch("/profile", response_model=MeOut, summary="Изменить профиль")
-async def update_profile(payload: ProfileIn, customer: CurrentCustomer, db: Db) -> MeOut:
+@router.patch("/profile", response_model=CustomerMeOut, summary="Изменить профиль")
+async def update_profile(payload: ProfileIn, customer: CurrentCustomer, db: Db) -> CustomerMeOut:
     if payload.name is not None:
         customer.name = " ".join(payload.name.split()) or None
     if payload.phone is not None:
@@ -66,10 +66,10 @@ async def update_profile(payload: ProfileIn, customer: CurrentCustomer, db: Db) 
     return await _me(db, customer)
 
 
-@router.post("/telegram", response_model=MeOut, summary="Привязать Telegram")
+@router.post("/telegram", response_model=CustomerMeOut, summary="Привязать Telegram")
 async def link_telegram(
     payload: TelegramIn, customer: CurrentCustomer, db: Db, container: Deps
-) -> MeOut:
+) -> CustomerMeOut:
     await customer_auth.link_telegram(
         db, container, customer, payload.model_dump(exclude_none=True)
     )

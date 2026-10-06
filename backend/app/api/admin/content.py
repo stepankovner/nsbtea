@@ -247,7 +247,7 @@ async def restore_page(
 # ------------------------------------------------------------------ home blocks
 
 
-class HomeBlockOut(ApiModel):
+class AdminHomeBlockOut(ApiModel):
     kind: str
     label: str
     data: dict[str, Any]
@@ -261,11 +261,11 @@ class HomeBlockPatch(ApiModel):
     is_visible: bool | None = None
 
 
-async def _block_out(db: Db, container: Deps, block: HomeBlock) -> HomeBlockOut:
+async def _block_out(db: Db, container: Deps, block: HomeBlock) -> AdminHomeBlockOut:
     ids = media_ids_in(block.data)
     media = (await db.scalars(select(MediaFile).where(MediaFile.id.in_(ids)))).all() if ids else []
     images = {str(m.id): out for m in media if (out := media_out(container, m)) is not None}
-    return HomeBlockOut(
+    return AdminHomeBlockOut(
         kind=block.kind,
         label=HOME_BLOCK_LABELS.get(HomeBlockKind(block.kind), block.kind),
         data=block.data,
@@ -275,16 +275,16 @@ async def _block_out(db: Db, container: Deps, block: HomeBlock) -> HomeBlockOut:
     )
 
 
-@router.get("/home-blocks", response_model=list[HomeBlockOut], summary="Блоки главной")
-async def list_blocks(_: ContentAccess, db: Db, container: Deps) -> list[HomeBlockOut]:
+@router.get("/home-blocks", response_model=list[AdminHomeBlockOut], summary="Блоки главной")
+async def list_blocks(_: ContentAccess, db: Db, container: Deps) -> list[AdminHomeBlockOut]:
     blocks = (await db.scalars(select(HomeBlock).order_by(HomeBlock.sort_order))).all()
     return [await _block_out(db, container, b) for b in blocks]
 
 
-@router.patch("/home-blocks/{kind}", response_model=HomeBlockOut, summary="Изменить блок")
+@router.patch("/home-blocks/{kind}", response_model=AdminHomeBlockOut, summary="Изменить блок")
 async def update_block(
     kind: HomeBlockKind, payload: HomeBlockPatch, context: ContentAccess, db: Db, container: Deps
-) -> HomeBlockOut:
+) -> AdminHomeBlockOut:
     block = await db.scalar(select(HomeBlock).where(HomeBlock.kind == kind.value))
     if block is None:
         block = HomeBlock(kind=kind.value, data={}, sort_order=100)

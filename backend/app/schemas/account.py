@@ -7,7 +7,7 @@ from pydantic import Field
 from app.schemas.common import ApiModel
 
 
-class MeOut(ApiModel):
+class CustomerMeOut(ApiModel):
     id: uuid.UUID
     email: str | None
     name: str | None

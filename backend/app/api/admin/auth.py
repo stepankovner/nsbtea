@@ -17,13 +17,13 @@ from app.container import Container
 from app.models.admin import PERMISSION_LABELS, AdminUser
 from app.schemas.admin_auth import (
     AcceptInviteIn,
+    AdminMeOut,
     AdminUserOut,
     ChangePasswordIn,
     ForgotPasswordIn,
     InviteInfoOut,
     LoginIn,
     LoginOut,
-    MeOut,
     PermissionOption,
     ResetPasswordIn,
     StaffCreatedOut,
@@ -92,9 +92,9 @@ async def two_factor(
     return _session_out(response, container, tokens)
 
 
-@router.get("/me", response_model=MeOut, summary="Текущий сотрудник")
-async def me(context: Admin) -> MeOut:
-    return MeOut(user=AdminUserOut.of(context.user), csrf_token=context.session.csrf_token)
+@router.get("/me", response_model=AdminMeOut, summary="Текущий сотрудник")
+async def me(context: Admin) -> AdminMeOut:
+    return AdminMeOut(user=AdminUserOut.of(context.user), csrf_token=context.session.csrf_token)
 
 
 @router.post("/logout", response_model=Ok, summary="Выйти")

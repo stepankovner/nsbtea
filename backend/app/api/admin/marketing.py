@@ -317,7 +317,7 @@ async def archive_promotion(
 # ------------------------------------------------------------------ promo codes
 
 
-class PromoCodeIn(ApiModel):
+class PromoCodeSaveIn(ApiModel):
     code: str = Field(min_length=1, max_length=64)
     description: str | None = Field(default=None, max_length=500)
     percent: int | None = Field(default=None, ge=1, le=99)
@@ -414,7 +414,7 @@ async def list_codes(_: PromotionsAccess, db: Db, container: Deps) -> list[Promo
     summary="Создать промокод",
 )
 async def create_code(
-    payload: PromoCodeIn, context: PromotionsAccess, db: Db, container: Deps
+    payload: PromoCodeSaveIn, context: PromotionsAccess, db: Db, container: Deps
 ) -> PromoCodeOut:
     promo = await svc.save_promo_code(db, context.user, None, payload.model_dump())
     return await _code_out(db, container, promo)
