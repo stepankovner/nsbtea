@@ -3,8 +3,10 @@
 Боевой контейнер собирается из переменных окружения; в тестах — с заглушками.
 """
 
+import logging
 from dataclasses import dataclass, field
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -27,6 +29,11 @@ from app.integrations.messaging import (
 from app.integrations.payments import FakePaymentGateway, PaymentGateway
 from app.integrations.storage import LocalStorage, S3Storage, Storage
 
+if TYPE_CHECKING:
+    from arq.connections import ArqRedis
+
+logger = logging.getLogger(__name__)
+
 
 class Kicker:
     """Будит воркер, чтобы тот сразу доставил сообщения из outbox (иначе — по расписанию)."""
@@ -36,21 +43,25 @@ class Kicker:
 
 
 class ArqKicker(Kicker):
+    """Ставит задачу в очередь arq. Одно соединение на процесс; сбой Redis не ломает запрос —
+    сообщение всё равно уйдёт по расписанию воркера."""
+
     def __init__(self, redis_url: str) -> None:
         self._redis_url = redis_url
+        self._pool: ArqRedis | None = None
 
     async def kick(self, job: str) -> None:
         from arq import create_pool
         from arq.connections import RedisSettings
 
         try:
-            pool = await create_pool(RedisSettings.from_dsn(self._redis_url))
-            try:
-                await pool.enqueue_job(job, _job_id=f"{job}:kick", _defer_by=1)
-            finally:
-                await pool.aclose()
+            if self._pool is None:
+                self._pool = await create_pool(RedisSettings.from_dsn(self._redis_url))
+            # один и тот же id: пока задача ждёт в очереди, повторные «пинки» не плодят копии
+            await self._pool.enqueue_job(job, _job_id=f"{job}:kick", _defer_by=1)
         except Exception:
-            return None
+            logger.warning("Не удалось поставить задачу %s в очередь", job, exc_info=True)
+            self._pool = None
 
 
 @dataclass

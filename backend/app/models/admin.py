@@ -94,6 +94,7 @@ class ChallengePurpose(StrEnum):
     LOGIN_2FA = "login_2fa"
     PASSWORD_RESET = "password_reset"  # noqa: S105 - это не пароль, а назначение кода
     TELEGRAM_LINK = "telegram_link"
+    RECIPIENT_LINK = "recipient_link"  # добавить чат в получатели уведомлений
 
 
 class AdminChallenge(IdMixin, Base):

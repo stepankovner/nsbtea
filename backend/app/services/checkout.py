@@ -195,6 +195,7 @@ async def place_order(
             product_discount_kop=line.product_discount_kop,
             order_discount_kop=line.order_discount_kop,
             points_kop=line.points_kop,
+            applied_promotion_id=line.promotion_id,
             applied_promotion_title=line.promotion_title,
             receipt_amount_kop=line.receipt_amount_kop,
         )
@@ -204,7 +205,11 @@ async def place_order(
     await db.flush()
     await db.refresh(order, ["number"])
     order_service.record_history(
-        order, from_status=None, to_status=order.status, actor_type=order_service.CUSTOMER
+        order,
+        from_status=None,
+        to_status=order.status,
+        actor_type=order_service.CUSTOMER,
+        at=now,
     )
     await order_service.reserve_stock(db, container, order)
     await order_service.reserve_points(db, order)

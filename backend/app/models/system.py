@@ -80,7 +80,7 @@ class OutboxMessage(IdMixin, Base):
     attempts: Mapped[int] = mapped_column(default=0)
     last_error: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
-    next_attempt_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    next_attempt_at: Mapped[datetime | None]  # пусто — отправить сразу; иначе — время повтора
     sent_at: Mapped[datetime | None]
 
 

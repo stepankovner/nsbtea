@@ -285,7 +285,7 @@ async def list_pages(
 # ------------------------------------------------------------------ home
 
 
-def _media_ids(data: Any) -> set[uuid.UUID]:
+def media_ids_in(data: Any) -> set[uuid.UUID]:
     found: set[uuid.UUID] = set()
     if isinstance(data, dict):
         for key, value in data.items():
@@ -295,10 +295,10 @@ def _media_ids(data: Any) -> set[uuid.UUID]:
                 except ValueError:
                     continue
             else:
-                found |= _media_ids(value)
+                found |= media_ids_in(value)
     elif isinstance(data, list):
         for item in data:
-            found |= _media_ids(item)
+            found |= media_ids_in(item)
     return found
 
 
@@ -314,7 +314,7 @@ async def home(db: AsyncSession, container: Container) -> HomeOut:
     ctx = await card_context(db, container)
     media_ids: set[uuid.UUID] = set()
     for block in blocks:
-        media_ids |= _media_ids(block.data)
+        media_ids |= media_ids_in(block.data)
     media = {
         m.id: m
         for m in (
@@ -341,7 +341,7 @@ async def home(db: AsyncSession, container: Container) -> HomeOut:
         data = block.data
         images = {
             str(mid): image
-            for mid in _media_ids(data)
+            for mid in media_ids_in(data)
             if (image := media_out(container, media.get(mid))) is not None
         }
         out = HomeBlockOut(kind=block.kind, data=data, images=images)

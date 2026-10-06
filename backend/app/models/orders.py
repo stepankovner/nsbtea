@@ -106,6 +106,7 @@ class OrderItem(IdMixin, Base):
     product_discount_kop: Mapped[int] = mapped_column(default=0)
     order_discount_kop: Mapped[int] = mapped_column(default=0)
     points_kop: Mapped[int] = mapped_column(default=0)
+    applied_promotion_id: Mapped[uuid.UUID | None] = mapped_column(index=True)  # акция или четверг
     applied_promotion_title: Mapped[str | None] = mapped_column(String(200))
     receipt_amount_kop: Mapped[int] = mapped_column(default=0)
 

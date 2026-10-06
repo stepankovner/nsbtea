@@ -3,7 +3,7 @@
 import logging
 from datetime import timedelta
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.container import Container
@@ -54,7 +54,10 @@ async def deliver_pending(container: Container) -> int:
                 select(OutboxMessage)
                 .where(
                     OutboxMessage.status == OutboxStatus.PENDING.value,
-                    OutboxMessage.next_attempt_at <= now,
+                    or_(
+                        OutboxMessage.next_attempt_at.is_(None),
+                        OutboxMessage.next_attempt_at <= now,
+                    ),
                 )
                 .order_by(OutboxMessage.created_at)
                 .limit(BATCH_SIZE)

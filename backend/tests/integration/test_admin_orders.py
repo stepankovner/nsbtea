@@ -104,7 +104,7 @@ class TestStatusFlow:
         completed_mail = [
             m for m in await outbox(db, channel="email") if "выполнен" in (m.subject or "")
         ]
-        assert "90 баллов" in completed_mail[0].subject
+        assert "90 баллов" in (completed_mail[0].subject or "")
 
         actions = [e.action for e in (await db.scalars(select(AuditLog))).all()]
         assert actions.count("order.status") == 3

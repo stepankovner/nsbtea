@@ -20,6 +20,8 @@ NAMING_CONVENTION = {
 
 
 class Base(DeclarativeBase):
+    # серверные значения (created_at и т.п.) сразу приходят через RETURNING — без ленивой загрузки
+    __mapper_args__ = {"eager_defaults": True}  # noqa: RUF012
     metadata = MetaData(naming_convention=NAMING_CONVENTION)
     type_annotation_map = {  # noqa: RUF012
         dict[str, Any]: JSONB,
@@ -35,8 +37,5 @@ class IdMixin:
 
 
 class TimestampMixin:
-    # серверные created_at/updated_at сразу возвращаются через RETURNING — без ленивой подгрузки
-    __mapper_args__ = {"eager_defaults": True}  # noqa: RUF012
-
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=func.now())

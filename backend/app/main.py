@@ -13,11 +13,16 @@ from app.api import health
 from app.api.account import routes as account_api
 from app.api.admin import auth as admin_auth_api
 from app.api.admin import catalog as admin_catalog_api
+from app.api.admin import content as admin_content_api
 from app.api.admin import inventory as admin_inventory_api
+from app.api.admin import marketing as admin_marketing_api
+from app.api.admin import orders as admin_orders_api
+from app.api.admin import overview as admin_overview_api
 from app.api.admin import settings as admin_settings_api
 from app.api.errors import install_error_handlers
 from app.api.public import catalog as public_catalog_api
 from app.api.public import shop as shop_api
+from app.api.webhooks import telegram as telegram_webhook_api
 from app.config import Environment, get_settings
 from app.container import Container, build_container
 from app.integrations.storage import LocalStorage
@@ -37,6 +42,11 @@ def _api_router() -> APIRouter:
     router.include_router(admin_settings_api.router)
     router.include_router(admin_catalog_api.router)
     router.include_router(admin_inventory_api.router)
+    router.include_router(admin_orders_api.router)
+    router.include_router(admin_marketing_api.router)
+    router.include_router(admin_content_api.router)
+    router.include_router(admin_overview_api.router)
+    router.include_router(telegram_webhook_api.router)
     return router
 
 

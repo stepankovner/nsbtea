@@ -304,6 +304,7 @@ class LineCalc:
     order_discount_kop: int = 0
     points_kop: int = 0
     promotion_title: str | None = None
+    promotion_id: uuid.UUID | None = None
     problem: str | None = None
     unavailable: bool = False  # товар снят или вариант больше не продаётся — не считаем в сумме
 
@@ -538,6 +539,7 @@ async def compute(
         line.product_discount_kop = result.product_discount_kop
         line.order_discount_kop = result.order_discount_kop
         if result.promotion is not None:
+            line.promotion_id = result.promotion.id
             title = result.promotion.title
             line.promotion_title = (
                 f"{title} −{result.promotion.percent}%"

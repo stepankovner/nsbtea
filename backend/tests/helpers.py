@@ -56,7 +56,9 @@ async def login(
 
 
 async def owner_client(client: AsyncClient, db: AsyncSession) -> AsyncClient:
-    await create_admin(db)
+    """Войти владельцем (создаёт его при первом вызове)."""
+    if await db.scalar(select(AdminUser).where(AdminUser.email == OWNER_EMAIL)) is None:
+        await create_admin(db)
     await login(client)
     return client
 

@@ -2,6 +2,7 @@
 уведомления владельцу и письма покупателю."""
 
 import uuid
+from datetime import datetime
 
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -46,17 +47,19 @@ def record_history(
     actor_type: str,
     actor: AdminUser | None = None,
     comment: str | None = None,
+    at: datetime | None = None,
 ) -> None:
-    order.history.append(
-        OrderStatusChange(
-            from_status=from_status,
-            to_status=to_status,
-            actor_type=actor_type,
-            actor_id=actor.id if actor else None,
-            actor_name=actor.name if actor else ("Система" if actor_type == SYSTEM else None),
-            comment=comment,
-        )
+    change = OrderStatusChange(
+        from_status=from_status,
+        to_status=to_status,
+        actor_type=actor_type,
+        actor_id=actor.id if actor else None,
+        actor_name=actor.name if actor else ("Система" if actor_type == SYSTEM else None),
+        comment=comment,
     )
+    if at is not None:
+        change.created_at = at
+    order.history.append(change)
 
 
 async def set_status(
@@ -88,6 +91,7 @@ async def set_status(
         actor_type=SYSTEM if by_system else ADMIN,
         actor=actor,
         comment=comment,
+        at=now,
     )
 
 
