@@ -93,7 +93,7 @@ describe("OrderDetail — карточка заказа", () => {
     renderWithAdmin(<OrderDetail id="o1" />);
     await userEvent.click(await screen.findByRole("button", { name: "Вернуть деньги" }));
     const dialog = await screen.findByRole("dialog");
-    await userEvent.click(within(dialog).getByRole("button", { name: "Вернуть 3 150 ₽" }));
+    await userEvent.click(within(dialog).getByRole("button", { name: /^Вернуть 3\s150\s₽$/ }));
     expect(ordersApi.refund).toHaveBeenCalledWith("o1", { restock: true, reason: null });
   });
 
@@ -107,7 +107,7 @@ describe("OrderDetail — карточка заказа", () => {
     await userEvent.type(within(dialog).getByLabelText("Сумма возврата"), "500");
     await userEvent.tab();
     await userEvent.click(within(dialog).getByRole("checkbox", { name: "Вернуть товары на склад" }));
-    await userEvent.click(within(dialog).getByRole("button", { name: "Вернуть 500 ₽" }));
+    await userEvent.click(within(dialog).getByRole("button", { name: /^Вернуть 500\s₽$/ }));
     expect(ordersApi.refund).toHaveBeenCalledWith("o1", { amount_kop: 50_000, restock: false, reason: null });
   });
 
