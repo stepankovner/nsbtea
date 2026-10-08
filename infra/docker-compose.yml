@@ -54,6 +54,16 @@ services:
     restart: unless-stopped
     logging: *logging
 
+  # Папка картинок должна принадлежать пользователю приложения: общий том мог быть создан
+  # пустым (владелец root) другим сервисом, тогда загрузка фото падала бы с ошибкой прав.
+  media-init:
+    <<: *backend
+    user: "0:0"
+    command: ["chown", "app:app", "/app/media"]
+    restart: "no"
+    healthcheck:
+      disable: true
+
   # Миграции БД — выполняются перед стартом API и воркера, затем контейнер завершается.
   migrate:
     <<: *backend
@@ -64,6 +74,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      media-init:
+        condition: service_completed_successfully
 
   api:
     <<: *backend
@@ -112,7 +124,6 @@ services:
       - "443:443/udp"
     environment:
       SITE_ADDRESS: ${SITE_ADDRESS:-localhost}
-      ACME_EMAIL: ${ACME_EMAIL:-}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - media:/srv/media:ro
