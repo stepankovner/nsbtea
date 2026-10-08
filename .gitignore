@@ -28,3 +28,6 @@ backend/media/
 infra/data/
 *.log
 .DS_Store
+
+# Рабочие копии агентов разработки
+.claude/worktrees/

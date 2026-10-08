@@ -1,0 +1,109 @@
+# Проверки на каждый push и pull request: линтеры, типы, тесты, сборка образов.
+# Те же команды, что в CLAUDE.md, — локально и в CI одинаково.
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend (ruff, mypy, pytest)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: nsb
+          POSTGRES_PASSWORD: nsb
+          POSTGRES_DB: nsbtea_test
+          TZ: UTC
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U nsb -d nsbtea_test"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      TEST_DATABASE_URL: postgresql+asyncpg://nsb:nsb@localhost:5432/nsbtea_test
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11"
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+      - run: uv python install 3.12
+      - run: uv sync --frozen
+      - name: ruff check
+        run: uv run ruff check app tests
+      - name: ruff format --check
+        run: uv run ruff format --check app tests
+      - name: mypy
+        run: uv run mypy app tests
+      - name: pytest
+        run: uv run pytest -q
+
+  frontend:
+    name: Frontend (lint, typecheck, vitest, build)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: frontend/package.json
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11"
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+      - run: pnpm install --frozen-lockfile
+      - name: Типы API совпадают с backend
+        run: |
+          (cd ../backend && uv python install 3.12 && uv sync --frozen --no-dev)
+          pnpm check:api
+      - name: lint
+        run: pnpm lint
+      - name: typecheck
+        run: pnpm typecheck
+      - name: vitest
+        run: pnpm test
+      - name: build
+        run: pnpm build
+
+  docker:
+    name: Docker-образы и Compose
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+      - name: Файл docker-compose.yml корректен
+        run: |
+          cp .env.example .env
+          sed -i 's/^POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=ci/' .env
+          docker compose -f infra/docker-compose.yml --env-file .env config -q
+      - name: Образ backend
+        run: docker build -f backend/Dockerfile -t nsbtea-backend:ci .
+      - name: Образ сайта
+        run: docker build -f frontend/Dockerfile -t nsbtea-web:ci .
+      - name: Образ резервных копий
+        run: docker build -t nsbtea-backup:ci infra/backup
