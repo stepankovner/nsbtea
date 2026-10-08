@@ -6,7 +6,14 @@ from typing import Annotated
 from fastapi import APIRouter, File, Query, UploadFile, status
 from sqlalchemy import or_, select
 
-from app.api.deps import Db, Deps, MediaAccess, ProductLookupAccess, ProductsAccess
+from app.api.deps import (
+    CategoryReadAccess,
+    Db,
+    Deps,
+    MediaAccess,
+    ProductLookupAccess,
+    ProductsAccess,
+)
 from app.container import Container
 from app.domain.inventory import format_qty
 from app.domain.pricing import ProductType, price_per_100g_kop
@@ -179,7 +186,7 @@ async def product_out(db: Db, container: Container, product: Product) -> Product
 
 @router.get("/categories", response_model=list[CategoryOut], summary="Дерево категорий")
 async def list_categories(
-    _: Products, db: Db, container: Deps, archived: bool = False
+    _: CategoryReadAccess, db: Db, container: Deps, archived: bool = False
 ) -> list[CategoryOut]:
     return [_category_out(container, n) for n in await svc.category_tree(db, archived=archived)]
 
@@ -452,7 +459,11 @@ class LookupProduct(ApiModel):
     type: str
     status: str
     image_url: str | None
+    stock: int
     stock_label: str
+
+
+MAX_LOOKUP_IDS = 200
 
 
 @router.get("/lookup/products", response_model=list[LookupProduct], summary="Выбор товаров (поиск)")
@@ -466,8 +477,9 @@ async def lookup_products(
 ) -> list[LookupProduct]:
     query = select(Product).where(Product.archived_at.is_(None))
     if ids:
-        wanted = [uuid.UUID(i) for i in ids.split(",") if i.strip()]
+        wanted = [uuid.UUID(i) for i in ids.split(",") if i.strip()][:MAX_LOOKUP_IDS]
         query = query.where(Product.id.in_(wanted))
+        limit = max(limit, len(wanted))  # выбранные товары — все, сколько бы их ни было
     elif q and q.strip():
         term = normalize_search(q.strip())
         query = query.where(
@@ -482,6 +494,7 @@ async def lookup_products(
             type=p.type,
             status=p.status,
             image_url=main_image_url(container, p),
+            stock=p.stock,
             stock_label=format_qty(ProductType(p.type), p.stock),
         )
         for p in products

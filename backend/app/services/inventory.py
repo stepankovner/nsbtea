@@ -55,6 +55,15 @@ def threshold_for(product: Product, settings: CatalogSettings) -> int:
     return settings.low_stock_units
 
 
+def _qty_change(product: Product, movement: InventoryMovement) -> list[str]:
+    """«Было → стало» для журнала действий — с единицами: «100 г», «3 шт.»."""
+    kind = product_type(product)
+    return [
+        format_qty(kind, movement.balance_after - movement.delta),
+        format_qty(kind, movement.balance_after),
+    ]
+
+
 async def change_stock(
     db: AsyncSession,
     container: Container,
@@ -199,8 +208,7 @@ async def post_supply(
         entity_id=supply.id,
         summary=f"Принята поставка: {len(lines)} поз.",
         diff={
-            products[m.product_id].name: [m.balance_after - m.delta, m.balance_after]
-            for m in movements
+            products[m.product_id].name: _qty_change(products[m.product_id], m) for m in movements
         },
     )
     return supply, movements
@@ -252,7 +260,13 @@ async def inventory_count(
             action="inventory.count",
             entity="inventory",
             summary=f"Инвентаризация: исправлено {len(changed)} поз.",
-            diff={r.product.name: [r.before, r.actual] for r in changed},
+            diff={
+                r.product.name: [
+                    format_qty(product_type(r.product), r.before),
+                    format_qty(product_type(r.product), r.actual),
+                ]
+                for r in changed
+            },
         )
     return results
 
@@ -300,8 +314,7 @@ async def write_off(
         entity="inventory",
         summary=f"Списание ({label.lower()}): {len(lines)} поз.",
         diff={
-            products[m.product_id].name: [m.balance_after - m.delta, m.balance_after]
-            for m in movements
+            products[m.product_id].name: _qty_change(products[m.product_id], m) for m in movements
         },
     )
     return movements

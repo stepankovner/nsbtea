@@ -108,6 +108,10 @@ MediaAccess = Annotated[
     AdminContext, Depends(require_any(AdminPermission.PRODUCTS, AdminPermission.CONTENT))
 ]
 # выбор товаров в акциях, контенте, складе и заказах
+# Список категорий: товары и акции (акция может действовать на категорию)
+CategoryReadAccess = Annotated[
+    AdminContext, Depends(require_any(AdminPermission.PRODUCTS, AdminPermission.PROMOTIONS))
+]
 ProductLookupAccess = Annotated[
     AdminContext,
     Depends(

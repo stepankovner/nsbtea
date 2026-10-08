@@ -4,7 +4,7 @@ import re
 import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from sqlalchemy import ColumnElement, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,7 +14,13 @@ from app.domain.errors import ConflictError, DomainError, NotFoundError
 from app.domain.loyalty import PointsKind
 from app.domain.orders import REVENUE_STATUSES
 from app.domain.promotions import OrderDiscountSource
-from app.domain.thursday import THURSDAY, msk_today, upcoming_thursdays
+from app.domain.thursday import (
+    THURSDAY,
+    ThursdayMode,
+    msk_today,
+    thursday_window,
+    upcoming_thursdays,
+)
 from app.models import (
     AdminUser,
     Category,
@@ -277,11 +283,17 @@ async def save_promo_code(
 ) -> PromoCode:
     if "code" in data:
         data["code"] = normalize_code(str(data["code"]))
-        clash_query = select(PromoCode.id).where(PromoCode.code == data["code"])
+        clash_query = select(PromoCode).where(PromoCode.code == data["code"])
         if code_id is not None:
             clash_query = clash_query.where(PromoCode.id != code_id)
         clash = await db.scalar(clash_query)
-        if clash:
+        if clash is not None:
+            if clash.archived_at is not None:
+                raise ConflictError(
+                    "Такой промокод уже есть в архиве — восстановите его "
+                    "(«Акции» → «Промокоды» → «Архив»)",
+                    field="code",
+                )
             raise ConflictError("Такой промокод уже есть", field="code")
     if code_id is None:
         promo = PromoCode(code=str(data.get("code", "")))
@@ -347,6 +359,18 @@ async def thursday_calendar(
         )
     ).all()
     return days, {p.date: p for p in plans}
+
+
+async def running_thursday_before(
+    db: AsyncSession, first_upcoming: date, mode: ThursdayMode, now: datetime
+) -> ThursdayPlan | None:
+    """План прошлого четверга, чья скидка ещё идёт (режим «неделя», с пятницы по среду)."""
+    previous = first_upcoming - timedelta(weeks=1)
+    plan = await db.scalar(select(ThursdayPlan).where(ThursdayPlan.date == previous))
+    if plan is None or not plan.products:
+        return None
+    start, end = thursday_window(previous, mode)
+    return plan if start <= now < end else None
 
 
 async def save_thursday(

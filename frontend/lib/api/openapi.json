@@ -5076,6 +5076,10 @@
       "title": "Status",
       "type": "string"
      },
+     "stock": {
+      "title": "Stock",
+      "type": "integer"
+     },
      "stock_label": {
       "title": "Stock Label",
       "type": "string"
@@ -5092,6 +5096,7 @@
      "type",
      "status",
      "image_url",
+     "stock",
      "stock_label"
     ],
     "title": "LookupProduct",
@@ -8256,6 +8261,10 @@
       "title": "Applies To Discounted",
       "type": "boolean"
      },
+     "archived": {
+      "title": "Archived",
+      "type": "boolean"
+     },
      "categories": {
       "items": {
        "$ref": "#/components/schemas/CategoryBrief"
@@ -8381,6 +8390,7 @@
      "starts_at",
      "ends_at",
      "is_active",
+     "archived",
      "status_label",
      "products",
      "categories",
@@ -8837,6 +8847,10 @@
       ],
       "title": "Amount Kop"
      },
+     "archived": {
+      "title": "Archived",
+      "type": "boolean"
+     },
      "categories": {
       "items": {
        "$ref": "#/components/schemas/CategoryBrief"
@@ -8915,6 +8929,7 @@
      "starts_at",
      "ends_at",
      "is_active",
+     "archived",
      "status_label",
      "products",
      "categories",
@@ -10770,6 +10785,16 @@
    },
    "ThursdayCalendarOut": {
     "properties": {
+     "current": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/ThursdayOut"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
      "default_percent": {
       "title": "Default Percent",
       "type": "integer"
@@ -10787,6 +10812,7 @@
      }
     },
     "required": [
+     "current",
      "upcoming",
      "default_percent",
      "mode"
@@ -10892,12 +10918,17 @@
       },
       "title": "Products",
       "type": "array"
+     },
+     "running": {
+      "title": "Running",
+      "type": "boolean"
      }
     },
     "required": [
      "date",
      "label",
      "planned",
+     "running",
      "percent",
      "custom_percent",
      "note",
@@ -12091,6 +12122,44 @@
       }
      },
      {
+      "description": "День по Москве, включительно",
+      "in": "query",
+      "name": "date_from",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "format": "date",
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "День по Москве, включительно",
+       "title": "Date From"
+      }
+     },
+     {
+      "description": "День по Москве, включительно",
+      "in": "query",
+      "name": "date_to",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "format": "date",
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "День по Москве, включительно",
+       "title": "Date To"
+      }
+     },
+     {
       "in": "query",
       "name": "page",
       "required": false,
@@ -12947,6 +13016,7 @@
   },
   "/api/admin/customers/{customer_id}/points": {
    "post": {
+    "description": "Только владелец (SPEC 7.1): у сотрудников нет доступа к деньгам и баллам (SPEC 10.9).",
     "operationId": "adjust_points_api_admin_customers__customer_id__points_post",
     "parameters": [
      {
@@ -13499,6 +13569,23 @@
         }
        ],
        "title": "Product Id"
+      }
+     },
+     {
+      "in": "query",
+      "name": "supply_id",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "format": "uuid",
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Supply Id"
       }
      },
      {
@@ -15405,6 +15492,18 @@
   "/api/admin/promo-codes": {
    "get": {
     "operationId": "list_codes_api_admin_promo_codes_get",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "archived",
+      "required": false,
+      "schema": {
+       "default": false,
+       "title": "Archived",
+       "type": "boolean"
+      }
+     }
+    ],
     "responses": {
      "200": {
       "content": {
@@ -15419,6 +15518,16 @@
        }
       },
       "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
      }
     },
     "summary": "Промокоды",
@@ -15560,9 +15669,64 @@
     ]
    }
   },
+  "/api/admin/promo-codes/{code_id}/restore": {
+   "post": {
+    "operationId": "restore_code_api_admin_promo_codes__code_id__restore_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "code_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Code Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PromoCodeOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Из архива",
+    "tags": [
+     "admin: клиенты и акции"
+    ]
+   }
+  },
   "/api/admin/promotions": {
    "get": {
     "operationId": "list_promotions_api_admin_promotions_get",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "archived",
+      "required": false,
+      "schema": {
+       "default": false,
+       "title": "Archived",
+       "type": "boolean"
+      }
+     }
+    ],
     "responses": {
      "200": {
       "content": {
@@ -15577,6 +15741,16 @@
        }
       },
       "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
      }
     },
     "summary": "Акции",
@@ -15734,6 +15908,49 @@
      }
     },
     "summary": "Изменить акцию",
+    "tags": [
+     "admin: клиенты и акции"
+    ]
+   }
+  },
+  "/api/admin/promotions/{promotion_id}/restore": {
+   "post": {
+    "operationId": "restore_promotion_api_admin_promotions__promotion_id__restore_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "promotion_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Promotion Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PromotionOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Из архива",
     "tags": [
      "admin: клиенты и акции"
     ]

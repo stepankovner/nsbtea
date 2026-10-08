@@ -2,7 +2,7 @@
 
 import re
 import uuid
-from datetime import UTC, datetime, time, timedelta
+from datetime import UTC, date, datetime, time, timedelta
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Query
@@ -421,6 +421,8 @@ async def audit_log(
     db: Db,
     entity: str | None = None,
     actor_id: uuid.UUID | None = None,
+    date_from: Annotated[date | None, Query(description="День по Москве, включительно")] = None,
+    date_to: Annotated[date | None, Query(description="День по Москве, включительно")] = None,
     page: Annotated[int, Query(ge=1)] = 1,
     per_page: Annotated[int, Query(ge=1, le=200)] = 50,
 ) -> AuditOut:
@@ -429,6 +431,10 @@ async def audit_log(
         query = query.where(AuditLog.entity == entity)
     if actor_id:
         query = query.where(AuditLog.actor_id == actor_id)
+    if date_from:
+        query = query.where(AuditLog.at >= _msk_start(date_from))
+    if date_to:
+        query = query.where(AuditLog.at < _msk_start(date_to + timedelta(days=1)))
     total = int(await db.scalar(select(func.count()).select_from(query.subquery())) or 0)
     rows = (
         await db.scalars(

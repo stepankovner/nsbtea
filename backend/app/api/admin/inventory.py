@@ -199,12 +199,16 @@ async def movements(
     _: Inventory,
     db: Db,
     product_id: uuid.UUID | None = None,
+    supply_id: uuid.UUID | None = None,
     page: Annotated[int, Query(ge=1)] = 1,
     per_page: Annotated[int, Query(ge=1, le=200)] = 50,
 ) -> MovementListOut:
-    base = select(InventoryMovement)
+    filters = []
     if product_id:
-        base = base.where(InventoryMovement.product_id == product_id)
+        filters.append(InventoryMovement.product_id == product_id)
+    if supply_id:
+        filters.append(InventoryMovement.supply_id == supply_id)
+    base = select(InventoryMovement).where(*filters)
     total = await db.scalar(select(func.count()).select_from(base.subquery())) or 0
     query = (
         select(InventoryMovement, AdminUser.name, Order.number)
@@ -214,8 +218,7 @@ async def movements(
         .offset((page - 1) * per_page)
         .limit(per_page)
     )
-    if product_id:
-        query = query.where(InventoryMovement.product_id == product_id)
+    query = query.where(*filters)
     rows = (await db.execute(query)).all()
     return MovementListOut(
         items=[

@@ -9,10 +9,12 @@ from pydantic import Field
 from sqlalchemy import select
 
 from app.api.admin.catalog import brief
-from app.api.deps import CustomersAccess, Db, Deps, PromotionsAccess
+from app.api.deps import CustomersAccess, Db, Deps, Owner, PromotionsAccess
+from app.domain.errors import NotFoundError
 from app.domain.loyalty import POINTS_KIND_LABELS, PointsKind
 from app.domain.texts import day_month
-from app.models import Customer, Order, PointsTransaction, PromoCode, Promotion
+from app.domain.thursday import thursday_window
+from app.models import Customer, Order, PointsTransaction, PromoCode, Promotion, ThursdayPlan
 from app.schemas.catalog import ProductBrief
 from app.schemas.common import ApiModel, Ok
 from app.services import audit
@@ -175,8 +177,9 @@ class PointsAdjustIn(ApiModel):
     "/customers/{customer_id}/points", response_model=CustomerCard, summary="Начислить/списать"
 )
 async def adjust_points(
-    customer_id: uuid.UUID, payload: PointsAdjustIn, context: CustomersAccess, db: Db
+    customer_id: uuid.UUID, payload: PointsAdjustIn, context: Owner, db: Db
 ) -> CustomerCard:
+    """Только владелец (SPEC 7.1): у сотрудников нет доступа к деньгам и баллам (SPEC 10.9)."""
     await svc.adjust_points(
         db, context.user, customer_id, delta=payload.delta, comment=payload.comment
     )
@@ -227,6 +230,7 @@ class PromotionOut(ApiModel):
     starts_at: datetime | None
     ends_at: datetime | None
     is_active: bool
+    archived: bool
     status_label: str
     products: list[ProductBrief]
     categories: list[CategoryBrief]
@@ -243,6 +247,7 @@ async def _promotion_out(db: Db, container: Deps, promotion: Promotion) -> Promo
         starts_at=promotion.starts_at,
         ends_at=promotion.ends_at,
         is_active=promotion.is_active,
+        archived=promotion.archived_at is not None,
         status_label=svc.promotion_status(promotion, container.clock.now()),
         products=[brief(container, p) for p in promotion.products],
         categories=[CategoryBrief(id=c.id, name=c.name) for c in promotion.categories],
@@ -251,13 +256,12 @@ async def _promotion_out(db: Db, container: Deps, promotion: Promotion) -> Promo
 
 
 @router.get("/promotions", response_model=list[PromotionOut], summary="Акции")
-async def list_promotions(_: PromotionsAccess, db: Db, container: Deps) -> list[PromotionOut]:
+async def list_promotions(
+    _: PromotionsAccess, db: Db, container: Deps, archived: bool = False
+) -> list[PromotionOut]:
+    in_archive = Promotion.archived_at.is_not(None) if archived else Promotion.archived_at.is_(None)
     promotions = (
-        await db.scalars(
-            select(Promotion)
-            .where(Promotion.archived_at.is_(None))
-            .order_by(Promotion.created_at.desc())
-        )
+        await db.scalars(select(Promotion).where(in_archive).order_by(Promotion.created_at.desc()))
     ).all()
     return [await _promotion_out(db, container, p) for p in promotions]
 
@@ -314,6 +318,26 @@ async def archive_promotion(
     return Ok()
 
 
+@router.post("/promotions/{promotion_id}/restore", response_model=PromotionOut, summary="Из архива")
+async def restore_promotion(
+    promotion_id: uuid.UUID, context: PromotionsAccess, db: Db, container: Deps
+) -> PromotionOut:
+    promotion = await db.get(Promotion, promotion_id)
+    if promotion is None:
+        raise NotFoundError("Акция не найдена")
+    if promotion.archived_at is not None:
+        promotion.archived_at = None  # возвращается выключенной: включить — осознанно
+        await audit.record(
+            db,
+            context.user,
+            action="promotion.restore",
+            entity="promotion",
+            entity_id=promotion.id,
+            summary=f"Акция «{promotion.title}» возвращена из архива (выключена)",
+        )
+    return await _promotion_out(db, container, promotion)
+
+
 # ------------------------------------------------------------------ promo codes
 
 
@@ -365,6 +389,7 @@ class PromoCodeOut(ApiModel):
     starts_at: datetime | None
     ends_at: datetime | None
     is_active: bool
+    archived: bool
     status_label: str
     products: list[ProductBrief]
     categories: list[CategoryBrief]
@@ -388,6 +413,7 @@ async def _code_out(db: Db, container: Deps, promo: PromoCode) -> PromoCodeOut:
         starts_at=promo.starts_at,
         ends_at=promo.ends_at,
         is_active=promo.is_active,
+        archived=promo.archived_at is not None,
         status_label="Действует" if error is None else error,
         products=[brief(container, p) for p in promo.products],
         categories=[CategoryBrief(id=c.id, name=c.name) for c in promo.categories],
@@ -396,13 +422,12 @@ async def _code_out(db: Db, container: Deps, promo: PromoCode) -> PromoCodeOut:
 
 
 @router.get("/promo-codes", response_model=list[PromoCodeOut], summary="Промокоды")
-async def list_codes(_: PromotionsAccess, db: Db, container: Deps) -> list[PromoCodeOut]:
+async def list_codes(
+    _: PromotionsAccess, db: Db, container: Deps, archived: bool = False
+) -> list[PromoCodeOut]:
+    in_archive = PromoCode.archived_at.is_not(None) if archived else PromoCode.archived_at.is_(None)
     codes = (
-        await db.scalars(
-            select(PromoCode)
-            .where(PromoCode.archived_at.is_(None))
-            .order_by(PromoCode.created_at.desc())
-        )
+        await db.scalars(select(PromoCode).where(in_archive).order_by(PromoCode.created_at.desc()))
     ).all()
     return [await _code_out(db, container, c) for c in codes]
 
@@ -435,10 +460,38 @@ async def archive_code(
     code_id: uuid.UUID, context: PromotionsAccess, db: Db, container: Deps
 ) -> Ok:
     promo = await db.get(PromoCode, code_id)
-    if promo is not None:
+    if promo is not None and promo.archived_at is None:
         promo.archived_at = container.clock.now()
         promo.is_active = False
+        await audit.record(
+            db,
+            context.user,
+            action="promo_code.archive",
+            entity="promo_code",
+            entity_id=promo.id,
+            summary=f"Промокод {promo.code} убран в архив",
+        )
     return Ok()
+
+
+@router.post("/promo-codes/{code_id}/restore", response_model=PromoCodeOut, summary="Из архива")
+async def restore_code(
+    code_id: uuid.UUID, context: PromotionsAccess, db: Db, container: Deps
+) -> PromoCodeOut:
+    promo = await db.get(PromoCode, code_id)
+    if promo is None:
+        raise NotFoundError("Промокод не найден")
+    if promo.archived_at is not None:
+        promo.archived_at = None  # возвращается выключенным: включить — осознанно
+        await audit.record(
+            db,
+            context.user,
+            action="promo_code.restore",
+            entity="promo_code",
+            entity_id=promo.id,
+            summary=f"Промокод {promo.code} возвращён из архива (выключен)",
+        )
+    return await _code_out(db, container, promo)
 
 
 # ------------------------------------------------------------------ thursdays
@@ -448,6 +501,7 @@ class ThursdayOut(ApiModel):
     date: date
     label: str
     planned: bool
+    running: bool  # скидка действует прямо сейчас
     percent: int
     custom_percent: int | None
     note: str | None
@@ -455,31 +509,48 @@ class ThursdayOut(ApiModel):
 
 
 class ThursdayCalendarOut(ApiModel):
+    # в режиме «неделя» с пятницы по среду идёт акция прошлого четверга — её не видно в upcoming
+    current: ThursdayOut | None
     upcoming: list[ThursdayOut]
     default_percent: int
     mode: str
 
 
+def _thursday_out(
+    container: Deps,
+    day: date,
+    plan: ThursdayPlan | None,
+    settings: ThursdaySettings,
+    now: datetime,
+) -> ThursdayOut:
+    planned = plan is not None and bool(plan.products)
+    start, end = thursday_window(day, settings.mode)
+    return ThursdayOut(
+        date=day,
+        label=day_month(day),
+        planned=planned,
+        running=planned and start <= now < end,
+        percent=(plan.percent if plan and plan.percent else settings.percent),
+        custom_percent=plan.percent if plan else None,
+        note=plan.note if plan else None,
+        products=[brief(container, p) for p in plan.products] if plan else [],
+    )
+
+
 @router.get("/thursdays", response_model=ThursdayCalendarOut, summary="Календарь четвергов")
 async def thursdays(_: PromotionsAccess, db: Db, container: Deps) -> ThursdayCalendarOut:
     settings = await get_group(db, ThursdaySettings)
+    now = container.clock.now()
     days, plans = await svc.thursday_calendar(db, container)
-    items = []
-    for day in days:
-        plan = plans.get(day)
-        items.append(
-            ThursdayOut(
-                date=day,
-                label=day_month(day),
-                planned=plan is not None and bool(plan.products),
-                percent=(plan.percent if plan and plan.percent else settings.percent),
-                custom_percent=plan.percent if plan else None,
-                note=plan.note if plan else None,
-                products=[brief(container, p) for p in plan.products] if plan else [],
-            )
-        )
+    current = None
+    previous = await svc.running_thursday_before(db, days[0], settings.mode, now)
+    if previous is not None:
+        current = _thursday_out(container, previous.date, previous, settings, now)
     return ThursdayCalendarOut(
-        upcoming=items, default_percent=settings.percent, mode=settings.mode.value
+        current=current,
+        upcoming=[_thursday_out(container, day, plans.get(day), settings, now) for day in days],
+        default_percent=settings.percent,
+        mode=settings.mode.value,
     )
 
 

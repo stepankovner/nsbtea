@@ -564,7 +564,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Начислить/списать */
+        /**
+         * Начислить/списать
+         * @description Только владелец (SPEC 7.1): у сотрудников нет доступа к деньгам и баллам (SPEC 10.9).
+         */
         post: operations["adjust_points_api_admin_customers__customer_id__points_post"];
         delete?: never;
         options?: never;
@@ -1216,6 +1219,23 @@ export interface paths {
         patch: operations["update_code_api_admin_promo_codes__code_id__patch"];
         trace?: never;
     };
+    "/api/admin/promo-codes/{code_id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Из архива */
+        post: operations["restore_code_api_admin_promo_codes__code_id__restore_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/promotions": {
         parameters: {
             query?: never;
@@ -1267,6 +1287,23 @@ export interface paths {
         head?: never;
         /** Изменить акцию */
         patch: operations["update_promotion_api_admin_promotions__promotion_id__patch"];
+        trace?: never;
+    };
+    "/api/admin/promotions/{promotion_id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Из архива */
+        post: operations["restore_promotion_api_admin_promotions__promotion_id__restore_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/admin/search": {
@@ -3691,6 +3728,8 @@ export interface components {
             slug: string;
             /** Status */
             status: string;
+            /** Stock */
+            stock: number;
             /** Stock Label */
             stock_label: string;
             /** Type */
@@ -4702,6 +4741,8 @@ export interface components {
             amount_kop: number | null;
             /** Applies To Discounted */
             applies_to_discounted: boolean;
+            /** Archived */
+            archived: boolean;
             /** Categories */
             categories: components["schemas"]["CategoryBrief"][];
             /** Code */
@@ -4844,6 +4885,8 @@ export interface components {
         PromotionOut: {
             /** Amount Kop */
             amount_kop: number | null;
+            /** Archived */
+            archived: boolean;
             /** Categories */
             categories: components["schemas"]["CategoryBrief"][];
             /** Ends At */
@@ -5538,6 +5581,7 @@ export interface components {
         };
         /** ThursdayCalendarOut */
         ThursdayCalendarOut: {
+            current: components["schemas"]["ThursdayOut"] | null;
             /** Default Percent */
             default_percent: number;
             /** Mode */
@@ -5578,6 +5622,8 @@ export interface components {
             planned: boolean;
             /** Products */
             products: components["schemas"]["ProductBrief"][];
+            /** Running */
+            running: boolean;
         };
         /** ThursdayPublic */
         ThursdayPublic: {
@@ -6272,6 +6318,10 @@ export interface operations {
             query?: {
                 entity?: string | null;
                 actor_id?: string | null;
+                /** @description День по Москве, включительно */
+                date_from?: string | null;
+                /** @description День по Москве, включительно */
+                date_to?: string | null;
                 page?: number;
                 per_page?: number;
             };
@@ -7277,6 +7327,7 @@ export interface operations {
         parameters: {
             query?: {
                 product_id?: string | null;
+                supply_id?: string | null;
                 page?: number;
                 per_page?: number;
             };
@@ -8465,7 +8516,9 @@ export interface operations {
     };
     list_codes_api_admin_promo_codes_get: {
         parameters: {
-            query?: never;
+            query?: {
+                archived?: boolean;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -8479,6 +8532,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PromoCodeOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -8582,9 +8644,42 @@ export interface operations {
             };
         };
     };
-    list_promotions_api_admin_promotions_get: {
+    restore_code_api_admin_promo_codes__code_id__restore_post: {
         parameters: {
             query?: never;
+            header?: never;
+            path: {
+                code_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PromoCodeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_promotions_api_admin_promotions_get: {
+        parameters: {
+            query?: {
+                archived?: boolean;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -8598,6 +8693,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PromotionOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -8700,6 +8804,37 @@ export interface operations {
                 "application/json": components["schemas"]["PromotionPatch"];
             };
         };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PromotionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    restore_promotion_api_admin_promotions__promotion_id__restore_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                promotion_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {
