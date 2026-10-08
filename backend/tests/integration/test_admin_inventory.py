@@ -259,3 +259,40 @@ class TestAlerts:
         assert len(await outbox(db)) == 1
         product = await db.get(Product, tea.id)
         assert product is not None
+
+
+class TestSupplyDetails:
+    async def test_movements_of_one_supply(self, client: AsyncClient, db: AsyncSession) -> None:
+        """«Поставки» → что пришло в этой поставке."""
+        await owner_client(client, db)
+        tea = await make_tea(db, "Да Хун Пао", stock=0)
+        cup = await make_unit(db, "Чаша", stock=0)
+        first = await client.post(
+            "/api/admin/inventory/supplies",
+            json={
+                "comment": "Ли",
+                "lines": [
+                    {"product_id": str(tea.id), "qty": 500},
+                    {"product_id": str(cup.id), "qty": 3},
+                ],
+            },
+        )
+        await client.post(
+            "/api/admin/inventory/supplies",
+            json={"lines": [{"product_id": str(tea.id), "qty": 100}]},
+        )
+        supply_id = first.json()["id"]
+        rows = (await client.get(f"/api/admin/inventory/movements?supply_id={supply_id}")).json()
+        assert rows["total"] == 2
+        assert {r["product_name"] for r in rows["items"]} == {"Да Хун Пао", "Чаша"}
+
+    async def test_supply_audit_shows_units(self, client: AsyncClient, db: AsyncSession) -> None:
+        """Журнал действий: «Остаток: 100 г → 600 г», а не голые числа."""
+        await owner_client(client, db)
+        tea = await make_tea(db, "Да Хун Пао", stock=100)
+        await client.post(
+            "/api/admin/inventory/supplies",
+            json={"lines": [{"product_id": str(tea.id), "qty": 500}]},
+        )
+        audit = (await client.get("/api/admin/audit?entity=supply")).json()["items"][0]
+        assert audit["diff"] == {"Да Хун Пао": ["100 г", "600 г"]}

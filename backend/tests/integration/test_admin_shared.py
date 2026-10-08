@@ -67,3 +67,33 @@ async def test_product_lookup_needs_some_catalog_related_access(
 ) -> None:
     await staff(client, db, ["applications"])
     assert (await client.get("/api/admin/lookup/products")).status_code == 403
+
+
+async def test_product_lookup_gives_stock_number_and_all_requested_ids(
+    client: AsyncClient, db: AsyncSession
+) -> None:
+    """Склад: «было → станет» считается от числа, а выбранных товаров бывает больше 30."""
+    teas = [await make_tea(db, f"Чай {i:02d}", stock=i * 10) for i in range(35)]
+    await staff(client, db, ["inventory"])
+    ids = ",".join(str(t.id) for t in teas)
+    found = (await client.get("/api/admin/lookup/products", params={"ids": ids})).json()
+    assert len(found) == 35
+    by_name = {p["name"]: p for p in found}
+    assert by_name["Чай 07"]["stock"] == 70
+    assert by_name["Чай 07"]["stock_label"] == "70 г"
+
+
+async def test_categories_are_visible_to_promotions_staff(
+    client: AsyncClient, db: AsyncSession
+) -> None:
+    """Акцию можно настроить на категорию — сотруднику раздела «Акции» нужен их список."""
+    await make_tea(db)
+    await staff(client, db, ["promotions"])
+    assert (await client.get("/api/admin/categories")).status_code == 200
+
+
+async def test_categories_are_hidden_from_unrelated_staff(
+    client: AsyncClient, db: AsyncSession
+) -> None:
+    await staff(client, db, ["orders"])
+    assert (await client.get("/api/admin/categories")).status_code == 403

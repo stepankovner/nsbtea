@@ -109,3 +109,28 @@ async def test_notification_recipients(client: AsyncClient, db: AsyncSession) ->
     link = await client.post("/api/admin/notifications/link")
     assert link.json()["deep_link"].startswith("https://t.me/nsbtea_test_bot?start=")
     assert (await client.delete(f"/api/admin/notifications/{recipient_id}")).status_code == 200
+
+
+async def test_audit_log_period_filter(client: AsyncClient, db: AsyncSession) -> None:
+    """Фильтр «за период» — дни по Москве, обе границы включительно."""
+    from datetime import UTC, datetime
+
+    from app.models import AuditLog
+
+    await owner_client(client, db)
+    for at, summary in [
+        (datetime(2026, 10, 1, 20, 59, tzinfo=UTC), "1 октября, 23:59 МСК"),
+        (datetime(2026, 10, 1, 21, 0, tzinfo=UTC), "2 октября, 00:00 МСК"),
+        (datetime(2026, 10, 3, 20, 59, tzinfo=UTC), "3 октября, 23:59 МСК"),
+        (datetime(2026, 10, 3, 21, 0, tzinfo=UTC), "4 октября, 00:00 МСК"),
+    ]:
+        db.add(AuditLog(at=at, actor_name="Никита", action="x", entity="test", summary=summary))
+    await db.commit()
+    body = (
+        await client.get(
+            "/api/admin/audit",
+            params={"entity": "test", "date_from": "2026-10-02", "date_to": "2026-10-03"},
+        )
+    ).json()
+    assert [e["summary"] for e in body["items"]] == ["3 октября, 23:59 МСК", "2 октября, 00:00 МСК"]
+    assert body["total"] == 2

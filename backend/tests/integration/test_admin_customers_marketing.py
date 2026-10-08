@@ -8,8 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.container import Container
 from app.models import AuditLog, Customer, PointsTransaction, ThursdayPlan
+from app.models.admin import AdminRole
 from tests.factories import make_category, make_tea
-from tests.helpers import owner_client
+from tests.helpers import create_admin, login, owner_client
 from tests.orders_helpers import buy
 
 
@@ -219,3 +220,112 @@ class TestThursdays:
         await owner_client(client, db)
         stats = (await client.get("/api/admin/promotions/welcome-stats")).json()
         assert stats == {"uses": 1, "discount_kop": 10_000}
+
+
+async def _staff(client: AsyncClient, db: AsyncSession, permissions: list[str]) -> None:
+    await create_admin(
+        db,
+        email="helper@nsbtea.test",
+        password="пароль-помощника",
+        role=AdminRole.STAFF,
+        permissions=permissions,
+    )
+    await login(client, "helper@nsbtea.test", "пароль-помощника")
+
+
+class TestFollowUps:
+    async def test_manual_points_are_owner_only(
+        self, client: AsyncClient, db: AsyncSession
+    ) -> None:
+        """SPEC 7.1: «Владелец может вручную начислить или списать баллы»; у сотрудника нет
+        финансов (SPEC 10.9) — карточку клиента он видит, баллы не меняет."""
+        customer = Customer(email="anna@mail.ru", name="Анна")
+        db.add(customer)
+        await db.commit()
+        await _staff(client, db, ["customers"])
+        assert (await client.get(f"/api/admin/customers/{customer.id}")).status_code == 200
+        response = await client.post(
+            f"/api/admin/customers/{customer.id}/points",
+            json={"delta": 300, "comment": "Подарок"},
+        )
+        assert response.status_code == 403
+        assert (await db.scalars(select(PointsTransaction))).all() == []
+
+    async def test_promotion_archive_and_restore(
+        self, client: AsyncClient, db: AsyncSession
+    ) -> None:
+        """Удаление — в архив с возможностью восстановить (SPEC 10.1)."""
+        tea = await make_tea(db)
+        await owner_client(client, db)
+        created = await client.post(
+            "/api/admin/promotions",
+            json={"title": "Осень", "percent": 10, "product_ids": [str(tea.id)]},
+        )
+        promo_id = created.json()["id"]
+        await client.delete(f"/api/admin/promotions/{promo_id}")
+
+        assert (await client.get("/api/admin/promotions")).json() == []
+        archived = (await client.get("/api/admin/promotions?archived=true")).json()
+        assert [p["title"] for p in archived] == ["Осень"]
+        assert archived[0]["archived"] is True
+
+        restored = await client.post(f"/api/admin/promotions/{promo_id}/restore")
+        assert restored.status_code == 200, restored.text
+        # возвращается выключенной: включить — осознанное действие
+        assert restored.json()["is_active"] is False
+        assert restored.json()["archived"] is False
+        assert [p["title"] for p in (await client.get("/api/admin/promotions")).json()] == ["Осень"]
+        actions = (await db.scalars(select(AuditLog.action))).all()
+        assert "promotion.restore" in actions
+
+    async def test_promo_code_archive_is_logged_and_restorable(
+        self, client: AsyncClient, db: AsyncSession
+    ) -> None:
+        await owner_client(client, db)
+        created = await client.post(
+            "/api/admin/promo-codes", json={"code": "chai10", "percent": 10}
+        )
+        code_id = created.json()["id"]
+        await client.delete(f"/api/admin/promo-codes/{code_id}")
+        actions = (await db.scalars(select(AuditLog.action))).all()
+        assert "promo_code.archive" in actions  # CLAUDE.md, правило 12
+
+        archived = (await client.get("/api/admin/promo-codes?archived=true")).json()
+        assert [c["code"] for c in archived] == ["CHAI10"]
+
+        # тот же код заново — подсказываем, что он в архиве
+        again = await client.post("/api/admin/promo-codes", json={"code": "CHAI10", "percent": 5})
+        assert again.status_code == 409
+        assert "в архиве" in again.json()["detail"]
+
+        restored = await client.post(f"/api/admin/promo-codes/{code_id}/restore")
+        assert restored.status_code == 200, restored.text
+        assert restored.json()["is_active"] is False
+        assert [c["code"] for c in (await client.get("/api/admin/promo-codes")).json()] == [
+            "CHAI10"
+        ]
+        assert "promo_code.restore" in (await db.scalars(select(AuditLog.action))).all()
+
+    async def test_running_week_is_shown_in_calendar(
+        self, client: AsyncClient, db: AsyncSession
+    ) -> None:
+        """Понедельник 5 октября, режим «неделя»: чай недели с четверга 1 октября ещё идёт —
+        он показывается отдельно, а 8 ближайших четвергов — как раньше."""
+        tea = await make_tea(db, "Да Хун Пао")
+        db.add(ThursdayPlan(date=date(2026, 10, 1), products=[tea], percent=None))
+        await db.commit()
+        await owner_client(client, db)
+
+        body = (await client.get("/api/admin/thursdays")).json()
+        assert body["current"]["date"] == "2026-10-01"
+        assert body["current"]["running"] is True
+        assert [p["name"] for p in body["current"]["products"]] == ["Да Хун Пао"]
+        assert len(body["upcoming"]) == 8
+        assert body["upcoming"][0]["date"] == "2026-10-08"
+        assert body["upcoming"][0]["running"] is False
+
+        day_mode = await client.put(
+            "/api/admin/settings/thursday", json={"percent": 20, "mode": "day"}
+        )
+        assert day_mode.status_code == 200, day_mode.text
+        assert (await client.get("/api/admin/thursdays")).json()["current"] is None
