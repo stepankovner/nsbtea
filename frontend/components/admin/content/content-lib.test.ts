@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { BLOCK_SCHEMAS, eventPreview, fromMoscow, pagePath, slugError, slugify, toMoscow } from "@/lib/admin/content";
+import { NBSP } from "@/lib/format";
 
 describe("время событий — вводим и показываем по Москве, на сервер — UTC", () => {
   it("дата и время по Москве → момент в UTC", () => {
@@ -87,7 +88,8 @@ describe("предпросмотр события — как в списке н�
   });
 
   it("цена: свой текст важнее суммы", () => {
-    expect(eventPreview(base, now).price_label).toBe("3 500 ₽");
+    // суммы — с неразрывными пробелами, как formatRub и сервер
+    expect(eventPreview(base, now).price_label).toBe(`3${NBSP}500${NBSP}₽`);
     expect(eventPreview({ ...base, price_text: "Бесплатно, по записи" }, now).price_label).toBe("Бесплатно, по записи");
     expect(eventPreview({ ...base, price_kop: null }, now).price_label).toBeNull();
   });
