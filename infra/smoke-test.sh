@@ -51,6 +51,15 @@ if $COMPOSE exec -T worker sh -c "test -w /app/media" 2>/dev/null; then ok "во
 # 6. Фоновые задачи (письма, автоотмена неоплаченных, баллы) — воркер на связи с Redis
 if $COMPOSE exec -T worker arq --check app.workers.main.WorkerSettings >/dev/null 2>&1; then ok "фоновые задачи"; else bad "воркер фоновых задач не отвечает"; fi
 
+# 7. Резервная копия создаётся, читается и закрыта от посторонних (в ней персональные данные)
+if out=$($COMPOSE exec -T backup backup.sh 2>&1); then
+  file=$(echo "$out" | sed -n 's/.*старт → \(\S*\).*/\1/p' | tail -1)
+  mode=$($COMPOSE exec -T backup stat -c %a "$file" 2>/dev/null || echo "?")
+  if [ "$mode" = "600" ]; then ok "резервная копия: $file"; else bad "резервная копия доступна посторонним (права $mode, нужно 600)"; fi
+else
+  bad "резервная копия не создаётся: $(echo "$out" | tail -3)"
+fi
+
 if [ "$failed" -ne 0 ]; then
   echo "Есть проблемы — см. ✗ выше. Логи: $COMPOSE logs --tail 100 <сервис>"
   exit 1
