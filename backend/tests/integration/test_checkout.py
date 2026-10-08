@@ -12,6 +12,7 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import Settings
 from app.container import Container
 from app.integrations.payments import FakePaymentGateway
 from app.main import create_app
@@ -20,6 +21,7 @@ from app.models import (
     InventoryMovement,
     NotificationRecipient,
     Order,
+    Page,
     PointsTransaction,
     Product,
     PromoCode,
@@ -471,3 +473,36 @@ class TestConcurrency:
         product = await db.get(Product, cup.id, populate_existing=True)
         assert product is not None
         assert product.stock == 0
+
+
+class TestLegalDocuments:
+    """SPEC 4.2: согласия — со ссылками на документы. На боевом сайте, пока оферта, политика
+    и согласие не опубликованы, заказ не принимается: ссылки вели бы на «страница не найдена»."""
+
+    async def test_production_checkout_waits_for_published_legal_pages(
+        self, client: AsyncClient, db: AsyncSession, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(Settings, "is_production", property(lambda _self: True))
+        tea = await make_tea(db, stock=500)
+        await add_to_cart(client, tea.id)
+
+        response = await client.post("/api/checkout", json=checkout_payload())
+        assert response.status_code == 409
+        assert "временно недоступно" in response.json()["detail"]
+        assert (await db.scalars(select(Order))).all() == []
+        await db.refresh(tea)
+        assert tea.stock == 500
+
+        for slug in ("offer", "privacy", "consent"):
+            db.add(Page(slug=slug, title=slug, kind="legal", is_published=True))
+        await db.commit()
+        response = await client.post("/api/checkout", json=checkout_payload())
+        assert response.status_code == 201, response.text
+
+    async def test_test_server_checkout_works_without_legal_pages(
+        self, client: AsyncClient, db: AsyncSession
+    ) -> None:
+        tea = await make_tea(db)
+        await add_to_cart(client, tea.id)
+        response = await client.post("/api/checkout", json=checkout_payload())
+        assert response.status_code == 201, response.text
