@@ -46,16 +46,20 @@ describe("OrderResult — страница после оплаты", () => {
   });
 
   it("вебхук ещё не пришёл — «Проверяем оплату…» и повторный запрос", async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
+    // время полностью под контролем теста: под нагрузкой (CI, параллельные прогоны) не «плавает»
+    vi.useFakeTimers();
     vi.mocked(shopApi.orderStatus)
       .mockResolvedValueOnce(status())
       .mockResolvedValue(status({ status: "paid", paid: true, status_label: "Оплачен" }));
     render(<OrderResult orderId="0192f000-0000-7000-8000-0000000000c1" navigate={vi.fn()} />);
-    expect(await screen.findByText("Проверяем оплату…")).toBeInTheDocument();
-    await act(async () => {
-      vi.advanceTimersByTime(3_000);
-    });
-    expect(await screen.findByRole("heading", { name: /заказ оплачен/i })).toBeInTheDocument();
+    await act(() => vi.advanceTimersByTimeAsync(0));
+    expect(screen.getByText("Проверяем оплату…")).toBeInTheDocument();
+    expect(shopApi.orderStatus).toHaveBeenCalledTimes(1);
+
+    await act(() => vi.advanceTimersByTimeAsync(2_999));
+    expect(shopApi.orderStatus).toHaveBeenCalledTimes(1);
+    await act(() => vi.advanceTimersByTimeAsync(1));
+    expect(screen.getByRole("heading", { name: /заказ оплачен/i })).toBeInTheDocument();
     expect(shopApi.orderStatus).toHaveBeenCalledTimes(2);
   });
 
