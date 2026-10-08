@@ -18,6 +18,10 @@ class PageKind(StrEnum):
     LEGAL = "legal"  # оферта, политика, согласие
 
 
+# Обязательные документы: без них нельзя запускать продажи (ссылки из согласий при оформлении)
+LEGAL_SLUGS = ("offer", "privacy", "consent")
+
+
 class Page(IdMixin, TimestampMixin, Base):
     __tablename__ = "pages"
 

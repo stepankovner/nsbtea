@@ -12,7 +12,7 @@ import uuid
 from dataclasses import dataclass
 from datetime import timedelta
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.container import Container
@@ -26,7 +26,8 @@ from app.domain.errors import (
 )
 from app.domain.money import format_rub
 from app.domain.orders import DeliveryMethod, OrderStatus, PaymentMethod
-from app.models import Customer, Order, OrderItem, PromoCodeUsage
+from app.models import Customer, Order, OrderItem, Page, PromoCodeUsage
+from app.models.content import LEGAL_SLUGS
 from app.schemas.checkout import CheckoutIn
 from app.services import cart as cart_service
 from app.services import delivery as delivery_service
@@ -80,6 +81,20 @@ async def _resolve_customer(
     return created
 
 
+async def _ensure_legal_pages_published(db: AsyncSession) -> None:
+    """SPEC 4.2: согласия — со ссылками на документы; без опубликованных документов не продаём."""
+    published = await db.scalar(
+        select(func.count())
+        .select_from(Page)
+        .where(Page.slug.in_(LEGAL_SLUGS), Page.is_published.is_(True), Page.archived_at.is_(None))
+    )
+    if (published or 0) < len(LEGAL_SLUGS):
+        raise ConflictError(
+            "Оформление заказа временно недоступно: магазин заканчивает подготовку документов. "
+            "Напишите нам в Telegram — оформим заказ вручную."
+        )
+
+
 def _variant_label(line: cart_service.LineCalc) -> str:
     return "шт." if line.product.type == "unit" else line.label
 
@@ -102,6 +117,8 @@ async def place_order(
         raise DomainError(
             "Подтвердите согласие на обработку персональных данных", field="consent_pd"
         )
+    if container.settings.is_production:
+        await _ensure_legal_pages_published(db)
     name = " ".join(payload.name.split())
     phone = normalize_phone(payload.phone)
     email = normalize_email(payload.email)

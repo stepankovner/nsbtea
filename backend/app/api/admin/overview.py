@@ -31,14 +31,13 @@ from app.models import (
     ThursdayPlan,
 )
 from app.models.admin import AdminPermission, ChallengePurpose
-from app.models.content import APPLICATION_TYPE_LABELS, ApplicationType
+from app.models.content import APPLICATION_TYPE_LABELS, LEGAL_SLUGS, ApplicationType
 from app.models.system import NOTIFICATION_EVENT_LABELS
 from app.schemas.common import ApiModel, Ok
 from app.services import inventory
 from app.services import orders as order_service
 from app.services.admin_orders import OrderFilters, list_orders
 from app.services.inventory import product_type
-from app.services.seed import LEGAL_SLUGS
 from app.services.settings import get_group
 from app.services.settings_schema import StoreSettings
 

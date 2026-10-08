@@ -240,7 +240,6 @@ PAGES: list[tuple[str, str, PageKind, bool, list[str]]] = [
     ),
 ]
 
-LEGAL_SLUGS = ("offer", "privacy", "consent")
 
 CATEGORIES: list[tuple[str, str, str]] = [
     ("Шу пуэр", "shu-puer", "puer"),

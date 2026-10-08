@@ -19,6 +19,7 @@ from app.models.content import (
     APPLICATION_TYPE_LABELS,
     EVENT_TYPE_LABELS,
     HOME_BLOCK_LABELS,
+    LEGAL_SLUGS,
     ApplicationStatus,
     ApplicationType,
     EventType,
@@ -28,7 +29,6 @@ from app.schemas.catalog import MediaOut
 from app.schemas.common import ApiModel, Ok, Slug
 from app.services import audit
 from app.services.content_public import event_out, media_ids_in, seats_taken
-from app.services.seed import LEGAL_SLUGS
 
 router = APIRouter(prefix="/admin", tags=["admin: контент"])
 EMPTY_DOC: dict[str, Any] = {"type": "doc", "content": []}
