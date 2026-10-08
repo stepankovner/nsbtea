@@ -244,6 +244,9 @@ export function CheckoutForm({
   const offer = "/legal/offer";
   const privacy = "/legal/privacy";
 
+  // пустая корзина: оформлять нечего, рядом уже есть «Перейти в каталог»
+  if (cart && cart.lines.length === 0) return null;
+
   return (
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-[26px] bg-block p-[clamp(24px,3vw,40px)]">
       <h2 className="font-serif text-[32px] leading-tight">Оформление</h2>
