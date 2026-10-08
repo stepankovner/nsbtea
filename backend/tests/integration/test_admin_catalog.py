@@ -454,3 +454,46 @@ async def test_staff_without_products_permission(client: AsyncClient, db: AsyncS
     response = await client.get("/api/admin/products")
     assert response.status_code == 403
     assert response.json()["detail"] == "Нет доступа к разделу «Товары»"
+
+
+class TestProductListExtras:
+    async def test_counts_by_status_for_tabs(self, client: AsyncClient, db: AsyncSession) -> None:
+        """Вкладки списка с числами, как в «Заказах»."""
+        from datetime import UTC, datetime
+
+        from app.models.catalog import ProductStatus
+
+        await owner_client(client, db)
+        await make_tea(db, "Да Хун Пао")
+        await make_tea(db, "Шу", status=ProductStatus.HIDDEN)
+        await make_tea(db, "Черновик", status=ProductStatus.DRAFT)
+        await make_tea(db, "Старый", archived_at=datetime(2026, 10, 1, tzinfo=UTC))
+        body = (await client.get("/api/admin/products?status=draft")).json()
+        assert body["total"] == 1
+        assert body["counts"] == {"published": 1, "hidden": 1, "draft": 1, "archived": 1}
+
+    async def test_catalog_options_for_staff(self, client: AsyncClient, db: AsyncSession) -> None:
+        """Сотруднику раздела «Товары» нужны общие граммовки и пороги, хотя настройки
+        магазина ему недоступны."""
+        await owner_client(client, db)
+        saved = await client.put(
+            "/api/admin/settings/catalog",
+            json={"weight_presets": [30, 50, 100, 357], "low_stock_tea_grams": 70},
+        )
+        assert saved.status_code == 200, saved.text
+        await create_admin(
+            db,
+            email="helper@nsbtea.test",
+            password="пароль-помощника",
+            role=AdminRole.STAFF,
+            permissions=["products"],
+        )
+        await login(client, "helper@nsbtea.test", "пароль-помощника")
+        options = await client.get("/api/admin/products/options")
+        assert options.status_code == 200, options.text
+        assert options.json() == {
+            "weight_presets": [30, 50, 100, 357],
+            "low_stock_tea_grams": 70,
+            "low_stock_units": 2,
+        }
+        assert (await client.get("/api/admin/settings")).status_code == 403
