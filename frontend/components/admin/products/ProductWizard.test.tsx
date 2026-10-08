@@ -29,7 +29,7 @@ vi.mock("@/lib/admin/products", async (importOriginal) => {
       publish: vi.fn(),
       setRelations: vi.fn(),
       tags: vi.fn(),
-      weightPresets: vi.fn(),
+      options: vi.fn(),
       uploadImages: vi.fn(),
       reorderImages: vi.fn(),
       updateImageAlt: vi.fn(),
@@ -43,7 +43,8 @@ vi.mock("@/lib/admin/categories", async (importOriginal) => {
 });
 vi.mock("@/lib/admin/lookup", () => ({ lookupProducts: vi.fn() }));
 
-const gaiwan = { id: "p9", slug: "gaivan", name: "Гайвань", type: "unit", status: "published", image_url: null, stock_label: "6 шт." };
+const gaiwan = { id: "p9", slug: "gaivan", name: "Гайвань", type: "unit", status: "published", image_url: null, stock: 6, stock_label: "6 шт." };
+const options = { weight_presets: [25, 50, 100, 200], low_stock_tea_grams: 50, low_stock_units: 2 };
 
 function at(step: number) {
   search = new URLSearchParams(`step=${step}`);
@@ -54,7 +55,7 @@ beforeEach(() => {
   push.mockReset();
   vi.mocked(categoriesApi.list).mockResolvedValue(categoriesTree);
   vi.mocked(productsApi.tags).mockResolvedValue([]);
-  vi.mocked(productsApi.weightPresets).mockResolvedValue([25, 50, 100, 200]);
+  vi.mocked(productsApi.options).mockResolvedValue(options);
   vi.mocked(lookupProducts).mockImplementation(async (params) => (params.ids ? [] : [gaiwan]));
 });
 
@@ -118,6 +119,17 @@ describe("ProductWizard — пошаговое заполнение чернов
     });
   });
 
+  it("шаг 4: граммовки — из общего списка каталога, и у сотрудника тоже (не заглушка)", async () => {
+    at(4);
+    vi.mocked(productsApi.get).mockResolvedValue(draftTea({ weight_presets: [50] }));
+    vi.mocked(productsApi.options).mockResolvedValue({ weight_presets: [30, 50, 75], low_stock_tea_grams: 70, low_stock_units: 3 });
+    renderWithAdmin(<ProductWizard id="p1" />, { owner: false, permissions: ["products"] });
+    expect(await screen.findByRole("checkbox", { name: /^75\s*г/ })).not.toBeChecked();
+    expect(screen.getByRole("checkbox", { name: /^30\s*г/ })).not.toBeChecked();
+    expect(screen.getByRole("checkbox", { name: /^50\s*г/ })).toBeChecked();
+    expect(screen.queryByRole("checkbox", { name: /^200\s*г/ })).not.toBeInTheDocument();
+  });
+
   it("шаг 4: свой вес — минимум должен делиться на шаг, подсказываем до отправки", async () => {
     at(4);
     vi.mocked(productsApi.get).mockResolvedValue(draftTea({ price_per_gram_kop: 1200 }));
@@ -139,7 +151,7 @@ describe("ProductWizard — пошаговое заполнение чернов
     vi.mocked(productsApi.patch).mockResolvedValue(unitProduct({ status: "draft" }));
     renderWithAdmin(<ProductWizard id="p5" />);
     expect(await screen.findByRole("heading", { name: "Цена" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Склад/ })).toHaveAttribute("href", expect.stringContaining("/admin/inventory"));
+    expect(screen.getByRole("link", { name: /Склад/ })).toHaveAttribute("href", "/admin/inventory/p5");
     await userEvent.type(screen.getByLabelText("Цена за штуку"), "2500");
     await userEvent.tab();
     await userEvent.click(screen.getByRole("button", { name: "Далее" }));
