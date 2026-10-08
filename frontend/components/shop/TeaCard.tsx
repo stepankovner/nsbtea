@@ -127,6 +127,7 @@ export function TeaCard({ product, priority = false }: { product: Card; priority
         <button
           type="button"
           onClick={onAdd}
+          aria-label={`${product.in_stock ? "В корзину" : "Нет в наличии"}: ${product.name}`}
           disabled={!product.in_stock || !variant || busy}
           className={clsx(
             "whitespace-nowrap rounded-full border border-ink px-3.5 py-[7px] text-[13px] font-medium text-ink transition-colors",

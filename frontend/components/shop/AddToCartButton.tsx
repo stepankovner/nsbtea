@@ -16,6 +16,7 @@ export function AddToCartButton({ product, className }: { product: Schemas["Prod
     <button
       type="button"
       disabled={!product.in_stock || !variant || busy}
+      aria-label={`${product.in_stock ? "В корзину" : "Нет в наличии"}: ${product.name}`}
       className={className}
       onClick={async () => {
         if (!variant) return;
