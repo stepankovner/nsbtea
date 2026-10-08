@@ -46,3 +46,20 @@ def test_check_config_passes_on_dev_and_staging(
     monkeypatch.setattr(cli, "get_settings", lambda: settings)
     _run(monkeypatch, "check-config")
     assert "Настройки в порядке" in capsys.readouterr().out
+
+
+def test_clear_test_data_refuses_on_production(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Очистка — только на тестовом сервере: на боевом удалила бы настоящие заказы."""
+    monkeypatch.setattr(cli, "get_settings", _prod)
+    with pytest.raises(SystemExit) as exc:
+        _run(monkeypatch, "clear-test-data", "--yes")
+    assert "боевом" in str(exc.value.code)
+
+
+def test_clear_test_data_asks_for_confirmation(monkeypatch: pytest.MonkeyPatch) -> None:
+    settings = _prod(environment="staging")
+    monkeypatch.setattr(cli, "get_settings", lambda: settings)
+    monkeypatch.setattr("builtins.input", lambda _prompt="": "нет")
+    with pytest.raises(SystemExit) as exc:
+        _run(monkeypatch, "clear-test-data")
+    assert "Отменено" in str(exc.value.code)
