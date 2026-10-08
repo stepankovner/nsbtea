@@ -13,5 +13,8 @@ export default defineConfig({
     exclude: ["node_modules", ".next", "e2e"],
     css: false,
     restoreMocks: true,
+    // формы админки вводят много текста через userEvent — под нагрузкой (CI, параллельные
+    // прогоны) 5 секунд по умолчанию не всегда хватает
+    testTimeout: 15_000,
   },
 });
