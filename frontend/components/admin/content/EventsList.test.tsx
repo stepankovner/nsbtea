@@ -27,7 +27,16 @@ describe("EventsList — события", () => {
   it("ближайшие события: дата и время по Москве, места, видно ли на сайте", async () => {
     vi.mocked(eventsApi.list).mockResolvedValue([
       adminEvent(),
-      adminEvent({ id: "e2", title: "Церемония «Осенние улуны»", type: "ceremony", type_label: "Церемония", is_published: false, seats_total: null, seats_left: null, seats_taken: 0 }),
+      adminEvent({
+        id: "e2",
+        title: "Церемония «Осенние улуны»",
+        type: "ceremony",
+        type_label: "Церемония",
+        is_published: false,
+        seats_total: null,
+        seats_left: null,
+        seats_taken: 0,
+      }),
     ]);
     renderWithAdmin(<EventsList />);
     const row = await screen.findByRole("link", { name: /Сплав по Клязьме/ });
@@ -44,9 +53,15 @@ describe("EventsList — события", () => {
   it("главное действие — новое событие; вкладки ближайшие и прошедшие", async () => {
     vi.mocked(eventsApi.list).mockResolvedValue([adminEvent()]);
     renderWithAdmin(<EventsList />);
-    expect(await screen.findByRole("link", { name: "Новое событие" })).toHaveAttribute("href", "/admin/content/events/new");
+    expect(await screen.findByRole("link", { name: "Новое событие" })).toHaveAttribute(
+      "href",
+      "/admin/content/events/new",
+    );
     expect(screen.getByRole("link", { name: "Ближайшие" })).toHaveAttribute("aria-current", "page");
-    expect(screen.getByRole("link", { name: /Прошедшие/ })).toHaveAttribute("href", "/admin/content/events?period=past");
+    expect(screen.getByRole("link", { name: /Прошедшие/ })).toHaveAttribute(
+      "href",
+      "/admin/content/events?period=past",
+    );
   });
 
   it("прошедшие — из адреса", async () => {
@@ -61,7 +76,10 @@ describe("EventsList — события", () => {
     vi.mocked(eventsApi.list).mockResolvedValue([]);
     renderWithAdmin(<EventsList />);
     expect(await screen.findByText("Ближайших событий нет")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Добавить событие" })).toHaveAttribute("href", "/admin/content/events/new");
+    expect(screen.getByRole("link", { name: "Добавить событие" })).toHaveAttribute(
+      "href",
+      "/admin/content/events/new",
+    );
   });
 
   it("без права «Сайт» — не показываем", () => {

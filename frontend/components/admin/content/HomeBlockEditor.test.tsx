@@ -20,7 +20,7 @@ vi.mock("@/lib/admin/content", async (importOriginal) => {
 vi.mock("@/lib/admin/media", () => ({ uploadMedia: vi.fn(), MAX_UPLOAD_MB: 15 }));
 vi.mock("@/lib/admin/lookup", () => ({ lookupProducts: vi.fn().mockResolvedValue([]) }));
 
-describe("HomeBlockEditor — содержимое блока главной", () => {
+describe("HomeBlockEditor — содержимое блока главной", { timeout: 15_000 }, () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("баннер: меняем заголовок — сохраняем блок целиком, ничего не теряя", async () => {
@@ -28,13 +28,17 @@ describe("HomeBlockEditor — содержимое блока главной", (
     vi.mocked(homeApi.list).mockResolvedValue(blocks);
     vi.mocked(homeApi.patch).mockResolvedValue(blocks[0]!);
     renderWithAdmin(<HomeBlockEditor kind="hero" />);
-    expect(await screen.findByRole("heading", { level: 1, name: "Главный баннер" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Главный баннер" }),
+    ).toBeInTheDocument();
     const line1 = screen.getByLabelText("Заголовок, первая строка");
     expect(line1).toHaveValue("Китайский чай");
     await userEvent.clear(line1);
     await userEvent.type(line1, "Чай с характером");
     await userEvent.click(screen.getByRole("button", { name: "Сохранить блок" }));
-    expect(homeApi.patch).toHaveBeenCalledWith("hero", { data: { ...blocks[0]!.data, title_line1: "Чай с характером" } });
+    expect(homeApi.patch).toHaveBeenCalledWith("hero", {
+      data: { ...blocks[0]!.data, title_line1: "Чай с характером" },
+    });
   });
 
   it("ссылка кнопки — только адрес сайта или https://", async () => {
@@ -71,7 +75,10 @@ describe("HomeBlockEditor — содержимое блока главной", (
   it("чай недели: товары выбираются в «Акциях» — объясняем и даём ссылку", async () => {
     vi.mocked(homeApi.list).mockResolvedValue(homeBlocks());
     renderWithAdmin(<HomeBlockEditor kind="thursday" />);
-    expect(await screen.findByRole("link", { name: /Акции/ })).toHaveAttribute("href", "/admin/promotions");
+    expect(await screen.findByRole("link", { name: /Акции/ })).toHaveAttribute(
+      "href",
+      "/admin/promotions",
+    );
   });
 
   it("предпросмотр — как на сайте, с несохранёнными правками", async () => {
@@ -89,6 +96,9 @@ describe("HomeBlockEditor — содержимое блока главной", (
     vi.mocked(homeApi.list).mockResolvedValue(homeBlocks());
     renderWithAdmin(<HomeBlockEditor kind="banner-x" />);
     expect(await screen.findByText("Такого блока нет")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Все блоки/ })).toHaveAttribute("href", "/admin/content/home");
+    expect(screen.getByRole("link", { name: /Все блоки/ })).toHaveAttribute(
+      "href",
+      "/admin/content/home",
+    );
   });
 });

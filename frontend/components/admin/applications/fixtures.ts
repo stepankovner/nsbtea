@@ -45,6 +45,8 @@ export function eventApplication(overrides: Partial<Application> = {}): Applicat
   });
 }
 
-export function applicationList(items: Application[] = [application()]): Schemas["ApplicationListOut"] {
+export function applicationList(
+  items: Application[] = [application()],
+): Schemas["ApplicationListOut"] {
   return { items, total: items.length, counts: { new: 1, in_progress: 2, closed: 5 } };
 }

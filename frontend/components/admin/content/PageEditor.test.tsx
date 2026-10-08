@@ -23,10 +23,24 @@ vi.mock("@/lib/admin/media", () => ({ uploadMedia: vi.fn(), MAX_UPLOAD_MB: 15 })
 vi.mock("@/lib/admin/lookup", () => ({ lookupProducts: vi.fn().mockResolvedValue([]) }));
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-const club = adminPage({ id: "p-club", title: "Чайный клуб", slug: "club", is_published: false, site_url: "https://nsbtea.ru/pages/club" });
-const offer = adminPage({ id: "p-offer", title: "Публичная оферта", slug: "offer", kind: "legal", is_published: false, required: true });
+const club = adminPage({
+  id: "p-club",
+  title: "Чайный клуб",
+  slug: "club",
+  is_published: false,
+  site_url: "https://nsbtea.ru/pages/club",
+});
+const offer = adminPage({
+  id: "p-offer",
+  title: "Публичная оферта",
+  slug: "offer",
+  kind: "legal",
+  is_published: false,
+  required: true,
+});
 
-describe("PageEditor — страница сайта", () => {
+// длинные сценарии с набором текста и автосохранением: под нагрузкой полного прогона 5 с бывает мало
+describe("PageEditor — страница сайта", { timeout: 15_000 }, () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
@@ -38,11 +52,21 @@ describe("PageEditor — страница сайта", () => {
     renderWithAdmin(<PageEditor id="p-club" />);
     await userEvent.type(await screen.findByLabelText("Название страницы"), " по средам");
     expect(screen.getByText(/Есть несохранённые изменения/)).toBeInTheDocument();
-    await waitFor(() => expect(pagesApi.patch).toHaveBeenCalledWith("p-club", expect.objectContaining({ title: "Чайный клуб по средам" })), {
-      timeout: 4000,
-    });
+    await waitFor(
+      () =>
+        expect(pagesApi.patch).toHaveBeenCalledWith(
+          "p-club",
+          expect.objectContaining({ title: "Чайный клуб по средам" }),
+        ),
+      {
+        timeout: 4000,
+      },
+    );
     // черновик остаётся черновиком — на сайт ничего не попадает
-    expect(pagesApi.patch).not.toHaveBeenCalledWith("p-club", expect.objectContaining({ is_published: true }));
+    expect(pagesApi.patch).not.toHaveBeenCalledWith(
+      "p-club",
+      expect.objectContaining({ is_published: true }),
+    );
     expect(await screen.findByText("Черновик сохранён")).toBeInTheDocument();
   });
 
@@ -52,7 +76,10 @@ describe("PageEditor — страница сайта", () => {
     renderWithAdmin(<PageEditor id="p-club" />);
     expect(await screen.findByText("Черновик")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Опубликовать" }));
-    expect(pagesApi.patch).toHaveBeenCalledWith("p-club", expect.objectContaining({ title: "Чайный клуб", is_published: true }));
+    expect(pagesApi.patch).toHaveBeenCalledWith(
+      "p-club",
+      expect.objectContaining({ title: "Чайный клуб", is_published: true }),
+    );
     expect(await screen.findByText("На сайте")).toBeInTheDocument();
   });
 
@@ -65,7 +92,10 @@ describe("PageEditor — страница сайта", () => {
     expect(pagesApi.patch).not.toHaveBeenCalled();
     expect(screen.getByText(/ещё не на сайте/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Сохранить изменения" }));
-    expect(pagesApi.patch).toHaveBeenCalledWith("p1", expect.objectContaining({ title: "О магазине и мастере" }));
+    expect(pagesApi.patch).toHaveBeenCalledWith(
+      "p1",
+      expect.objectContaining({ title: "О магазине и мастере" }),
+    );
   });
 
   it("несохранённые правки опубликованной страницы не теряются, если закрыть вкладку", async () => {
@@ -84,13 +114,18 @@ describe("PageEditor — страница сайта", () => {
   });
 
   it("снять с сайта — с подтверждением", async () => {
-    vi.mocked(pagesApi.get).mockResolvedValue(adminPage({ id: "p-club", title: "Чайный клуб", slug: "club" }));
+    vi.mocked(pagesApi.get).mockResolvedValue(
+      adminPage({ id: "p-club", title: "Чайный клуб", slug: "club" }),
+    );
     vi.mocked(pagesApi.patch).mockResolvedValue({ ...club, is_published: false });
     renderWithAdmin(<PageEditor id="p-club" />);
     await userEvent.click(await screen.findByRole("button", { name: "Снять с сайта" }));
     const dialog = await screen.findByRole("alertdialog");
     await userEvent.click(within(dialog).getByRole("button", { name: "Да, снять с сайта" }));
-    expect(pagesApi.patch).toHaveBeenCalledWith("p-club", expect.objectContaining({ is_published: false }));
+    expect(pagesApi.patch).toHaveBeenCalledWith(
+      "p-club",
+      expect.objectContaining({ is_published: false }),
+    );
   });
 
   it("как это увидят в Яндексе — заголовок и описание для поиска", async () => {
@@ -99,9 +134,14 @@ describe("PageEditor — страница сайта", () => {
     const snippet = await screen.findByTestId("yandex-snippet");
     expect(snippet).toHaveTextContent("О магазине — НСБ Чай");
     expect(snippet).toHaveTextContent("nsbtea.ru/about");
-    await userEvent.type(screen.getByLabelText("Заголовок для Яндекса"), "Магазин чая во Владимире");
+    await userEvent.type(
+      screen.getByLabelText("Заголовок для Яндекса"),
+      "Магазин чая во Владимире",
+    );
     expect(snippet).toHaveTextContent("Магазин чая во Владимире — НСБ Чай");
-    expect(screen.getByRole("button", { name: "Подсказка: Заголовок для Яндекса" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Подсказка: Заголовок для Яндекса" }),
+    ).toBeInTheDocument();
   });
 
   it("адрес — с подсказкой; у служебных страниц его не поменять", async () => {
@@ -139,13 +179,18 @@ describe("PageEditor — страница сайта", () => {
     await userEvent.click(await screen.findByRole("button", { name: "Как это увидит покупатель" }));
     const dialog = await screen.findByRole("dialog");
     expect(within(dialog).getByRole("heading", { name: "О магазине" })).toBeInTheDocument();
-    expect(within(dialog).getByText("Расскажите о магазине и о чайном мастере")).toBeInTheDocument();
+    expect(
+      within(dialog).getByText("Расскажите о магазине и о чайном мастере"),
+    ).toBeInTheDocument();
   });
 
   it("ссылка «Открыть на сайте» — только у опубликованной страницы", async () => {
     vi.mocked(pagesApi.get).mockResolvedValue(adminPage());
     const { unmount } = renderWithAdmin(<PageEditor id="p1" />);
-    expect(await screen.findByRole("link", { name: /Открыть на сайте/ })).toHaveAttribute("href", "/about");
+    expect(await screen.findByRole("link", { name: /Открыть на сайте/ })).toHaveAttribute(
+      "href",
+      "/about",
+    );
     unmount();
     vi.mocked(pagesApi.get).mockResolvedValue(club);
     renderWithAdmin(<PageEditor id="p-club" />);
@@ -154,8 +199,12 @@ describe("PageEditor — страница сайта", () => {
   });
 
   it("ошибка сервера (адрес занят) — видна у поля", async () => {
-    vi.mocked(pagesApi.get).mockResolvedValue(adminPage({ id: "p-club", title: "Чайный клуб", slug: "club" }));
-    vi.mocked(pagesApi.patch).mockRejectedValue(new ApiError(400, "Адрес «delivery» уже занят", "domain_error", { field: "slug" }));
+    vi.mocked(pagesApi.get).mockResolvedValue(
+      adminPage({ id: "p-club", title: "Чайный клуб", slug: "club" }),
+    );
+    vi.mocked(pagesApi.patch).mockRejectedValue(
+      new ApiError(400, "Адрес «delivery» уже занят", "domain_error", { field: "slug" }),
+    );
     renderWithAdmin(<PageEditor id="p-club" />);
     const slug = await screen.findByLabelText("Адрес страницы");
     await userEvent.clear(slug);

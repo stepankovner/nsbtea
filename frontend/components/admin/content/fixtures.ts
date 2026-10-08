@@ -6,7 +6,12 @@ type Event = Schemas["EventAdminOut"];
 
 export const DOC = {
   type: "doc",
-  content: [{ type: "paragraph", content: [{ type: "text", text: "Расскажите о магазине и о чайном мастере" }] }],
+  content: [
+    {
+      type: "paragraph",
+      content: [{ type: "text", text: "Расскажите о магазине и о чайном мастере" }],
+    },
+  ],
 };
 
 export function adminPage(overrides: Partial<Page> = {}): Page {

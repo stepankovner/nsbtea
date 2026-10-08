@@ -27,16 +27,32 @@ describe("PageCreate — новая страница", () => {
   });
 
   it("вид и название — создаём черновик и открываем редактор", async () => {
-    vi.mocked(pagesApi.create).mockResolvedValue(adminPage({ id: "p-new", title: "Как заваривать пуэр", slug: "kak-zavarivat-puer", kind: "guide", is_published: false }));
+    vi.mocked(pagesApi.create).mockResolvedValue(
+      adminPage({
+        id: "p-new",
+        title: "Как заваривать пуэр",
+        slug: "kak-zavarivat-puer",
+        kind: "guide",
+        is_published: false,
+      }),
+    );
     renderWithAdmin(<PageCreate />);
     await userEvent.click(screen.getByRole("radio", { name: "Как заваривать" }));
     await userEvent.type(screen.getByLabelText("Название страницы"), "Как заваривать пуэр");
     // адрес подсказываем из названия — его можно не заполнять
-    expect(screen.getByLabelText("Адрес страницы")).toHaveAttribute("placeholder", "kak-zavarivat-puer");
+    expect(screen.getByLabelText("Адрес страницы")).toHaveAttribute(
+      "placeholder",
+      "kak-zavarivat-puer",
+    );
     expect(screen.getByText("/guides/")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Создать черновик" }));
     expect(pagesApi.create).toHaveBeenCalledWith(
-      expect.objectContaining({ title: "Как заваривать пуэр", kind: "guide", slug: null, is_published: false }),
+      expect.objectContaining({
+        title: "Как заваривать пуэр",
+        kind: "guide",
+        slug: null,
+        is_published: false,
+      }),
     );
     expect(replace).toHaveBeenCalledWith("/admin/content/pages/p-new");
   });
@@ -47,7 +63,9 @@ describe("PageCreate — новая страница", () => {
     await userEvent.type(screen.getByLabelText("Название страницы"), "Наш чайный клуб");
     await userEvent.type(screen.getByLabelText("Адрес страницы"), "club");
     await userEvent.click(screen.getByRole("button", { name: "Создать черновик" }));
-    expect(pagesApi.create).toHaveBeenCalledWith(expect.objectContaining({ title: "Наш чайный клуб", kind: "page", slug: "club" }));
+    expect(pagesApi.create).toHaveBeenCalledWith(
+      expect.objectContaining({ title: "Наш чайный клуб", kind: "page", slug: "club" }),
+    );
   });
 
   it("без названия и с кириллицей в адресе — не отправляем, объясняем", async () => {

@@ -26,7 +26,10 @@ describe("ApplicationsList — заявки", () => {
 
   it("единый список: кто, что хочет, когда, статус текстом", async () => {
     vi.mocked(applicationsApi.list).mockResolvedValue(
-      applicationList([application(), eventApplication({ status: "in_progress", status_label: "В работе" })]),
+      applicationList([
+        application(),
+        eventApplication({ status: "in_progress", status_label: "В работе" }),
+      ]),
     );
     renderWithAdmin(<ApplicationsList />);
     const row = await screen.findByRole("link", { name: /Олег/ });
@@ -46,11 +49,23 @@ describe("ApplicationsList — заявки", () => {
     vi.mocked(applicationsApi.list).mockResolvedValue(applicationList());
     renderWithAdmin(<ApplicationsList />);
     const statuses = await screen.findByRole("navigation", { name: "Статус заявки" });
-    expect(within(statuses).getByRole("link", { name: /Новые\s*1/ })).toHaveAttribute("href", "/admin/applications?status=new");
-    expect(within(statuses).getByRole("link", { name: /В работе\s*2/ })).toHaveAttribute("href", "/admin/applications?status=in_progress");
-    expect(within(statuses).getByRole("link", { name: /Закрытые\s*5/ })).toHaveAttribute("href", "/admin/applications?status=closed");
+    expect(within(statuses).getByRole("link", { name: /Новые\s*1/ })).toHaveAttribute(
+      "href",
+      "/admin/applications?status=new",
+    );
+    expect(within(statuses).getByRole("link", { name: /В работе\s*2/ })).toHaveAttribute(
+      "href",
+      "/admin/applications?status=in_progress",
+    );
+    expect(within(statuses).getByRole("link", { name: /Закрытые\s*5/ })).toHaveAttribute(
+      "href",
+      "/admin/applications?status=closed",
+    );
     const types = screen.getByRole("navigation", { name: "Вид заявки" });
-    expect(within(types).getByRole("link", { name: "Опт" })).toHaveAttribute("href", "/admin/applications?type=wholesale");
+    expect(within(types).getByRole("link", { name: "Опт" })).toHaveAttribute(
+      "href",
+      "/admin/applications?type=wholesale",
+    );
     expect(within(types).getByRole("link", { name: "Индивидуальная церемония" })).toHaveAttribute(
       "href",
       "/admin/applications?type=private_ceremony",
@@ -62,7 +77,9 @@ describe("ApplicationsList — заявки", () => {
     vi.mocked(applicationsApi.list).mockResolvedValue(applicationList([]));
     renderWithAdmin(<ApplicationsList />);
     expect(await screen.findByText("Ничего не нашлось")).toBeInTheDocument();
-    expect(applicationsApi.list).toHaveBeenCalledWith(expect.objectContaining({ status: "new", type: "event", page: 1 }));
+    expect(applicationsApi.list).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "new", type: "event", page: 1 }),
+    );
   });
 
   it("пусто — объясняем, откуда берутся заявки", async () => {
@@ -74,7 +91,10 @@ describe("ApplicationsList — заявки", () => {
 
   it("сотрудник с правом «Заявки» видит список, без права — нет", async () => {
     vi.mocked(applicationsApi.list).mockResolvedValue(applicationList());
-    const { unmount } = renderWithAdmin(<ApplicationsList />, { owner: false, permissions: ["applications"] });
+    const { unmount } = renderWithAdmin(<ApplicationsList />, {
+      owner: false,
+      permissions: ["applications"],
+    });
     expect(await screen.findByRole("link", { name: /Олег/ })).toBeInTheDocument();
     unmount();
     vi.clearAllMocks();

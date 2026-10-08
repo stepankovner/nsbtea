@@ -18,7 +18,10 @@ vi.mock("next/navigation", () => ({
 }));
 vi.mock("@/lib/admin/content", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/admin/content")>();
-  return { ...actual, eventsApi: { get: vi.fn(), create: vi.fn(), patch: vi.fn(), archive: vi.fn() } };
+  return {
+    ...actual,
+    eventsApi: { get: vi.fn(), create: vi.fn(), patch: vi.fn(), archive: vi.fn() },
+  };
 });
 vi.mock("@/lib/admin/media", () => ({ uploadMedia: vi.fn(), MAX_UPLOAD_MB: 15 }));
 vi.mock("@/lib/admin/lookup", () => ({ lookupProducts: vi.fn().mockResolvedValue([]) }));
@@ -31,7 +34,8 @@ async function fillBasics() {
   await userEvent.type(screen.getByLabelText("Место"), "Клязьма, лодочная станция");
 }
 
-describe("EventCreate — новое событие", () => {
+// много полей формы набираются посимвольно: под нагрузкой полного прогона 5 с бывает мало
+describe("EventCreate — новое событие", { timeout: 15_000 }, () => {
   beforeEach(() => {
     vi.clearAllMocks();
     search = new URLSearchParams();
@@ -64,7 +68,9 @@ describe("EventCreate — новое событие", () => {
     renderWithAdmin(<EventCreate />);
     await fillBasics();
     await userEvent.click(screen.getByRole("button", { name: "Сохранить черновик" }));
-    expect(eventsApi.create).toHaveBeenCalledWith(expect.objectContaining({ is_published: false, price_kop: null, seats_total: null }));
+    expect(eventsApi.create).toHaveBeenCalledWith(
+      expect.objectContaining({ is_published: false, price_kop: null, seats_total: null }),
+    );
   });
 
   it("без названия и даты — не отправляем, объясняем", async () => {
@@ -95,7 +101,7 @@ describe("EventCreate — новое событие", () => {
   });
 });
 
-describe("EventEditor — изменить событие", () => {
+describe("EventEditor — изменить событие", { timeout: 15_000 }, () => {
   beforeEach(() => {
     vi.clearAllMocks();
     search = new URLSearchParams();
@@ -114,7 +120,11 @@ describe("EventEditor — изменить событие", () => {
     await userEvent.click(screen.getByRole("button", { name: "Сохранить" }));
     expect(eventsApi.patch).toHaveBeenCalledWith(
       "e1",
-      expect.objectContaining({ place: "Пляж у моста", title: "Сплав по Клязьме", starts_at: "2026-10-15T16:00:00.000Z" }),
+      expect.objectContaining({
+        place: "Пляж у моста",
+        title: "Сплав по Клязьме",
+        starts_at: "2026-10-15T16:00:00.000Z",
+      }),
     );
   });
 
@@ -122,7 +132,10 @@ describe("EventEditor — изменить событие", () => {
     vi.mocked(eventsApi.get).mockResolvedValue(adminEvent());
     renderWithAdmin(<EventEditor id="e1" />);
     expect(await screen.findByText(/Записались 3 из 8/)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Заявки/ })).toHaveAttribute("href", "/admin/applications?type=event");
+    expect(screen.getByRole("link", { name: /Заявки/ })).toHaveAttribute(
+      "href",
+      "/admin/applications?type=event",
+    );
   });
 
   it("скрыть с сайта — сразу сохраняется", async () => {
@@ -130,7 +143,10 @@ describe("EventEditor — изменить событие", () => {
     vi.mocked(eventsApi.patch).mockResolvedValue(adminEvent({ is_published: false }));
     renderWithAdmin(<EventEditor id="e1" />);
     await userEvent.click(await screen.findByRole("button", { name: "Скрыть с сайта" }));
-    expect(eventsApi.patch).toHaveBeenCalledWith("e1", expect.objectContaining({ is_published: false }));
+    expect(eventsApi.patch).toHaveBeenCalledWith(
+      "e1",
+      expect.objectContaining({ is_published: false }),
+    );
     expect(await screen.findByRole("button", { name: "Показать на сайте" })).toBeInTheDocument();
   });
 
@@ -158,7 +174,13 @@ describe("EventEditor — изменить событие", () => {
   it("ссылки: открыть на сайте и создать копию", async () => {
     vi.mocked(eventsApi.get).mockResolvedValue(adminEvent());
     renderWithAdmin(<EventEditor id="e1" />);
-    expect(await screen.findByRole("link", { name: /Открыть на сайте/ })).toHaveAttribute("href", "/events/splav-po-klyazme");
-    expect(screen.getByRole("link", { name: /Создать копию/ })).toHaveAttribute("href", "/admin/content/events/new?copy=e1");
+    expect(await screen.findByRole("link", { name: /Открыть на сайте/ })).toHaveAttribute(
+      "href",
+      "/events/splav-po-klyazme",
+    );
+    expect(screen.getByRole("link", { name: /Создать копию/ })).toHaveAttribute(
+      "href",
+      "/admin/content/events/new?copy=e1",
+    );
   });
 });

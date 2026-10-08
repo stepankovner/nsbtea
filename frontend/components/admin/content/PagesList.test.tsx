@@ -23,8 +23,21 @@ const pages = [
   adminPage(),
   adminPage({ id: "p-club", title: "Чайный клуб", slug: "club", is_published: false }),
   adminPage({ id: "p-gongfu", title: "Пролив (гунфу ча)", slug: "gongfu", kind: "guide" }),
-  adminPage({ id: "p-offer", title: "Публичная оферта", slug: "offer", kind: "legal", is_published: false, required: true }),
-  adminPage({ id: "p-privacy", title: "Политика обработки персональных данных", slug: "privacy", kind: "legal", required: true }),
+  adminPage({
+    id: "p-offer",
+    title: "Публичная оферта",
+    slug: "offer",
+    kind: "legal",
+    is_published: false,
+    required: true,
+  }),
+  adminPage({
+    id: "p-privacy",
+    title: "Политика обработки персональных данных",
+    slug: "privacy",
+    kind: "legal",
+    required: true,
+  }),
 ];
 
 describe("PagesList — страницы сайта", () => {
@@ -46,7 +59,9 @@ describe("PagesList — страницы сайта", () => {
 
     const club = screen.getByRole("link", { name: /Чайный клуб/ });
     expect(within(club).getByText("Черновик")).toBeInTheDocument();
-    expect(within(screen.getByRole("link", { name: /Пролив/ })).getByText("/guides/gongfu")).toBeInTheDocument();
+    expect(
+      within(screen.getByRole("link", { name: /Пролив/ })).getByText("/guides/gongfu"),
+    ).toBeInTheDocument();
   });
 
   it("неопубликованный обязательный документ — предупреждение", async () => {
@@ -63,17 +78,30 @@ describe("PagesList — страницы сайта", () => {
     search = new URLSearchParams();
     vi.mocked(pagesApi.list).mockResolvedValue(pages);
     renderWithAdmin(<PagesList />);
-    expect(await screen.findByRole("link", { name: "Новая страница" })).toHaveAttribute("href", "/admin/content/pages/new");
-    expect(screen.getByRole("link", { name: /Архив/ })).toHaveAttribute("href", "/admin/content/pages?archived=1");
+    expect(await screen.findByRole("link", { name: "Новая страница" })).toHaveAttribute(
+      "href",
+      "/admin/content/pages/new",
+    );
+    expect(screen.getByRole("link", { name: /Архив/ })).toHaveAttribute(
+      "href",
+      "/admin/content/pages?archived=1",
+    );
   });
 
   it("архив: страницу можно восстановить", async () => {
     search = new URLSearchParams("archived=1");
-    const old = adminPage({ id: "p-old", title: "Летняя акция", slug: "leto", is_published: false });
+    const old = adminPage({
+      id: "p-old",
+      title: "Летняя акция",
+      slug: "leto",
+      is_published: false,
+    });
     vi.mocked(pagesApi.list).mockResolvedValue([old]);
     vi.mocked(pagesApi.restore).mockResolvedValue(old);
     renderWithAdmin(<PagesList />);
-    await userEvent.click(await screen.findByRole("button", { name: "Восстановить «Летняя акция»" }));
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Восстановить «Летняя акция»" }),
+    );
     expect(pagesApi.list).toHaveBeenCalledWith(true);
     expect(pagesApi.restore).toHaveBeenCalledWith("p-old");
   });

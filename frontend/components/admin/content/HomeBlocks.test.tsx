@@ -27,10 +27,9 @@ describe("HomeBlocks — блоки главной страницы", () => {
     expect(rows()).toEqual(["Главный баннер", "Чай недели", "Преимущества"]);
     const advantages = screen.getAllByRole("listitem")[2]!;
     expect(within(advantages).getByText("Скрыт")).toBeInTheDocument();
-    expect(within(screen.getAllByRole("listitem")[0]!).getByRole("link", { name: "Изменить" })).toHaveAttribute(
-      "href",
-      "/admin/content/home/hero",
-    );
+    expect(
+      within(screen.getAllByRole("listitem")[0]!).getByRole("link", { name: "Изменить" }),
+    ).toHaveAttribute("href", "/admin/content/home/hero");
     expect(screen.getByRole("link", { name: /Открыть главную/ })).toHaveAttribute("href", "/");
   });
 
@@ -38,7 +37,9 @@ describe("HomeBlocks — блоки главной страницы", () => {
     vi.mocked(homeApi.list).mockResolvedValue(homeBlocks());
     vi.mocked(homeApi.patch).mockResolvedValue({ ...homeBlocks()[2]!, is_visible: true });
     renderWithAdmin(<HomeBlocks />);
-    const toggle = await screen.findByRole("switch", { name: "Показывать на главной: Преимущества" });
+    const toggle = await screen.findByRole("switch", {
+      name: "Показывать на главной: Преимущества",
+    });
     expect(toggle).not.toBeChecked();
     await userEvent.click(toggle);
     expect(homeApi.patch).toHaveBeenCalledWith("advantages", { is_visible: true });
@@ -58,7 +59,9 @@ describe("HomeBlocks — блоки главной страницы", () => {
   it("перетаскивание — за ручку с понятной подписью", async () => {
     vi.mocked(homeApi.list).mockResolvedValue(homeBlocks());
     renderWithAdmin(<HomeBlocks />);
-    expect(await screen.findByRole("button", { name: "Перетащить: Главный баннер" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("button", { name: "Перетащить: Главный баннер" }),
+    ).toBeInTheDocument();
   });
 
   it("порядок не сохранился — возвращаем как было", async () => {

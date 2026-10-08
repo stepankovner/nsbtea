@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import { BLOCK_SCHEMAS, eventPreview, fromMoscow, pagePath, slugError, slugify, toMoscow } from "@/lib/admin/content";
+import {
+  BLOCK_SCHEMAS,
+  eventPreview,
+  fromMoscow,
+  pagePath,
+  slugError,
+  slugify,
+  toMoscow,
+} from "@/lib/admin/content";
 import { NBSP } from "@/lib/format";
 
 describe("время событий — вводим и показываем по Москве, на сервер — UTC", () => {
@@ -90,14 +98,28 @@ describe("предпросмотр события — как в списке н�
   it("цена: свой текст важнее суммы", () => {
     // суммы — с неразрывными пробелами, как formatRub и сервер
     expect(eventPreview(base, now).price_label).toBe(`3${NBSP}500${NBSP}₽`);
-    expect(eventPreview({ ...base, price_text: "Бесплатно, по записи" }, now).price_label).toBe("Бесплатно, по записи");
+    expect(eventPreview({ ...base, price_text: "Бесплатно, по записи" }, now).price_label).toBe(
+      "Бесплатно, по записи",
+    );
     expect(eventPreview({ ...base, price_kop: null }, now).price_label).toBeNull();
   });
 
   it("места: сколько осталось; закончились — записаться нельзя", () => {
-    expect(eventPreview(base, now)).toMatchObject({ seats_left: 5, seats_label: "Осталось 5 мест", can_book: true });
-    expect(eventPreview({ ...base, seats_taken: 8 }, now)).toMatchObject({ seats_left: 0, seats_label: "Мест нет", can_book: false });
-    expect(eventPreview({ ...base, seats_total: null }, now)).toMatchObject({ seats_left: null, seats_label: null, can_book: true });
+    expect(eventPreview(base, now)).toMatchObject({
+      seats_left: 5,
+      seats_label: "Осталось 5 мест",
+      can_book: true,
+    });
+    expect(eventPreview({ ...base, seats_taken: 8 }, now)).toMatchObject({
+      seats_left: 0,
+      seats_label: "Мест нет",
+      can_book: false,
+    });
+    expect(eventPreview({ ...base, seats_total: null }, now)).toMatchObject({
+      seats_left: null,
+      seats_label: null,
+      can_book: true,
+    });
   });
 
   it("прошедшее событие — без записи", () => {
@@ -109,13 +131,33 @@ describe("предпросмотр события — как в списке н�
 
 describe("блоки главной — поля по виду блока", () => {
   it("у каждого блока главной есть понятное описание", () => {
-    for (const kind of ["hero", "thursday", "services", "featured", "new_products", "sets", "events", "about", "advantages", "wholesale"] as const) {
+    for (const kind of [
+      "hero",
+      "thursday",
+      "services",
+      "featured",
+      "new_products",
+      "sets",
+      "events",
+      "about",
+      "advantages",
+      "wholesale",
+    ] as const) {
       expect(BLOCK_SCHEMAS[kind].description.length).toBeGreaterThan(10);
     }
   });
 
   it("баннер: заголовок, кнопки и фото", () => {
     const keys = BLOCK_SCHEMAS.hero.fields.map((f) => f.key);
-    expect(keys).toEqual(expect.arrayContaining(["title_line1", "title_line2", "text", "primary_label", "primary_href", "image_media_id"]));
+    expect(keys).toEqual(
+      expect.arrayContaining([
+        "title_line1",
+        "title_line2",
+        "text",
+        "primary_label",
+        "primary_href",
+        "image_media_id",
+      ]),
+    );
   });
 });
