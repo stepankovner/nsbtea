@@ -113,7 +113,7 @@ describe("PromoCodeForm — новый промокод", () => {
     const user = userEvent.setup();
     mockApi();
     renderWithAdmin(<PromoCodeForm />);
-    await user.click(screen.getByRole("button", { name: /Подсказка: Промокод/ }));
+    await user.click(screen.getByRole("button", { name: "Подсказка: Промокод" }));
     expect(await screen.findByText(/Например: CHAI10/)).toBeInTheDocument();
     await user.type(screen.getByLabelText(/^Промокод( \*)?$/), "osen-2026");
     await user.click(screen.getByRole("button", { name: "Скопировать" }));
