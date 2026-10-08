@@ -74,9 +74,7 @@ async def _shop_with_test_orders(
         response = await client.post(f"/api/admin/orders/{done}/status", json={"to": step})
         assert response.status_code == 200, response.text
     # оплачен, ещё не собран
-    await buy(
-        client, container, [(tea.id, "preset", 100, 2)], email="b@mail.ru", delivery=PICKUP
-    )
+    await buy(client, container, [(tea.id, "preset", 100, 2)], email="b@mail.ru", delivery=PICKUP)
     # не оплачен — товар в резерве
     await buy(
         client, container, [(unit.id, "unit", 0, 1)], email="c@mail.ru", delivery=PICKUP, pay=False
@@ -96,7 +94,7 @@ async def _shop_with_test_orders(
 async def test_removes_test_orders_and_customers_keeps_shop(
     client: AsyncClient, db: AsyncSession, container: Container
 ) -> None:
-    tea, unit = await _shop_with_test_orders(client, db, container)
+    await _shop_with_test_orders(client, db, container)
     assert await _count(db, PointsTransaction) > 0
     assert await _count(db, OutboxMessage) > 0
     pages_before = await _count(db, Page)
@@ -155,7 +153,8 @@ async def test_stock_returns_to_supplied_amount_through_journal(
     )
     assert returned is not None
     assert returned.delta == 300
-    assert returned.comment is not None and "тестовых заказов" in returned.comment
+    assert returned.comment is not None
+    assert "тестовых заказов" in returned.comment
 
 
 async def test_keep_applications_and_audit_entry(

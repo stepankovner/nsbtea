@@ -63,7 +63,24 @@ docker compose --env-file ../.env exec api python -m app.cli register-tochka-web
 Дальше владелец входит в `/admin`, привязывает Telegram в «Мой профиль» (вход станет с кодом из бота)
 и проходит чек-лист запуска на главном экране админки.
 
-## 4. Обновление
+## 4. Запуск: с тестового сервера на боевой
+
+Каталог, тексты и настройки владелец заполняет на тестовом сервере — они переезжают вместе с базой.
+
+```sh
+cd ~/nsbtea/infra
+docker compose --env-file ../.env exec backup backup.sh                      # копия на всякий случай
+docker compose --env-file ../.env exec api python -m app.cli clear-test-data # пробные заказы, покупатели, баллы, письма
+```
+
+Команда спросит подтверждение (ввести `УДАЛИТЬ`), работает только при `ENVIRONMENT=staging`.
+Остатки вернутся так, будто пробных заказов не было. Демо-товары (если добавлялись) уберите в админке
+в архив. Затем в `.env`: `ENVIRONMENT=production`, `PUBLIC_BASE_URL=https://nsbtea.ru`,
+`SITE_ADDRESS=nsbtea.ru, www.nsbtea.ru`, боевые ключи Точки и СДЭК, `EMAIL_MODE=smtp`; DNS nsbtea.ru → сервер;
+`up -d`, `set-telegram-webhook`, `register-tochka-webhook`, `./smoke-test.sh https://nsbtea.ru`.
+Перед объявлением — один настоящий платёж и возврат (ROADMAP, M6).
+
+## 5. Обновление
 
 ```sh
 cd ~/nsbtea && git pull
@@ -74,7 +91,7 @@ cd infra && docker compose --env-file ../.env up -d --build
 Миграции БД применяются сами (шаг `migrate`) до старта новой версии API.
 Если что-то пошло не так: `git checkout <предыдущий коммит>` и та же команда `up -d --build`.
 
-## 5. Резервные копии
+## 6. Резервные копии
 
 - Каждый день в 03:00 МСК — копия БД в томе `backups` (хранится `BACKUP_KEEP_DAYS` дней, по умолчанию 14).
 - Если задан `BACKUP_S3_BUCKET` — копия БД и все картинки уходят ещё и в S3 (отдельный бакет в РФ).
@@ -92,7 +109,7 @@ docker compose --env-file ../.env start api worker
 
 Проверку восстановления делать раз в месяц на тестовом сервере (ROADMAP, M6).
 
-## 6. Полезное
+## 7. Полезное
 
 ```sh
 docker compose --env-file ../.env ps                     # что запущено

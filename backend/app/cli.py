@@ -8,6 +8,7 @@ register-tochka-webhook — подписаться на вебхук оплат�
 export-openapi      — схема API в JSON (из неё генерируются типы фронтенда)
 demo-data           — демо-товары для тестового сервера (не для боевого)
 check-config        — проверить настройки .env (запускается перед миграциями в Docker Compose)
+clear-test-data     — удалить пробные заказы и покупателей перед запуском (только тестовый сервер)
 """
 
 import argparse
@@ -18,11 +19,12 @@ import sys
 
 from sqlalchemy import select
 
-from app.config import get_settings, production_problems
+from app.config import Settings, get_settings, production_problems
 from app.container import build_container
 from app.core.security import hash_password
 from app.models import AdminUser
 from app.services.admin_auth import create_owner, validate_password
+from app.services.launch_cleanup import clear_test_data
 from app.services.seed import seed_categories, seed_content, seed_demo_catalog
 
 
@@ -113,6 +115,36 @@ async def _demo_data() -> None:
     print(f"Добавлено демо-товаров: {created}")
 
 
+async def _clear_test_data(settings: Settings, keep_applications: bool) -> None:
+    container = build_container(settings)
+    async with container.session_factory() as db:
+        report = await clear_test_data(db, container, keep_applications=keep_applications)
+        await db.commit()
+    print(
+        f"Удалено: заказов {report.orders}, покупателей {report.customers}, "
+        f"заявок {report.applications}."
+    )
+    for name, qty in report.restocked.items():
+        print(f"Возвращено на склад: {name} +{qty}")
+
+
+def _confirm_clear_test_data(settings: Settings, assume_yes: bool) -> None:
+    if settings.is_production:
+        sys.exit(
+            "Очистка только для тестового сервера: на боевом она удалила бы настоящие заказы. "
+            "Запустите её до переключения ENVIRONMENT=production."
+        )
+    if assume_yes:
+        return
+    print(
+        "Будут удалены ВСЕ заказы, покупатели, баллы, корзины, письма в очереди и заявки.\n"
+        "Товары, тексты, настройки, сотрудники, акции и поставки останутся, остатки вернутся.\n"
+        "Сначала сделайте резервную копию: docker compose exec backup backup.sh"
+    )
+    if input("Чтобы продолжить, введите УДАЛИТЬ: ").strip() != "УДАЛИТЬ":
+        sys.exit("Отменено — ничего не удалено.")
+
+
 def _check_config() -> None:
     settings = get_settings()
     problems = production_problems(settings)
@@ -124,7 +156,6 @@ def _check_config() -> None:
 
 
 def _export_openapi() -> None:
-    from app.config import Settings
     from app.main import create_app
 
     # схема не зависит от окружения; заглушки — чтобы не требовались ключи и сеть
@@ -147,6 +178,11 @@ def main() -> None:
     sub.add_parser("export-openapi", help="схема API (JSON) в stdout")
     sub.add_parser("demo-data", help="демо-товары (только не на боевом сервере)")
     sub.add_parser("check-config", help="проверить настройки .env перед запуском")
+    clear = sub.add_parser(
+        "clear-test-data", help="удалить пробные заказы и покупателей перед запуском"
+    )
+    clear.add_argument("--yes", action="store_true", help="не спрашивать подтверждение")
+    clear.add_argument("--keep-applications", action="store_true", help="заявки не удалять")
     args = parser.parse_args()
 
     if args.command == "create-owner":
@@ -165,6 +201,10 @@ def main() -> None:
         asyncio.run(_demo_data())
     elif args.command == "check-config":
         _check_config()
+    elif args.command == "clear-test-data":
+        settings = get_settings()
+        _confirm_clear_test_data(settings, args.yes)
+        asyncio.run(_clear_test_data(settings, args.keep_applications))
 
 
 if __name__ == "__main__":
