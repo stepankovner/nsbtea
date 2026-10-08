@@ -118,7 +118,7 @@ export function ProductPreview({
               <span className="absolute bottom-2 left-2 rounded-full bg-paper px-2.5 py-1 font-mono text-[11px] text-ink">{stockBadge}</span>
             ) : null}
           </div>
-          <span className="font-serif text-xl leading-tight">{name}</span>
+          <span className="break-words font-serif text-xl leading-tight">{name}</span>
           {isTea && listing ? (
             <span className="text-[15px]">
               {formatRub(listing.price_kop)} <span className="text-muted">· {formatGrams(listing.grams)}</span>
@@ -144,7 +144,7 @@ export function ProductPreview({
           ) : null}
           <div className="flex flex-col gap-2">
             {categoryName ? <span className="kicker text-green">{categoryName}</span> : null}
-            <h3 className="font-serif text-[clamp(28px,4vw,44px)] leading-[1.05]">{name}</h3>
+            <h3 className="break-words font-serif text-[clamp(28px,4vw,44px)] leading-[1.05]">{name}</h3>
             {form.short_description.trim() ? <p className="text-[16px] leading-relaxed text-text2">{form.short_description.trim()}</p> : null}
           </div>
 

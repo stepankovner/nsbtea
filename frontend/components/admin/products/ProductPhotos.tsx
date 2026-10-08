@@ -5,7 +5,6 @@ import {
   DndContext,
   KeyboardSensor,
   PointerSensor,
-  TouchSensor,
   useSensor,
   useSensors,
   type DragEndEvent,
@@ -169,8 +168,8 @@ export function ProductPhotos({ product }: { product: AdminProduct }) {
   const [optimistic, setOptimistic] = useState<{ base: string; ids: string[] } | null>(null);
 
   const sensors = useSensors(
+    // ручка перетаскивания — с touch-action: none, поэтому палец двигает фото, а не страницу; остальная карточка прокручивается как обычно
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 

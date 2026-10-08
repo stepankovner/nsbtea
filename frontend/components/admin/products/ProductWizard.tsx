@@ -198,7 +198,7 @@ function WizardView({ product, autosaveDelay }: { product: AdminProduct; autosav
               {fixes.length ? (
                 <div className="flex flex-wrap gap-2">
                   {fixes.map((f) => (
-                    <Button key={f.problem} variant="outline" onClick={() => go(f.step)}>
+                    <Button key={f.problem} variant="outline" className="h-auto min-h-11 whitespace-normal py-2 text-left" onClick={() => go(f.step)}>
                       Перейти к шагу {f.step}: {f.title}
                     </Button>
                   ))}
