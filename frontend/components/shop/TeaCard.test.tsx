@@ -55,7 +55,8 @@ describe("TeaCard — плитка товара в каталоге", () => {
   it("«В корзину» кладёт вариант по умолчанию и показывает подтверждение со ссылкой", async () => {
     vi.mocked(shopApi.addToCart).mockResolvedValue(cart({ count: 1 }));
     renderCard();
-    await userEvent.click(screen.getByRole("button", { name: "В корзину" }));
+    // в каталоге много одинаковых кнопок — в доступном имени есть название чая
+    await userEvent.click(screen.getByRole("button", { name: "В корзину: Да Хун Пао" }));
     expect(shopApi.addToCart).toHaveBeenCalledWith({
       product_id: "0192f000-0000-7000-8000-000000000001",
       kind: "preset",
@@ -72,13 +73,13 @@ describe("TeaCard — плитка товара в каталоге", () => {
       new ApiError(409, "Доступно не больше 30 г", "insufficient_stock"),
     );
     renderCard();
-    await userEvent.click(screen.getByRole("button", { name: "В корзину" }));
+    await userEvent.click(screen.getByRole("button", { name: "В корзину: Да Хун Пао" }));
     expect(await screen.findByRole("status")).toHaveTextContent("Доступно не больше 30 г");
   });
 
   it("нет в наличии — кнопка неактивна", () => {
     renderCard(productCard({ in_stock: false, badges: [{ kind: "out", label: "Нет в наличии" }] }));
-    expect(screen.getByRole("button", { name: "Нет в наличии" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Нет в наличии: Да Хун Пао" })).toBeDisabled();
   });
 
   it("штучный товар — цена без граммовки", () => {
