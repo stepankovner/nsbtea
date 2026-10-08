@@ -1,11 +1,11 @@
-import { screen, within } from "@testing-library/react";
+import { fireEvent, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import type { Schemas } from "@/lib/api/client";
 import { auditApi } from "@/lib/admin/audit";
 import { settingsApi } from "@/lib/admin/settings";
-import { staffApi } from "@/lib/admin/staff";
+import { addDays, moscowDateInput, staffApi } from "@/lib/admin/staff";
 import { renderWithAdmin } from "@/tests/admin";
 
 import { settingsMeta } from "../settings/fixtures";
@@ -196,6 +196,94 @@ describe("Журнал действий", () => {
     expect(auditApi.list).toHaveBeenLastCalledWith(expect.objectContaining({ page: 2 }));
     expect(screen.getByRole("article", { name: "Изменён товар «Да Хун Пао»" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Показать ещё/ })).not.toBeInTheDocument();
+  });
+
+  it("период — быстрые варианты и свои даты, ссылками с адресом страницы", async () => {
+    search = new URLSearchParams("actor=s1");
+    setup([entry()]);
+    renderWithAdmin(<AuditPage />);
+    const period = await screen.findByRole("navigation", { name: "Период" });
+    expect(within(period).getByRole("link", { name: "Всё время" })).toHaveAttribute("aria-current", "page");
+    expect(within(period).getByRole("link", { name: "Сегодня" })).toHaveAttribute("href", "/admin/audit?actor=s1&period=today");
+    expect(within(period).getByRole("link", { name: "7 дней" })).toHaveAttribute("href", "/admin/audit?actor=s1&period=7d");
+    expect(within(period).getByRole("link", { name: "30 дней" })).toHaveAttribute("href", "/admin/audit?actor=s1&period=30d");
+
+    await userEvent.click(within(period).getByRole("button", { name: "Свои даты" }));
+    fireEvent.change(screen.getByLabelText("С"), { target: { value: "2026-10-01" } });
+    expect(replace).toHaveBeenLastCalledWith("/admin/audit?actor=s1&from=2026-10-01");
+  });
+
+  it("быстрый период из адреса — дни по Москве в запросе, обе границы включительно", async () => {
+    search = new URLSearchParams("period=7d");
+    setup([entry()]);
+    renderWithAdmin(<AuditPage />);
+    expect(await screen.findByRole("link", { name: "7 дней" })).toHaveAttribute("aria-current", "page");
+    const today = moscowDateInput();
+    expect(auditApi.list).toHaveBeenCalledWith(expect.objectContaining({ date_from: addDays(today, -6), date_to: today, page: 1 }));
+
+    search = new URLSearchParams("period=today");
+    renderWithAdmin(<AuditPage />);
+    await screen.findAllByRole("link", { name: "Сегодня" });
+    expect(auditApi.list).toHaveBeenLastCalledWith(expect.objectContaining({ date_from: today, date_to: today }));
+  });
+
+  it("свои даты из адреса — в полях и в запросе; конец можно поменять", async () => {
+    search = new URLSearchParams("from=2026-10-01&to=2026-10-05");
+    setup([entry()]);
+    renderWithAdmin(<AuditPage />);
+    expect(await screen.findByLabelText("С")).toHaveValue("2026-10-01");
+    expect(screen.getByLabelText("По")).toHaveValue("2026-10-05");
+    expect(screen.getByRole("button", { name: "Свои даты" })).toHaveAttribute("aria-pressed", "true");
+    expect(auditApi.list).toHaveBeenCalledWith(expect.objectContaining({ date_from: "2026-10-01", date_to: "2026-10-05" }));
+
+    fireEvent.change(screen.getByLabelText("По"), { target: { value: "2026-10-07" } });
+    expect(replace).toHaveBeenLastCalledWith("/admin/audit?from=2026-10-01&to=2026-10-07");
+  });
+
+  it("склад: новые записи — с единицами, старые — числами", async () => {
+    search = new URLSearchParams();
+    setup([
+      entry({
+        id: "e8",
+        action: "inventory.supply",
+        entity: "supply",
+        entity_id: "sup2",
+        summary: "Принята поставка: 2 поз.",
+        diff: { "Да Хун Пао": ["100 г", "1 100 г"], "Гайвань": ["0 шт.", "3 шт."] },
+      }),
+      entry({
+        id: "e9",
+        action: "inventory.count",
+        entity: "inventory",
+        entity_id: null,
+        summary: "Инвентаризация: исправлено 1 поз.",
+        diff: { "Шу пуэр": [1200, 1150] },
+      }),
+    ]);
+    renderWithAdmin(<AuditPage />);
+    const supply = await screen.findByRole("article", { name: "Принята поставка: 2 поз." });
+    expect(rows(supply)).toEqual(expect.arrayContaining(["Остаток «Да Хун Пао»: 100 г → 1 100 г", "Остаток «Гайвань»: 0 шт. → 3 шт."]));
+    expect(within(supply).getByRole("link", { name: /Поставки на складе/ })).toHaveAttribute("href", "/admin/inventory?tab=supplies");
+
+    const count = screen.getByRole("article", { name: "Инвентаризация: исправлено 1 поз." });
+    expect(rows(count)).toContain("Остаток «Шу пуэр»: 1 200 → 1 150");
+    expect(within(count).getByRole("link", { name: /История склада/ })).toHaveAttribute("href", "/admin/inventory?tab=history");
+  });
+
+  it("акции, промокоды и категории — со ссылками на свои экраны", async () => {
+    search = new URLSearchParams();
+    setup([
+      entry({ id: "p1", action: "promotion.save", entity: "promotion", entity_id: "pr1", summary: "Сохранена акция «Осенняя»", diff: {} }),
+      entry({ id: "p2", action: "promo_code.save", entity: "promo_code", entity_id: "pc1", summary: "Сохранён промокод CHAI10", diff: {} }),
+      entry({ id: "p3", action: "category.update", entity: "category", entity_id: "c1", summary: "Изменена категория «Улун»", diff: {} }),
+    ]);
+    renderWithAdmin(<AuditPage />);
+    const promo = await screen.findByRole("article", { name: "Сохранена акция «Осенняя»" });
+    expect(within(promo).getByRole("link", { name: /Открыть акцию/ })).toHaveAttribute("href", "/admin/promotions/pr1");
+    const code = screen.getByRole("article", { name: "Сохранён промокод CHAI10" });
+    expect(within(code).getByRole("link", { name: /Открыть промокод/ })).toHaveAttribute("href", "/admin/promotions/codes/pc1");
+    const category = screen.getByRole("article", { name: "Изменена категория «Улун»" });
+    expect(within(category).getByRole("link", { name: /Категории/ })).toHaveAttribute("href", "/admin/products/categories");
   });
 
   it("пусто — объясняем, что здесь появится", async () => {
