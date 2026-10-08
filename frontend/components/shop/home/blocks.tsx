@@ -166,7 +166,7 @@ export function ThursdayBlock({ block }: { block: Block }) {
   );
 }
 
-const CHIP: Record<string, string> = { ink: "#1D231B", green: "#5C7650", red: "#8E3236" };
+const CHIP: Record<string, string> = { ink: "#1D231B", green: "#546B49", red: "#8E3236" };
 
 export function ServicesBlock({ block }: { block: Block }) {
   const items = Array.isArray(block.data.items) ? (block.data.items as Record<string, unknown>[]) : [];

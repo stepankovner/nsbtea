@@ -19,7 +19,7 @@
   --color-red: #8e3236;
   --color-red-hover: #76292d;
   --color-red-light: #e39a97;
-  --color-green: #5c7650;
+  --color-green: #546b49; /* макет: #5C7650 — затемнён до контраста 4.5:1 (WCAG AA) для мелкого текста */
   --color-green-light: #93ac85;
   --color-forest: #232b21;
   --color-forest-line: #46523f;

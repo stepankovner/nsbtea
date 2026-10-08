@@ -22,12 +22,15 @@ export const plexMono = IBM_Plex_Mono({
   display: "swap",
 });
 
-// Иероглифы: браузер скачивает только нужные кусочки шрифта (unicode-range), без предзагрузки.
+// Иероглифы — украшение: браузер скачивает только нужные кусочки шрифта (unicode-range), без
+// предзагрузки. display: optional — если шрифт не успел за ~0,1 с, на этой странице остаётся
+// системный китайский шрифт и ничего не перерисовывается (иначе крупные иероглифы на карточках
+// дорисовываются через секунды на медленном мобильном интернете и тормозят LCP).
 export const notoSerifSc = Noto_Serif_SC({
   weight: "500",
   subsets: ["latin"],
   variable: "--font-noto-sc",
-  display: "swap",
+  display: "optional",
   preload: false,
 });
 

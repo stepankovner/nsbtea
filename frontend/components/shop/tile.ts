@@ -5,7 +5,7 @@ export interface TileColors {
 }
 
 const TILES: Record<string, TileColors> = {
-  green: { bg: "#5C7650", fg: "#F1EDE4" },
+  green: { bg: "#546B49", fg: "#F1EDE4" },
   white: { bg: "#E2DACA", fg: "#1D231B" },
   oolong: { bg: "#34402F", fg: "#F1EDE4" },
   red: { bg: "#8E3236", fg: "#F1EDE4" },
