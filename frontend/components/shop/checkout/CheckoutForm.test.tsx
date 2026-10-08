@@ -58,6 +58,19 @@ describe("CheckoutForm — оформление на одной странице
     });
   });
 
+  it("пустая корзина — формы оформления нет (в корзине уже есть «Перейти в каталог»)", async () => {
+    const empty = cart({ count: 0, lines: [] });
+    vi.mocked(shopApi.getCart).mockResolvedValue(empty);
+    render(
+      <CartProvider initialCart={empty}>
+        <CheckoutForm site={site()} customer={null} navigate={assign} />
+      </CartProvider>,
+    );
+    expect(screen.queryByRole("heading", { name: "Оформление" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Оплатить/ })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Имя")).not.toBeInTheDocument();
+  });
+
   it("способы получения из настроек магазина", () => {
     renderForm();
     const group = screen.getByRole("radiogroup", { name: "Получение" });
