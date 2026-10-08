@@ -259,6 +259,16 @@ class ProductListOut(ApiModel):
     total: int
     page: int
     per_page: int
+    # для вкладок: published / hidden / draft — без архива, archived — в архиве
+    counts: dict[str, int]
+
+
+class ProductOptionsOut(ApiModel):
+    """Общие настройки каталога, нужные редактору товара (без доступа к настройкам магазина)."""
+
+    weight_presets: list[int]
+    low_stock_tea_grams: int
+    low_stock_units: int
 
 
 class RelationsIn(ApiModel):

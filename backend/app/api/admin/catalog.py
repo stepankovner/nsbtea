@@ -4,7 +4,7 @@ import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, File, Query, UploadFile, status
-from sqlalchemy import or_, select
+from sqlalchemy import func, or_, select
 
 from app.api.deps import (
     CategoryReadAccess,
@@ -19,7 +19,7 @@ from app.domain.inventory import format_qty
 from app.domain.pricing import ProductType, price_per_100g_kop
 from app.domain.texts import normalize_search
 from app.models import Product, Tag
-from app.models.catalog import RelationKind
+from app.models.catalog import ProductStatus, RelationKind
 from app.models.system import MediaFile
 from app.schemas.catalog import (
     AltIn,
@@ -34,6 +34,7 @@ from app.schemas.catalog import (
     ProductImageOut,
     ProductListItem,
     ProductListOut,
+    ProductOptionsOut,
     ProductOut,
     ProductPatchIn,
     RelationsIn,
@@ -292,7 +293,33 @@ async def list_products(
         )
         for p, level in rows
     ]
-    return ProductListOut(items=items, total=total, page=page, per_page=per_page)
+    counts = {status.value: 0 for status in ProductStatus}
+    rows_by_status = await db.execute(
+        select(Product.status, func.count())
+        .where(Product.archived_at.is_(None))
+        .group_by(Product.status)
+    )
+    for status_value, count in rows_by_status.all():
+        counts[status_value] = count
+    counts["archived"] = int(
+        await db.scalar(
+            select(func.count()).select_from(Product).where(Product.archived_at.is_not(None))
+        )
+        or 0
+    )
+    return ProductListOut(items=items, total=total, page=page, per_page=per_page, counts=counts)
+
+
+@router.get(
+    "/products/options", response_model=ProductOptionsOut, summary="Граммовки и пороги каталога"
+)
+async def product_options(_: Products, db: Db) -> ProductOptionsOut:
+    catalog = await get_group(db, CatalogSettings)
+    return ProductOptionsOut(
+        weight_presets=catalog.weight_presets,
+        low_stock_tea_grams=catalog.low_stock_tea_grams,
+        low_stock_units=catalog.low_stock_units,
+    )
 
 
 @router.post(

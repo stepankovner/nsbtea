@@ -1027,6 +1027,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/products/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Граммовки и пороги каталога */
+        get: operations["product_options_api_admin_products_options_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/products/{product_id}": {
         parameters: {
             query?: never;
@@ -4470,6 +4487,10 @@ export interface components {
         };
         /** ProductListOut */
         ProductListOut: {
+            /** Counts */
+            counts: {
+                [key: string]: number;
+            };
             /** Items */
             items: components["schemas"]["ProductListItem"][];
             /** Page */
@@ -4478,6 +4499,18 @@ export interface components {
             per_page: number;
             /** Total */
             total: number;
+        };
+        /**
+         * ProductOptionsOut
+         * @description Общие настройки каталога, нужные редактору товара (без доступа к настройкам магазина).
+         */
+        ProductOptionsOut: {
+            /** Low Stock Tea Grams */
+            low_stock_tea_grams: number;
+            /** Low Stock Units */
+            low_stock_units: number;
+            /** Weight Presets */
+            weight_presets: number[];
         };
         /** ProductOut */
         ProductOut: {
@@ -8115,6 +8148,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    product_options_api_admin_products_options_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductOptionsOut"];
                 };
             };
         };

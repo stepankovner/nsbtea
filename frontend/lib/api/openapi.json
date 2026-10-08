@@ -7117,6 +7117,13 @@
    },
    "ProductListOut": {
     "properties": {
+     "counts": {
+      "additionalProperties": {
+       "type": "integer"
+      },
+      "title": "Counts",
+      "type": "object"
+     },
      "items": {
       "items": {
        "$ref": "#/components/schemas/ProductListItem"
@@ -7141,9 +7148,37 @@
      "items",
      "total",
      "page",
-     "per_page"
+     "per_page",
+     "counts"
     ],
     "title": "ProductListOut",
+    "type": "object"
+   },
+   "ProductOptionsOut": {
+    "description": "Общие настройки каталога, нужные редактору товара (без доступа к настройкам магазина).",
+    "properties": {
+     "low_stock_tea_grams": {
+      "title": "Low Stock Tea Grams",
+      "type": "integer"
+     },
+     "low_stock_units": {
+      "title": "Low Stock Units",
+      "type": "integer"
+     },
+     "weight_presets": {
+      "items": {
+       "type": "integer"
+      },
+      "title": "Weight Presets",
+      "type": "array"
+     }
+    },
+    "required": [
+     "weight_presets",
+     "low_stock_tea_grams",
+     "low_stock_units"
+    ],
+    "title": "ProductOptionsOut",
     "type": "object"
    },
    "ProductOut": {
@@ -14896,6 +14931,27 @@
      }
     },
     "summary": "Создать товар (черновик)",
+    "tags": [
+     "admin: каталог"
+    ]
+   }
+  },
+  "/api/admin/products/options": {
+   "get": {
+    "operationId": "product_options_api_admin_products_options_get",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ProductOptionsOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "Граммовки и пороги каталога",
     "tags": [
      "admin: каталог"
     ]
