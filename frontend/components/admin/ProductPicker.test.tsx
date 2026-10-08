@@ -10,8 +10,8 @@ import { ProductPicker } from "./ProductPicker";
 
 vi.mock("@/lib/admin/lookup", () => ({ lookupProducts: vi.fn() }));
 
-const tea = { id: "p1", slug: "da-hun-pao", name: "Да Хун Пао", type: "tea", status: "published", image_url: null, stock_label: "600 г" };
-const cup = { id: "p2", slug: "gaivan", name: "Гайвань", type: "unit", status: "published", image_url: null, stock_label: "6 шт." };
+const tea = { id: "p1", slug: "da-hun-pao", name: "Да Хун Пао", type: "tea", status: "published", image_url: null, stock: 600, stock_label: "600 г" };
+const cup = { id: "p2", slug: "gaivan", name: "Гайвань", type: "unit", status: "published", image_url: null, stock: 6, stock_label: "6 шт." };
 
 function Harness({ initial = [] as string[], max }: { initial?: string[]; max?: number }) {
   const [ids, setIds] = useState(initial);
