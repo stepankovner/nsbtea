@@ -21,7 +21,8 @@ def _run(monkeypatch: pytest.MonkeyPatch, *args: str) -> None:
 def test_check_config_fails_and_lists_every_problem(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    monkeypatch.setattr(cli, "get_settings", lambda: _prod(tochka_mode="fake", email_mode="console"))
+    settings = _prod(tochka_mode="fake", email_mode="console")
+    monkeypatch.setattr(cli, "get_settings", lambda: settings)
     with pytest.raises(SystemExit) as exc:
         _run(monkeypatch, "check-config")
     assert exc.value.code == 1
@@ -33,7 +34,7 @@ def test_check_config_fails_and_lists_every_problem(
 def test_check_config_passes_for_complete_production_settings(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    monkeypatch.setattr(cli, "get_settings", lambda: _prod())
+    monkeypatch.setattr(cli, "get_settings", _prod)
     _run(monkeypatch, "check-config")
     assert "Настройки в порядке" in capsys.readouterr().out
 
@@ -41,6 +42,7 @@ def test_check_config_passes_for_complete_production_settings(
 def test_check_config_passes_on_dev_and_staging(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    monkeypatch.setattr(cli, "get_settings", lambda: _prod(environment="staging", tochka_mode="fake"))
+    settings = _prod(environment="staging", tochka_mode="fake")
+    monkeypatch.setattr(cli, "get_settings", lambda: settings)
     _run(monkeypatch, "check-config")
     assert "Настройки в порядке" in capsys.readouterr().out

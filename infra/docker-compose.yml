@@ -64,10 +64,11 @@ services:
     healthcheck:
       disable: true
 
-  # Миграции БД — выполняются перед стартом API и воркера, затем контейнер завершается.
+  # Проверка настроек и миграции БД — перед стартом API и воркера, затем контейнер завершается.
+  # Не хватает ключей для боевого режима — здесь будет список, а API и воркер не запустятся.
   migrate:
     <<: *backend
-    command: ["alembic", "upgrade", "head"]
+    command: ["sh", "-c", "python -m app.cli check-config && alembic upgrade head"]
     restart: "no"
     healthcheck:
       disable: true

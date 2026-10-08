@@ -7,6 +7,7 @@ set-telegram-webhook — зарегистрировать вебхук бота
 register-tochka-webhook — подписаться на вебхук оплаты в Точке
 export-openapi      — схема API в JSON (из неё генерируются типы фронтенда)
 demo-data           — демо-товары для тестового сервера (не для боевого)
+check-config        — проверить настройки .env (запускается перед миграциями в Docker Compose)
 """
 
 import argparse
@@ -17,7 +18,7 @@ import sys
 
 from sqlalchemy import select
 
-from app.config import get_settings
+from app.config import get_settings, production_problems
 from app.container import build_container
 from app.core.security import hash_password
 from app.models import AdminUser
@@ -112,6 +113,16 @@ async def _demo_data() -> None:
     print(f"Добавлено демо-товаров: {created}")
 
 
+def _check_config() -> None:
+    settings = get_settings()
+    problems = production_problems(settings)
+    if problems:
+        lines = "\n".join(f"- {problem}" for problem in problems)
+        print(f"Сайт не запущен: не хватает настроек в .env:\n{lines}", file=sys.stderr)
+        sys.exit(1)
+    print(f"Настройки в порядке (режим: {settings.environment.value}).")
+
+
 def _export_openapi() -> None:
     from app.config import Settings
     from app.main import create_app
@@ -135,6 +146,7 @@ def main() -> None:
     sub.add_parser("register-tochka-webhook", help="вебхук оплаты Точки")
     sub.add_parser("export-openapi", help="схема API (JSON) в stdout")
     sub.add_parser("demo-data", help="демо-товары (только не на боевом сервере)")
+    sub.add_parser("check-config", help="проверить настройки .env перед запуском")
     args = parser.parse_args()
 
     if args.command == "create-owner":
@@ -151,6 +163,8 @@ def main() -> None:
         _export_openapi()
     elif args.command == "demo-data":
         asyncio.run(_demo_data())
+    elif args.command == "check-config":
+        _check_config()
 
 
 if __name__ == "__main__":
