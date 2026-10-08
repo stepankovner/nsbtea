@@ -1,6 +1,10 @@
 import "@testing-library/jest-dom/vitest";
-import { cleanup } from "@testing-library/react";
+import { cleanup, configure } from "@testing-library/react";
 import { afterEach } from "vitest";
+
+// findBy*/waitFor ждут появления элемента до 5 с (по умолчанию 1 с): под нагрузкой в CI
+// и при параллельных прогонах загрузка данных в тестах иногда дольше секунды
+configure({ asyncUtilTimeout: 5_000 });
 
 afterEach(() => {
   cleanup();
