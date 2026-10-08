@@ -140,7 +140,7 @@ const HINTS: Record<string, Record<string, string>> = {
 };
 
 /** Подписи вариантов, которых нет в схеме (в схеме — только коды). */
-const ENUM_LABELS: Record<string, Record<string, string>> = {
+export const ENUM_LABELS: Record<string, Record<string, string>> = {
   mode: { week: "Неделю", day: "День" },
 };
 
@@ -243,6 +243,14 @@ export function settingSections(group: string, meta: SettingsMeta): SettingSecti
   const rest = [...fields.values()].filter((f) => !used.has(f.key));
   if (rest.length) sections.push({ title: sections.length ? "Другое" : null, fields: rest });
   return sections;
+}
+
+/** Подпись поля настроек, как в форме (для журнала действий). */
+export function settingFieldLabel(meta: SettingsMeta, group: string, key: string): string | null {
+  const schema = (meta.groups[group] as { schema?: JsonSchema } | undefined)?.schema;
+  const title = schema?.properties?.[key]?.title;
+  if (!title) return null;
+  return key.endsWith("_kop") ? title.replace(MONEY_SUFFIX, "") : title;
 }
 
 export function groupTitle(group: string, meta: SettingsMeta): string | null {
