@@ -85,7 +85,7 @@ const SECTIONS: Record<string, { title: string | null; description?: string; lin
     { title: "Завершение заказов", keys: ["auto_complete_days"] },
   ],
   payment: [
-    { title: "Чеки", description: "Чеки покупателям формирует банк «Точка» — эти данные попадают в каждый чек.", keys: ["tax_system", "vat_type"] },
+    { title: "Чеки", description: "Чеки покупателям по 54-ФЗ формирует банк «Точка» — отдельная касса для оплаты на сайте не нужна.", keys: ["tax_system", "vat_type"] },
     { title: "Оплата при получении", keys: ["allow_pay_on_delivery"] },
   ],
   seo: [

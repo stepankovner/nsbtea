@@ -235,7 +235,7 @@ function AddRecipientDialog({
               <li>Бот ответит: «Готово! Этот чат добавлен в получатели уведомлений».</li>
               <li>Вернитесь сюда и нажмите «Проверить» — новый получатель появится в списке.</li>
             </ol>
-            <p className="rounded-lg bg-muted px-3 py-2 text-sm">
+            <p className="rounded-lg border bg-background px-3 py-2 text-sm">
               Ссылка не открывается? Найдите в Telegram {botName} и отправьте ему сообщение{" "}
               <b className="font-mono text-base whitespace-nowrap">/start {data.code}</b>
             </p>
