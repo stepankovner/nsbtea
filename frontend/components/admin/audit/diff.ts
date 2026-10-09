@@ -7,7 +7,7 @@ import { ENUM_LABELS, settingFieldLabel } from "@/components/admin/settings/sche
 import type { AuditEntry } from "@/lib/admin/audit";
 import type { SettingsMeta } from "@/lib/admin/settings";
 import { permissionsText, type PermissionOption } from "@/lib/admin/staff";
-import { formatDate, formatDateTime, formatGrams, formatRub, plural } from "@/lib/format";
+import { formatDate, formatDateTime, formatGrams, formatRub, NBSP, plural } from "@/lib/format";
 
 export const CHANGED = "изменено";
 const EMPTY = "—";
@@ -167,11 +167,22 @@ function formatValue(entry: AuditEntry, key: string, value: unknown, ctx: DiffCo
   return truncate(text);
 }
 
+/**
+ * Остаток на складе. Новые записи приходят строкой с единицами («1 100 г», «3 шт.»),
+ * старые — просто числом: его показываем с разделением разрядов, без единиц (их в записи нет).
+ */
+function formatStock(value: unknown): string {
+  if (value === null || value === undefined || value === "") return EMPTY;
+  if (typeof value === "number") return String(Math.trunc(value)).replace(/\B(?=(\d{3})+(?!\d))/g, NBSP);
+  return String(value).trim();
+}
+
 /** Строки «было → стало» записи журнала. */
 export function diffRows(entry: AuditEntry, ctx: DiffContext = {}): DiffRow[] {
   return Object.entries(entry.diff ?? {}).map(([key, change]) => {
     const label = labelFor(entry, key, ctx);
     const [before, after] = Array.isArray(change) && change.length === 2 ? change : [undefined, change];
+    if (STOCK_ENTITIES.has(entry.entity)) return { key, label, before: formatStock(before), after: formatStock(after) };
     // ссылки на другие записи (…_id), тексты целиком (описание), вложенные данные — без значений
     const hidden = key.endsWith("_id") || key === "description_changed" || isComplex(before) || isComplex(after);
     if (hidden) return { key, label, before: null, after: null };
@@ -193,11 +204,19 @@ export function entryLink(entry: AuditEntry): { href: string; label: string } | 
       return id ? { href: `/admin/applications/${id}`, label: "Открыть заявку" } : null;
     case "settings":
       return id ? { href: `/admin/settings/${id}`, label: "Открыть настройки" } : null;
+    case "promotion":
+      return id ? { href: `/admin/promotions/${id}`, label: "Открыть акцию" } : null;
+    case "promo_code":
+      return id ? { href: `/admin/promotions/codes/${id}`, label: "Открыть промокод" } : null;
+    case "category":
+      return { href: "/admin/products/categories", label: "Категории товаров" };
     case "thursday":
       return { href: "/admin/promotions/thursdays", label: "Календарь четвергов" };
+    // в записи склада — названия товаров, а не их номера, поэтому ведём на общие списки
     case "supply":
+      return { href: "/admin/inventory?tab=supplies", label: "Поставки на складе" };
     case "inventory":
-      return { href: "/admin/inventory", label: "Открыть склад" };
+      return { href: "/admin/inventory?tab=history", label: "История склада" };
     case "admin_user":
       return entry.action.startsWith("staff.") ? { href: "/admin/staff", label: "К сотрудникам" } : null;
     default:

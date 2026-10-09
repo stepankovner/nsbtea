@@ -19,6 +19,7 @@ import { addDays, moscowDateInput, staffApi, staffKeys } from "@/lib/admin/staff
 import { formatDate, formatDateTime } from "@/lib/format";
 
 import { CHANGED, diffRows, entryLink, type DiffContext } from "./diff";
+import { hasPeriod, PeriodFilter, periodRange } from "./PeriodFilter";
 
 const PER_PAGE = 30;
 
@@ -98,7 +99,7 @@ function AuditScreen() {
   const { user } = useAdmin();
   const actor = params.get("actor") ?? "";
   const entity = params.get("entity") ?? "";
-  const filters = { ...(entity ? { entity } : {}), ...(actor ? { actor_id: actor } : {}) };
+  const filters = { ...(entity ? { entity } : {}), ...(actor ? { actor_id: actor } : {}), ...periodRange(params) };
 
   const staff = useQuery({ queryKey: staffKeys.list, queryFn: staffApi.list });
   const meta = useQuery({ queryKey: settingsKeys.meta, queryFn: settingsApi.meta, staleTime: 5 * 60_000 });
@@ -112,7 +113,7 @@ function AuditScreen() {
   const ctx: DiffContext = { settingsMeta: meta.data, permissions: staff.data?.permissions };
   const entries = log.data?.pages.flatMap((p) => p.items) ?? [];
   const total = log.data?.pages[0]?.total ?? 0;
-  const filtered = Boolean(actor || entity);
+  const filtered = Boolean(actor || entity) || hasPeriod(params);
 
   function setFilter(key: "actor" | "entity", value: string) {
     const next = new URLSearchParams(params.toString());
@@ -130,7 +131,7 @@ function AuditScreen() {
     <>
       <PageHeader
         title="Журнал действий"
-        description="Кто, когда и что менял в админке: товары, цены, остатки, заказы, баллы, настройки. Время — московское, новые записи сверху."
+        description="Кто, когда и что менял в админке: товары, цены, остатки, заказы, баллы, настройки. Время и дни — по Москве, новые записи сверху."
       />
 
       <div className="mb-5 grid gap-3 sm:grid-cols-2 lg:max-w-3xl">
@@ -161,6 +162,7 @@ function AuditScreen() {
             ))}
           </select>
         </div>
+        <PeriodFilter params={params} pathname={pathname} replace={(href) => router.replace(href)} />
         {filtered ? (
           <Link href={pathname} className="flex min-h-10 items-center self-start text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground">
             Сбросить фильтры
@@ -203,7 +205,7 @@ function AuditScreen() {
         </div>
       ) : filtered ? (
         <EmptyState icon={History} title="Ничего не нашлось">
-          С такими фильтрами записей нет. Выберите другого сотрудника или раздел — или сбросьте фильтры.
+          С такими фильтрами записей нет. Выберите другого сотрудника, раздел или период — или сбросьте фильтры.
         </EmptyState>
       ) : (
         <EmptyState icon={History} title="Пока пусто">
