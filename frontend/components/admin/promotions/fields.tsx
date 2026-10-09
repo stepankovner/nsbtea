@@ -10,7 +10,6 @@ import { describedBy, Field } from "@/components/admin/Field";
 import { Hint } from "@/components/admin/Hint";
 import { MoneyField } from "@/components/admin/MoneyField";
 import { EmptyState } from "@/components/admin/page";
-import { useAdmin } from "@/components/admin/session";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -18,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { promotionKeys, promotionsApi, type AdminCategory } from "@/lib/admin/promotions";
 import type { Schemas } from "@/lib/api/client";
+import { errorMessage } from "@/lib/api/errors";
 import { cn } from "@/lib/utils";
 
 export function NoAccess({ section }: { section: string }) {
@@ -161,8 +161,8 @@ function flatten(tree: AdminCategory[]): { category: AdminCategory; child: boole
 }
 
 /**
- * Выбор категорий. Список категорий отдаётся только с доступом к товарам;
- * без него видны и снимаются уже выбранные.
+ * Выбор категорий галочками (список доступен с правом «Акции» или «Товары»).
+ * Если список не загрузился — видны и снимаются уже выбранные.
  */
 export function CategoryPicker({
   value,
@@ -176,14 +176,11 @@ export function CategoryPicker({
   known: Schemas["CategoryBrief"][];
   hint: ReactNode;
 }) {
-  const { can } = useAdmin();
-  const allowed = can("products");
-  const tree = useQuery({ queryKey: promotionKeys.categories, queryFn: () => promotionsApi.categories(), enabled: allowed, staleTime: 5 * 60_000 });
+  const tree = useQuery({ queryKey: promotionKeys.categories, queryFn: () => promotionsApi.categories(), staleTime: 5 * 60_000 });
   const toggle = (id: string, on: boolean) => onChange(on ? [...value, id] : value.filter((v) => v !== id));
 
   const names: Record<string, string> = {};
   for (const c of known) names[c.id] = c.name;
-  for (const { category } of flatten(tree.data ?? [])) names[category.id] = category.name;
 
   return (
     <fieldset className="flex min-w-0 flex-col gap-2">
@@ -191,7 +188,7 @@ export function CategoryPicker({
         Категории
         <Hint label="Категории">{hint}</Hint>
       </legend>
-      {allowed && tree.data ? (
+      {tree.data ? (
         tree.data.length ? (
           <ul className="flex flex-col gap-1">
             {flatten(tree.data).map(({ category, child }) => (
@@ -209,9 +206,9 @@ export function CategoryPicker({
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-muted-foreground">Категорий пока нет.</p>
+          <p className="text-sm text-muted-foreground">Категорий пока нет — их заводят в разделе «Товары».</p>
         )
-      ) : allowed && tree.isPending ? (
+      ) : tree.isPending ? (
         <p className="text-sm text-muted-foreground">Загружаем категории…</p>
       ) : (
         <>
@@ -234,10 +231,12 @@ export function CategoryPicker({
               ))}
             </ul>
           ) : null}
-          <p className="text-sm text-muted-foreground">
-            {tree.isError ? "Не удалось загрузить категории. " : ""}
-            Выбрать новые категории может владелец или сотрудник с доступом к разделу «Товары».
-          </p>
+          <div role="alert" className="flex flex-wrap items-center gap-2 text-sm text-destructive">
+            {errorMessage(tree.error)}
+            <Button type="button" variant="outline" onClick={() => void tree.refetch()}>
+              Загрузить категории ещё раз
+            </Button>
+          </div>
         </>
       )}
     </fieldset>

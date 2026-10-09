@@ -2,6 +2,8 @@ import { PromotionsOverview } from "@/components/admin/promotions/PromotionsOver
 
 export const metadata = { title: "Акции" };
 
-export default function PromotionsPage() {
-  return <PromotionsOverview />;
+/** `?archive=codes` или `?archive=promotions` — сразу открыть архив (ссылки из форм). */
+export default async function PromotionsPage(props: PageProps<"/admin/promotions">) {
+  const { archive } = await props.searchParams;
+  return <PromotionsOverview archive={archive === "codes" || archive === "promotions" ? archive : null} />;
 }

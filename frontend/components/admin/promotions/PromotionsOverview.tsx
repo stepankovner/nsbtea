@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { CalendarDays, Percent, Plus, Settings, TicketPercent } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 
 import { EmptyState, PageHeader, QueryState, SectionCard, StatusBadge } from "@/components/admin/page";
 import { useAdmin } from "@/components/admin/session";
@@ -26,7 +27,10 @@ import {
 } from "@/lib/admin/promotions";
 import { plural } from "@/lib/format";
 
+import { ArchivedCodes, ArchivedPromotions, LIST_CLASS, ViewSwitch, type View } from "./ArchivedLists";
 import { CopyButton, NoAccess } from "./fields";
+
+export type ArchiveTab = "promotions" | "codes";
 
 const settingsLink = "inline-flex min-h-11 items-center gap-2 text-[15px] text-muted-foreground underline-offset-4 hover:text-foreground hover:underline";
 
@@ -77,15 +81,74 @@ function CodeRow({ code }: { code: PromoCode }) {
   );
 }
 
+function SalesList({ items }: { items: Promotion[] }) {
+  return items.length ? (
+    <ul className={LIST_CLASS}>
+      {[...items]
+        .sort((a, b) => (PROMOTION_ORDER[a.status_label] ?? 9) - (PROMOTION_ORDER[b.status_label] ?? 9))
+        .map((p) => (
+          <PromotionRow key={p.id} promotion={p} />
+        ))}
+    </ul>
+  ) : (
+    <EmptyState
+      icon={Percent}
+      title="Пока нет акций"
+      action={
+        <Button asChild variant="outline">
+          <Link href="/admin/promotions/new">Создать акцию</Link>
+        </Button>
+      }
+    >
+      Например, «−15% на все улуны до конца месяца». Покупатели увидят старую и новую цену.
+    </EmptyState>
+  );
+}
+
+function CodesList({ items }: { items: PromoCode[] }) {
+  return items.length ? (
+    <ul className={LIST_CLASS}>
+      {items.map((c) => (
+        <CodeRow key={c.id} code={c} />
+      ))}
+    </ul>
+  ) : (
+    <EmptyState
+      icon={TicketPercent}
+      title="Пока нет промокодов"
+      action={
+        <Button asChild variant="outline">
+          <Link href="/admin/promotions/codes/new">Создать промокод</Link>
+        </Button>
+      }
+    >
+      Промокод — слово, которое покупатель вводит в корзине, чтобы получить скидку. Например, CHAI10 для подписчиков Telegram.
+    </EmptyState>
+  );
+}
+
 function NearestThursday({ calendar }: { calendar: ThursdayCalendar }) {
   const first = calendar.upcoming[0];
   if (!first) return null;
   const planned = calendar.upcoming.filter((t) => t.planned).length;
   const isToday = first.date === moscowToday();
+  const current = calendar.current;
   return (
     <div className="flex flex-col gap-2 text-[15px]">
-      <p className="font-medium">
+      {current ? (
+        // режим «неделя», пятница–среда: идёт скидка прошлого четверга
+        <div className="flex flex-col gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-emerald-950">
+          <p className="font-medium">Сейчас идёт — чай недели с четверга, {current.label}</p>
+          <p className="flex flex-wrap items-baseline gap-x-2">
+            <span className="font-semibold text-red-700">−{current.percent}%</span>
+            <span>{current.products.map((p) => p.name).join(", ")}</span>
+          </p>
+          <p className="text-sm">Скидка действует {thursdayPeriodText(current.date, calendar.mode)}</p>
+        </div>
+      ) : null}
+      <p className="flex flex-wrap items-center gap-2 font-medium">
         {isToday ? "Сегодня" : "Ближайший"} — четверг, {first.label}
+        {first.running ? <StatusBadge tone="success">Идёт сейчас</StatusBadge> : null}
       </p>
       {first.planned ? (
         <>
@@ -105,8 +168,10 @@ function NearestThursday({ calendar }: { calendar: ThursdayCalendar }) {
   );
 }
 
-function Overview() {
+function Overview({ archive }: { archive: ArchiveTab | null }) {
   const { isOwner } = useAdmin();
+  const [salesView, setSalesView] = useState<View>(archive === "promotions" ? "archive" : "active");
+  const [codesView, setCodesView] = useState<View>(archive === "codes" ? "archive" : "active");
   const promotions = useQuery({ queryKey: promotionKeys.list, queryFn: () => promotionsApi.list() });
   const codes = useQuery({ queryKey: promotionKeys.codes, queryFn: () => promotionsApi.codes() });
   const welcome = useQuery({ queryKey: promotionKeys.welcome, queryFn: () => promotionsApi.welcomeStats() });
@@ -140,57 +205,25 @@ function Overview() {
       <div className="flex flex-col gap-5 lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-start">
         <div className="contents lg:flex lg:flex-col lg:gap-5">
           <SectionCard title="Акции на товары" id="promo-sales" className="order-2 lg:order-none">
-            <QueryState query={promotions}>
-              {(items) =>
-                items.length ? (
-                  <ul className="-mx-4 -mb-4 flex flex-col overflow-hidden rounded-b-xl border-t md:-mx-5 md:-mb-5">
-                    {[...items]
-                      .sort((a, b) => (PROMOTION_ORDER[a.status_label] ?? 9) - (PROMOTION_ORDER[b.status_label] ?? 9))
-                      .map((p) => (
-                        <PromotionRow key={p.id} promotion={p} />
-                      ))}
-                  </ul>
-                ) : (
-                  <EmptyState
-                    icon={Percent}
-                    title="Пока нет акций"
-                    action={
-                      <Button asChild variant="outline">
-                        <Link href="/admin/promotions/new">Создать акцию</Link>
-                      </Button>
-                    }
-                  >
-                    Например, «−15% на все улуны до конца месяца». Покупатели увидят старую и новую цену.
-                  </EmptyState>
-                )
-              }
-            </QueryState>
+            <ViewSwitch value={salesView} onChange={setSalesView} label="Какие акции показать" />
+            {salesView === "archive" ? (
+              <ArchivedPromotions />
+            ) : (
+              <QueryState query={promotions}>
+                {(items) => <SalesList items={items} />}
+              </QueryState>
+            )}
           </SectionCard>
 
           <SectionCard title="Промокоды" id="promo-codes" className="order-3 lg:order-none">
-            <QueryState query={codes}>
-              {(items) =>
-                items.length ? (
-                  <ul className="-mx-4 -mb-4 flex flex-col overflow-hidden rounded-b-xl border-t md:-mx-5 md:-mb-5">
-                    {items.map((c) => (
-                      <CodeRow key={c.id} code={c} />
-                    ))}
-                  </ul>
-                ) : (
-                  <EmptyState
-                    icon={TicketPercent}
-                    title="Пока нет промокодов"
-                    action={
-                      <Button asChild variant="outline">
-                        <Link href="/admin/promotions/codes/new">Создать промокод</Link>
-                      </Button>
-                    }
-                  >
-                    Промокод — слово, которое покупатель вводит в корзине, чтобы получить скидку. Например, CHAI10 для подписчиков Telegram.
-                  </EmptyState>
-                )
-              }
-            </QueryState>
+            <ViewSwitch value={codesView} onChange={setCodesView} label="Какие промокоды показать" />
+            {codesView === "archive" ? (
+              <ArchivedCodes />
+            ) : (
+              <QueryState query={codes}>
+                {(items) => <CodesList items={items} />}
+              </QueryState>
+            )}
           </SectionCard>
         </div>
 
@@ -270,9 +303,9 @@ function Overview() {
   );
 }
 
-/** Обзор раздела «Акции» (/admin/promotions). */
-export function PromotionsOverview() {
+/** Обзор раздела «Акции» (/admin/promotions); `archive` — сразу открыть архив акций или промокодов. */
+export function PromotionsOverview({ archive = null }: { archive?: ArchiveTab | null }) {
   const { can } = useAdmin();
   if (!can("promotions")) return <NoAccess section="Акции" />;
-  return <Overview />;
+  return <Overview archive={archive} />;
 }

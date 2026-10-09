@@ -88,6 +88,11 @@ describe("подписи акций", () => {
     expect(promoCodeStatus(promoCode({ max_uses: 5, stats: { uses: 5, discount_kop: 10_000 } }), now)).toEqual({ label: "Лимит исчерпан", tone: "neutral" });
   });
 
+  it("в архиве — так и пишем, а не «выключена»", () => {
+    expect(promotionStatus(promotion({ archived: true, is_active: false, status_label: "Выключена" }))).toEqual({ label: "В архиве", tone: "neutral" });
+    expect(promoCodeStatus(promoCode({ archived: true, is_active: false }))).toEqual({ label: "В архиве", tone: "neutral" });
+  });
+
   it("срок чая недели: неделя или один день", () => {
     expect(thursdayPeriodText("2026-10-08", "week")).toBe("с 8 по 14 октября");
     expect(thursdayPeriodText("2026-10-29", "week")).toBe("с 29 октября по 4 ноября");

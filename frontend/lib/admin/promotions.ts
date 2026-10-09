@@ -21,6 +21,10 @@ export type LoyaltySettings = Schemas["LoyaltySettings"];
 
 export const promotionsApi = {
   list: () => must(adminApi.GET("/api/admin/promotions")),
+  listArchived: () => must(adminApi.GET("/api/admin/promotions", { params: { query: { archived: true } } })),
+  /** вернуть из архива — акция возвращается выключенной */
+  restore: (id: string) =>
+    must(adminApi.POST("/api/admin/promotions/{promotion_id}/restore", { params: { path: { promotion_id: id } } })),
   create: (body: PromotionBody) => must(adminApi.POST("/api/admin/promotions", { body })),
   update: (id: string, body: Schemas["PromotionPatch"]) =>
     must(adminApi.PATCH("/api/admin/promotions/{promotion_id}", { params: { path: { promotion_id: id } }, body })),
@@ -28,6 +32,9 @@ export const promotionsApi = {
   welcomeStats: () => must(adminApi.GET("/api/admin/promotions/welcome-stats")),
 
   codes: () => must(adminApi.GET("/api/admin/promo-codes")),
+  codesArchived: () => must(adminApi.GET("/api/admin/promo-codes", { params: { query: { archived: true } } })),
+  /** вернуть из архива — промокод возвращается выключенным */
+  restoreCode: (id: string) => must(adminApi.POST("/api/admin/promo-codes/{code_id}/restore", { params: { path: { code_id: id } } })),
   createCode: (body: PromoCodeBody) => must(adminApi.POST("/api/admin/promo-codes", { body })),
   updateCode: (id: string, body: Schemas["PromoCodePatch"]) =>
     must(adminApi.PATCH("/api/admin/promo-codes/{code_id}", { params: { path: { code_id: id } }, body })),
@@ -37,7 +44,7 @@ export const promotionsApi = {
   saveThursday: (day: string, body: ThursdayBody) => must(adminApi.PUT("/api/admin/thursdays/{day}", { params: { path: { day } }, body })),
   clearThursday: (day: string) => must(adminApi.DELETE("/api/admin/thursdays/{day}", { params: { path: { day } } })),
 
-  /** Дерево категорий — доступно с правом «Товары» (или владельцу). */
+  /** Дерево категорий — доступно с правом «Акции» или «Товары». */
   categories: () => must(adminApi.GET("/api/admin/categories")),
   /** Текущие настройки баллов и приветственной скидки — только владельцу. */
   loyaltySettings: async (): Promise<LoyaltySettings> => (await must(adminApi.GET("/api/admin/settings"))).loyalty,
@@ -46,7 +53,9 @@ export const promotionsApi = {
 export const promotionKeys = {
   all: ["promotions"] as const,
   list: ["promotions", "list"] as const,
+  archived: ["promotions", "archived"] as const,
   codes: ["promotions", "codes"] as const,
+  codesArchived: ["promotions", "codes-archived"] as const,
   welcome: ["promotions", "welcome"] as const,
   thursdays: ["promotions", "thursdays"] as const,
   categories: ["promotions", "categories"] as const,
@@ -175,8 +184,12 @@ export interface StatusView {
   tone: Tone;
 }
 
+const ARCHIVED: StatusView = { label: "В архиве", tone: "neutral" };
+
 /** Статус акции считает сервер; здесь — понятное слово и цвет. */
-export function promotionStatus(promotion: Pick<Promotion, "status_label">): StatusView {
+export function promotionStatus(promotion: Pick<Promotion, "status_label" | "archived">): StatusView {
+  // в архиве акция ещё и выключена — показываем главное
+  if (promotion.archived) return ARCHIVED;
   switch (promotion.status_label) {
     case "Действует":
       return { label: "Идёт", tone: "success" };
@@ -199,6 +212,7 @@ export const PROMOTION_ORDER: Record<string, number> = { Действует: 0, 
  * («Срок действия промокода закончился»), поэтому считаем коротко по тем же правилам.
  */
 export function promoCodeStatus(code: PromoCode, now: Date = new Date()): StatusView {
+  if (code.archived) return ARCHIVED;
   if (!code.is_active) return { label: "Выключен", tone: "warning" };
   if (code.starts_at && new Date(code.starts_at) > now) return { label: "Запланирован", tone: "info" };
   if (code.ends_at && new Date(code.ends_at) <= now) return { label: "Закончился", tone: "neutral" };

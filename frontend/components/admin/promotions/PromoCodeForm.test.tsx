@@ -1,4 +1,4 @@
-import { screen, within } from "@testing-library/react";
+import { configure, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -31,6 +31,11 @@ function mockApi() {
   vi.mocked(promotionsApi.updateCode).mockResolvedValue(promoCode());
   vi.mocked(promotionsApi.archiveCode).mockResolvedValue({ ok: true });
 }
+
+// Формы с поиском товаров под нагрузкой (весь набор тестов идёт параллельно) отвечают дольше
+// обычной секунды — даём запас, чтобы тесты не падали случайно.
+configure({ asyncUtilTimeout: 3_000 });
+vi.setConfig({ testTimeout: 20_000 });
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -96,6 +101,21 @@ describe("PromoCodeForm — новый промокод", () => {
         product_ids: ["p1"],
       }),
     );
+  });
+
+  it("код уже лежит в архиве — объясняем у поля и ведём в архив промокодов", async () => {
+    const user = userEvent.setup();
+    mockApi();
+    vi.mocked(promotionsApi.createCode).mockRejectedValue(
+      new ApiError(409, "Такой промокод уже есть в архиве — восстановите его («Акции» → «Промокоды» → «Архив»)", "conflict", { field: "code" }),
+    );
+    renderWithAdmin(<PromoCodeForm />);
+    await user.type(screen.getByLabelText(/^Промокод( \*)?$/), "LETO2026");
+    await user.type(screen.getByLabelText(/^Скидка, %/), "10");
+    await user.click(screen.getByRole("button", { name: "Создать промокод" }));
+    expect(await screen.findByText(/Такой промокод уже есть в архиве/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Открыть архив промокодов/ })).toHaveAttribute("href", "/admin/promotions?archive=codes");
+    expect(push).not.toHaveBeenCalled();
   });
 
   it("код проверяем сразу — латиница, цифры, дефис", async () => {
@@ -171,6 +191,7 @@ describe("PromoCodeForm — изменение промокода", () => {
     await user.click(await screen.findByRole("button", { name: "Убрать в архив" }));
     const dialog = await screen.findByRole("alertdialog");
     expect(within(dialog).getByText(/перестанет действовать/)).toBeInTheDocument();
+    expect(within(dialog).getByText(/вернуть из архива/)).toBeInTheDocument();
     await user.click(within(dialog).getByRole("button", { name: "Да, убрать в архив" }));
     expect(promotionsApi.archiveCode).toHaveBeenCalledWith("pc1");
     expect(push).toHaveBeenCalledWith("/admin/promotions");
@@ -181,5 +202,6 @@ describe("PromoCodeForm — изменение промокода", () => {
     vi.mocked(promotionsApi.codes).mockResolvedValue([]);
     renderWithAdmin(<PromoCodeForm id="nope" />);
     expect(await screen.findByText(/Промокод не найден/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Открыть архив промокодов/ })).toHaveAttribute("href", "/admin/promotions?archive=codes");
   });
 });

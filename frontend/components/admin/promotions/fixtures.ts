@@ -4,8 +4,8 @@ export const daHunPao: Schemas["ProductBrief"] = { id: "p1", name: "Да Хун 
 export const teGuanYin: Schemas["ProductBrief"] = { id: "p2", name: "Те Гуань Инь", type: "tea", status: "published", image_url: null };
 
 /** Товары в выдаче поиска (ProductPicker). */
-export const lookupTea = { id: "p1", slug: "da-hun-pao", name: "Да Хун Пао", type: "tea", status: "published", image_url: null, stock_label: "600 г" };
-export const lookupOolong = { id: "p2", slug: "te-guan-yin", name: "Те Гуань Инь", type: "tea", status: "published", image_url: null, stock_label: "300 г" };
+export const lookupTea = { id: "p1", slug: "da-hun-pao", name: "Да Хун Пао", type: "tea", status: "published", image_url: null, stock: 600, stock_label: "600 г" };
+export const lookupOolong = { id: "p2", slug: "te-guan-yin", name: "Те Гуань Инь", type: "tea", status: "published", image_url: null, stock: 300, stock_label: "300 г" };
 
 export function promotion(overrides: Partial<Schemas["PromotionOut"]> = {}): Schemas["PromotionOut"] {
   return {
@@ -17,6 +17,7 @@ export function promotion(overrides: Partial<Schemas["PromotionOut"]> = {}): Sch
     starts_at: "2026-10-01T21:00:00Z",
     ends_at: "2026-10-31T21:00:00Z",
     is_active: true,
+    archived: false,
     status_label: "Действует",
     products: [daHunPao],
     categories: [{ id: "cat1", name: "Улуны" }],
@@ -40,6 +41,7 @@ export function promoCode(overrides: Partial<Schemas["PromoCodeOut"]> = {}): Sch
     starts_at: null,
     ends_at: null,
     is_active: true,
+    archived: false,
     status_label: "Действует",
     products: [],
     categories: [],
@@ -60,15 +62,28 @@ const DAYS: [string, string][] = [
 ];
 
 export function thursday(overrides: Partial<Schemas["ThursdayOut"]> = {}): Schemas["ThursdayOut"] {
-  return { date: "2026-10-22", label: "22 октября", planned: false, percent: 20, custom_percent: null, note: null, products: [], ...overrides };
+  return {
+    date: "2026-10-22",
+    label: "22 октября",
+    planned: false,
+    running: false,
+    percent: 20,
+    custom_percent: null,
+    note: null,
+    products: [],
+    ...overrides,
+  };
 }
 
-/** Календарь на 8 четвергов: «сегодня» — четверг 8 октября (общая скидка), 15-го — своя скидка 25%, дальше пусто. */
+/**
+ * Календарь на 8 четвергов: «сегодня» — четверг 8 октября (общая скидка, идёт сейчас),
+ * 15-го — своя скидка 25%, дальше пусто. Акции прошлого четверга нет (`current: null`).
+ */
 export function calendar(overrides: Partial<Schemas["ThursdayCalendarOut"]> = {}): Schemas["ThursdayCalendarOut"] {
   const upcoming = DAYS.map(([date, label]) => thursday({ date, label }));
-  upcoming[0] = thursday({ date: "2026-10-08", label: "8 октября", planned: true, products: [daHunPao] });
+  upcoming[0] = thursday({ date: "2026-10-08", label: "8 октября", planned: true, running: true, products: [daHunPao] });
   upcoming[1] = thursday({ date: "2026-10-15", label: "15 октября", planned: true, percent: 25, custom_percent: 25, note: "остатки весеннего урожая", products: [teGuanYin] });
-  return { upcoming, default_percent: 20, mode: "week", ...overrides };
+  return { current: null, upcoming, default_percent: 20, mode: "week", ...overrides };
 }
 
 export function categoryTree(): Schemas["CategoryOut"][] {

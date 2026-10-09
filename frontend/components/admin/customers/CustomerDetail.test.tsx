@@ -1,4 +1,4 @@
-import { screen, within } from "@testing-library/react";
+import { configure, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -13,6 +13,11 @@ vi.mock("@/lib/admin/customers", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/admin/customers")>();
   return { ...actual, customersApi: { get: vi.fn(), updateNotes: vi.fn(), adjustPoints: vi.fn() } };
 });
+
+// Формы с поиском товаров под нагрузкой (весь набор тестов идёт параллельно) отвечают дольше
+// обычной секунды — даём запас, чтобы тесты не падали случайно.
+configure({ asyncUtilTimeout: 3_000 });
+vi.setConfig({ testTimeout: 20_000 });
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -137,6 +142,20 @@ describe("CustomerDetail — карточка клиента", () => {
     renderWithAdmin(<CustomerDetail id="c1" />);
     const orders = await screen.findByRole("region", { name: "Заказы" });
     expect(within(orders).getByText(/Заказов пока нет/)).toBeInTheDocument();
+  });
+
+  it("сотруднику баллы видны, но начислять и списывать может только владелец", async () => {
+    vi.mocked(customersApi.get).mockResolvedValue(customerCard());
+    renderWithAdmin(<CustomerDetail id="c1" />, { owner: false, permissions: ["customers"] });
+    const points = await screen.findByRole("region", { name: "Баллы" });
+    expect(within(points).getByTestId("points-balance")).toHaveTextContent("120");
+    expect(within(points).getByRole("list", { name: "История баллов" })).toBeInTheDocument();
+    expect(within(points).getByText("Начислять и списывать баллы может только владелец")).toBeInTheDocument();
+    expect(within(points).queryByLabelText(/^Сколько баллов/)).not.toBeInTheDocument();
+    expect(within(points).queryByRole("radio", { name: "Списать" })).not.toBeInTheDocument();
+    expect(within(points).queryByRole("button", { name: /Начислить/ })).not.toBeInTheDocument();
+    // заметки сотруднику доступны
+    expect(screen.getByLabelText(/^Заметки о клиенте/)).toBeInTheDocument();
   });
 
   it("без права «Клиенты» экран закрыт", () => {

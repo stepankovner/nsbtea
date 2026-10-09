@@ -233,13 +233,14 @@ function PromotionEditor({ promotion }: { promotion: Promotion | null }) {
           <ConfirmAction
             trigger="Убрать в архив"
             title={`Убрать акцию «${promotion.title}» в архив?`}
-            description="Акция сразу перестанет действовать — на сайте вернутся обычные цены. Она пропадёт из списка, скидки в уже оформленных заказах сохранятся. Вернуть акцию из архива здесь нельзя: если нужна пауза, лучше выключите её переключателем «Акция включена»."
+            description="Акция сразу перестанет действовать — на сайте вернутся обычные цены. Она перейдёт во вкладку «Архив» раздела «Акции», скидки в уже оформленных заказах сохранятся. Акцию можно вернуть из архива — она вернётся выключенной. Для короткой паузы проще выключить её переключателем «Акция включена»."
             confirm="Да, убрать в архив"
             cancel="Не убирать"
             onConfirm={async () => {
               await promotionsApi.archive(promotion.id);
               client.setQueryData<Promotion[]>(promotionKeys.list, (old) => old?.filter((p) => p.id !== promotion.id));
               void client.invalidateQueries({ queryKey: promotionKeys.list });
+              void client.invalidateQueries({ queryKey: promotionKeys.archived });
               toast.success("Акция убрана в архив");
               router.push("/admin/promotions");
             }}
@@ -262,8 +263,16 @@ function EditPromotion({ id }: { id: string }) {
         ) : (
           <>
             <PageHeader back={BACK} title="Акция" />
-            <EmptyState icon={Percent} title="Акция не найдена">
-              Возможно, её уже убрали в архив. Вернитесь к списку акций.
+            <EmptyState
+              icon={Percent}
+              title="Акция не найдена"
+              action={
+                <Button asChild variant="outline">
+                  <Link href="/admin/promotions?archive=promotions">Открыть архив акций</Link>
+                </Button>
+              }
+            >
+              Возможно, её убрали в архив — оттуда акцию можно восстановить.
             </EmptyState>
           </>
         );

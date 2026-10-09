@@ -163,6 +163,7 @@ function Stat({ label, value }: { label: string; value: string }) {
 }
 
 function CustomerView({ customer: c }: { customer: CustomerCard }) {
+  const { isOwner } = useAdmin();
   const link = "inline-flex min-h-11 items-center gap-2.5 underline-offset-4 hover:underline";
   return (
     <>
@@ -196,7 +197,12 @@ function CustomerView({ customer: c }: { customer: CustomerCard }) {
                 </p>
                 <p className="text-sm text-muted-foreground">1 балл = 1 ₽. Покупатель видит баланс и историю в личном кабинете.</p>
               </div>
-              <PointsAdjust customer={c} />
+              {isOwner ? (
+                <PointsAdjust customer={c} />
+              ) : (
+                // SPEC 7.1, 10.9: у сотрудников нет доступа к деньгам и баллам — сервер ответит отказом
+                <p className="rounded-lg bg-muted/60 px-3 py-2.5 text-[15px] text-muted-foreground">Начислять и списывать баллы может только владелец</p>
+              )}
               <div className="flex flex-col gap-2">
                 <h3 className="font-medium">История</h3>
                 {c.points_history.length ? (
