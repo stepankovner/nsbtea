@@ -30,7 +30,8 @@
   --font-serif: var(--font-prata), Georgia, serif;
   --font-sans: var(--font-golos), system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: var(--font-plex-mono), ui-monospace, "SFMono-Regular", monospace;
-  --font-hanzi: var(--font-noto-sc), "Songti SC", serif;
+  /* иероглифы — системный китайский шрифт (есть на всех телефонах и компьютерах), без загрузки */
+  --font-hanzi: "Songti SC", "STSong", "Noto Serif CJK SC", "Source Han Serif SC", "SimSun", serif;
   --font-logo: var(--font-spectral), Georgia, serif;
 
   --animate-toast-in: toast-in 0.18s ease-out;
