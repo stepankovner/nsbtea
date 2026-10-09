@@ -14,7 +14,8 @@ export type HomeBlockKind = Schemas["HomeBlockKind"];
 export type AdminEvent = Schemas["EventAdminOut"];
 export type EventType = Schemas["EventType"];
 export type Media = Schemas["MediaOut"];
-export type EventPeriod = "upcoming" | "past";
+/** ближайшие, прошедшие (уходят сами по дате) и архив (убранные вручную) */
+export type EventPeriod = "upcoming" | "past" | "archived";
 
 // ------------------------------------------------------------------ API
 
@@ -54,6 +55,13 @@ export const eventsApi = {
     ),
   archive: (id: string) =>
     must(adminApi.DELETE("/api/admin/events/{event_id}", { params: { path: { event_id: id } } })),
+  /** вернуть из архива — событие возвращается скрытым с сайта */
+  restore: (id: string) =>
+    must(
+      adminApi.POST("/api/admin/events/{event_id}/restore", {
+        params: { path: { event_id: id } },
+      }),
+    ),
 };
 
 export const contentKeys = {
@@ -617,7 +625,7 @@ export const BLOCK_SCHEMAS: Record<HomeBlockKind, BlockSchema> = {
         label: "Какие товары показать",
         type: "products",
         max: 12,
-        hint: "Выберите товары в нужном порядке — не больше, чем указано в поле «Сколько товаров показать». Если ничего не выбрать — покажем первые товары, которые есть в наличии.",
+        hint: "Выберите товары в нужном порядке — на сайте покажутся первые из них, сколько указано в поле «Сколько товаров показать». Если ничего не выбрать — покажем первые товары, которые есть в наличии.",
       },
       LIMIT("Сколько товаров показать", 12, 4),
     ],

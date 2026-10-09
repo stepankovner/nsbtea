@@ -1,7 +1,7 @@
 "use client";
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { Inbox } from "lucide-react";
+import { CalendarDays, Inbox } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 
@@ -21,6 +21,11 @@ import { formatDayTime, formatPhone } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 const PER_PAGE = 30;
+
+/** Название события берём из самих заявок: право «Заявки» не даёт смотреть раздел «Сайт». */
+function eventTitle(items: Application[]): string | null {
+  return items.find((a) => a.event_title)?.event_title ?? null;
+}
 
 function Row({ app }: { app: Application }) {
   const subject = applicationSubject(app);
@@ -55,8 +60,15 @@ function ListContent() {
   const params = useSearchParams();
   const status = params.get("status");
   const type = params.get("type");
+  const eventId = params.get("event_id");
   const page = Math.max(1, Number(params.get("page") ?? "1") || 1);
-  const query = { status: status ?? undefined, type: type ?? undefined, page, per_page: PER_PAGE };
+  const query = {
+    status: status ?? undefined,
+    type: type ?? undefined,
+    event_id: eventId ?? undefined,
+    page,
+    per_page: PER_PAGE,
+  };
   const list = useQuery({
     queryKey: applicationKeys.list(query),
     queryFn: () => applicationsApi.list(query),
@@ -112,6 +124,31 @@ function ListContent() {
       <QueryState query={list}>
         {(data) => (
           <>
+            {eventId ? (
+              <div
+                role="status"
+                aria-label="Фильтр по событию"
+                className="mb-4 flex flex-col gap-2 rounded-xl border border-sky-200 bg-sky-50 p-4 text-[15px] text-sky-950 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <p className="flex items-start gap-2">
+                  <CalendarDays className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
+                  <span>
+                    {eventTitle(data.items) ? (
+                      <>
+                        Только заявки на событие{" "}
+                        <span className="font-medium">«{eventTitle(data.items)}»</span>.
+                      </>
+                    ) : (
+                      "Только заявки на выбранное событие."
+                    )}{" "}
+                    Количество в фильтрах — тоже по нему.
+                  </span>
+                </p>
+                <Button asChild variant="outline" className="shrink-0">
+                  <Link href={href({ event_id: null })}>Показать все заявки</Link>
+                </Button>
+              </div>
+            ) : null}
             {/* фильтры — вместе с данными, чтобы количество в них было настоящим, а не «0» на время загрузки */}
             {all > 0 || status || type ? (
               <div className="mb-4 flex flex-col gap-2">
@@ -150,6 +187,11 @@ function ListContent() {
             ) : status || type ? (
               <EmptyState icon={Inbox} title="Ничего не нашлось">
                 Таких заявок нет. Попробуйте другой статус или вид.
+              </EmptyState>
+            ) : eventId ? (
+              <EmptyState icon={Inbox} title="На это событие заявок нет">
+                Когда кто-то запишется на сайте, заявка появится здесь, а вам придёт сообщение в
+                Telegram.
               </EmptyState>
             ) : (
               <EmptyState icon={Inbox} title="Пока нет заявок">

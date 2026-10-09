@@ -52,6 +52,14 @@ const str = (v: unknown) => (typeof v === "string" ? v : "");
 /** сколько товаров показывает сервер, если «limit» не задан (content_public.home) */
 const DEFAULT_LIMIT = 4;
 
+/** Сервер берёт выбранные товары по порядку и обрезает по «сколько показать» — предупреждаем. */
+function productsNote(data: Data): string | undefined {
+  const ids = Array.isArray(data.product_ids) ? data.product_ids : [];
+  const limit = Number(data.limit) || DEFAULT_LIMIT;
+  if (ids.length <= limit) return undefined;
+  return `Выбрано ${ids.length} — на сайте покажутся первые ${limit} по порядку. Чтобы показать все, увеличьте «Сколько товаров показать».`;
+}
+
 function emptyItem(fields: BlockField[]): Data {
   return Object.fromEntries(
     fields.map((f) => [
@@ -73,13 +81,6 @@ function validate(fields: BlockField[], data: Data, prefix = ""): Record<string,
       const n = Number(value);
       if (!Number.isInteger(n) || n < (f.min ?? 0) || n > (f.max ?? 1000))
         errors[prefix + f.key] = `Число от ${f.min ?? 0} до ${f.max ?? 1000}`;
-    } else if (f.type === "products" && Array.isArray(value)) {
-      // сервер показывает не больше «limit» товаров — лишние выбранные просто не появятся
-      const limit = Number(data.limit) || DEFAULT_LIMIT;
-      if (value.length > limit) {
-        errors[prefix + f.key] =
-          `Выбрано ${value.length}, а показываем ${limit}. Уберите лишние или увеличьте «Сколько товаров показать».`;
-      }
     } else if (f.type === "items" && Array.isArray(value) && f.fields) {
       value.forEach((item, i) =>
         Object.assign(errors, validate(f.fields!, (item ?? {}) as Data, `${prefix}${f.key}.${i}.`)),
@@ -96,6 +97,7 @@ function FieldInput({
   images,
   onImage,
   error,
+  note,
 }: {
   field: BlockField;
   value: unknown;
@@ -103,6 +105,8 @@ function FieldInput({
   images: Images;
   onImage: (m: Media) => void;
   error?: string;
+  /** мягкая подсказка под полем (не мешает сохранить) */
+  note?: string;
 }) {
   const id = useId();
   switch (field.type) {
@@ -131,7 +135,7 @@ function FieldInput({
             value={Array.isArray(value) ? value.map(String) : []}
             onChange={(ids) => onChange(ids)}
           />
-          {error ? <p className="text-sm text-destructive">{error}</p> : null}
+          {note ? <p className="text-sm text-amber-800">{note}</p> : null}
         </div>
       );
     case "color": {
@@ -477,6 +481,7 @@ function BlockForm({ block, kind }: { block: HomeBlock; kind: HomeBlockKind }) {
                   images={images}
                   onImage={onImage}
                   error={errors[field.key]}
+                  note={field.type === "products" ? productsNote(data) : undefined}
                 />
               ),
             )}
