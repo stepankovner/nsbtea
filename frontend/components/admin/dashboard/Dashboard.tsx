@@ -90,8 +90,9 @@ export function DashboardView({ data, userName }: { data: Data; userName: string
         <Tile href="/admin/orders?status=awaiting_payment" label="Ждут оплаты" value={a.awaiting_payment} icon={<Timer className="size-4" aria-hidden="true" />} />
       </section>
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
-        <div className="flex flex-col gap-5">
+      {/* grid-cols-1 = minmax(0, 1fr): длинная строка с обрезкой не раздвигает экран телефона */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+        <div className="flex min-w-0 flex-col gap-5">
           <SectionCard title="Новые заказы" id="dash-orders" action={<Link href="/admin/orders" className="text-sm text-muted-foreground hover:text-foreground">Все заказы</Link>}>
             {data.new_orders.length ? (
               <ul className="-mx-2 flex flex-col">
@@ -142,7 +143,7 @@ export function DashboardView({ data, userName }: { data: Data; userName: string
           ) : null}
         </div>
 
-        <div className="flex flex-col gap-5">
+        <div className="flex min-w-0 flex-col gap-5">
           <SectionCard title="Заканчивается" id="dash-stock" action={<Link href="/admin/inventory?tab=reorder" className="text-sm text-muted-foreground hover:text-foreground">Дозаказать</Link>}>
             {data.low_stock.length ? (
               <ul className="-mx-2 flex flex-col">

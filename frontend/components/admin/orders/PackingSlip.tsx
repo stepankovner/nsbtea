@@ -9,7 +9,10 @@ export function PackingSlip({ order, size }: { order: AdminOrder; size: "a4" | "
   return (
     <article
       data-size={size}
-      className={cn("mx-auto bg-white text-black", small ? "w-[105mm] p-[6mm] text-[11px]" : "w-[210mm] p-[14mm] text-[14px]")}
+      className={cn("mx-auto bg-white text-black", small
+          ? "w-full max-w-[105mm] p-[6mm] text-[11px] print:w-[105mm]"
+          : // на экране телефона лист сжимается по ширине, при печати — ровно A4
+            "w-full max-w-[210mm] p-[6mm] text-[14px] sm:p-[14mm] print:w-[210mm] print:p-[14mm]")}
     >
       <header className={cn("flex items-start justify-between border-b-2 border-black", small ? "pb-2" : "pb-4")}>
         <NsbLogo size={small ? 7 : 11} />
