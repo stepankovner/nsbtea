@@ -9,6 +9,8 @@ import { ApiError, errorMessage } from "@/lib/api/errors";
 function onAuthError(error: unknown) {
   if (error instanceof ApiError && error.status === 401 && typeof window !== "undefined") {
     const next = encodeURIComponent(window.location.pathname + window.location.search);
+    // сессия истекла: полная перезагрузка сбрасывает кеш запросов с чужими правами
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
     window.location.assign(`/admin/login?next=${next}`);
     return true;
   }

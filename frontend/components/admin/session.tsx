@@ -64,6 +64,8 @@ export function AdminSessionProvider({ children }: { children: ReactNode }) {
             logout: async () => {
               await adminAuth.logout().catch(() => undefined);
               setCsrfToken(null);
+              // полная перезагрузка: после выхода в памяти не остаётся данных админки и кеша запросов
+              // eslint-disable-next-line @next/next/no-location-assign-relative-destination
               window.location.assign("/admin/login");
             },
           }
