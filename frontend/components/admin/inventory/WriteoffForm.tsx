@@ -11,14 +11,14 @@ import { ProductPicker } from "@/components/admin/ProductPicker";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { checkQty, inventoryApi, isTea, parseIds, WRITEOFF_REASONS, type QtyCheck, type WriteoffReason } from "@/lib/admin/inventory";
 import { formatQty, plural } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 import { qtyFieldId, QtyField, StepHeader, StickyBar, useAfterStockChange } from "./parts";
-import { useStockInfo } from "./useStockInfo";
+import { SelectedFields } from "./SelectedFields";
+import { useSelectedStock } from "./useStockInfo";
 
 type Step = 1 | 2;
 
@@ -38,7 +38,7 @@ export function WriteoffForm() {
   const [finished, setFinished] = useState(false);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const moved = useRef(false);
-  const stock = useStockInfo(ids);
+  const stock = useSelectedStock(ids);
   const done = useAfterStockChange();
 
   useEffect(() => {
@@ -145,52 +145,31 @@ export function WriteoffForm() {
             hint="Для чая — целые граммы (например, 50), для посуды и наборов — целые штуки. Списать больше, чем есть на складе, нельзя."
             headingRef={headingRef}
           />
-          {stock.loading ? (
-            <div className="flex flex-col gap-3" aria-busy="true" aria-label="Загружаем">
-              {ids.map((id) => (
-                <Skeleton key={id} className="h-24 w-full" />
-              ))}
-            </div>
-          ) : (
-            <div className="grid gap-4 md:grid-cols-2">
-              {ids.map((id) => {
-                const info = stock.info[id];
-                if (!info) {
-                  return (
-                    <div key={id} className="flex items-center justify-between gap-3 rounded-xl border border-dashed p-4 text-[15px]">
-                      <span>Товар не найден — возможно, его убрали в архив.</span>
-                      <Button type="button" variant="outline" onClick={() => setIds(ids.filter((v) => v !== id))}>
-                        Убрать
-                      </Button>
-                    </div>
-                  );
-                }
-                const value = checks[id]?.value ?? null;
-                return (
-                  <div key={id} className="rounded-xl border bg-card p-4">
-                    <QtyField
-                      id={qtyFieldId(id)}
-                      label={info.name}
-                      type={info.type}
-                      value={texts[id] ?? ""}
-                      onChange={(text) => setTexts((t) => ({ ...t, [id]: text }))}
-                      hint={
-                        isTea(info.type)
-                          ? "Сколько граммов списать — целым числом, без дробей. Например, 50."
-                          : "Сколько штук списать — целым числом. Например, 1."
-                      }
-                      description={
-                        value !== null
-                          ? `На складе ${formatQty(info.type, info.stock)} → останется ${formatQty(info.type, info.stock - value)}`
-                          : `На складе: ${formatQty(info.type, info.stock)}`
-                      }
-                      error={shownError(id)}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          <SelectedFields ids={ids} stock={stock} onRemove={(id) => setIds(ids.filter((v) => v !== id))}>
+            {(info) => {
+              const value = checks[info.id]?.value ?? null;
+              return (
+                <QtyField
+                  id={qtyFieldId(info.id)}
+                  label={info.name}
+                  type={info.type}
+                  value={texts[info.id] ?? ""}
+                  onChange={(text) => setTexts((t) => ({ ...t, [info.id]: text }))}
+                  hint={
+                    isTea(info.type)
+                      ? "Сколько граммов списать — целым числом, без дробей. Например, 50."
+                      : "Сколько штук списать — целым числом. Например, 1."
+                  }
+                  description={
+                    value !== null
+                      ? `На складе ${formatQty(info.type, info.stock)} → останется ${formatQty(info.type, info.stock - value)}`
+                      : `На складе: ${formatQty(info.type, info.stock)}`
+                  }
+                  error={shownError(info.id)}
+                />
+              );
+            }}
+          </SelectedFields>
 
           <div className="mt-5 flex flex-col gap-2">
             <div className="flex min-h-7 items-center gap-1">

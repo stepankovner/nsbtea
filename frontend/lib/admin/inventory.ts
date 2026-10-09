@@ -12,7 +12,7 @@ export type SupplyListItem = Schemas["SupplyListItem"];
 export type WriteoffReason = Schemas["WriteoffIn"]["reason"];
 
 export type StockQuery = { q?: string; level?: Schemas["StockLevel"] };
-export type MovementsQuery = { product_id?: string; page?: number; per_page?: number };
+export type MovementsQuery = { product_id?: string; supply_id?: string; page?: number; per_page?: number };
 export type SuppliesQuery = { page?: number; per_page?: number };
 
 export const inventoryApi = {
@@ -31,7 +31,7 @@ export const inventoryKeys = {
   reorder: ["inventory", "reorder"] as const,
   supplies: (query: SuppliesQuery) => ["inventory", "supplies", query] as const,
   movements: (query: MovementsQuery) => ["inventory", "movements", query] as const,
-  /** товары, которых нет в таблице остатков (черновики), — из поиска товаров */
+  /** выбранные товары с остатком числом — из поиска товаров (отдаёт все запрошенные id) */
   lookup: (ids: string[]) => ["inventory", "lookup", ids] as const,
 };
 
@@ -118,10 +118,4 @@ export function parseIds(param: string | null): string[] {
     .map((id) => id.trim())
     .filter(Boolean);
   return [...new Set(ids)];
-}
-
-/** Число из подписи остатка («1 200 г» → 1200) — для товаров, которых нет в таблице остатков. */
-export function qtyFromLabel(label: string): number | null {
-  const digits = label.replace(/\D/g, "");
-  return digits ? Number(digits) : null;
 }

@@ -12,7 +12,7 @@ import { formatDate } from "@/lib/format";
 
 import { MovementList } from "./MovementList";
 import { LEVEL_TONES, thresholdHint } from "./parts";
-import { useStockInfo } from "./useStockInfo";
+import { useProductStock } from "./useStockInfo";
 
 function Actions({ id }: { id: string }) {
   return (
@@ -39,15 +39,22 @@ function Actions({ id }: { id: string }) {
   );
 }
 
+function statusNote(status: string): string | undefined {
+  if (status === "published") return undefined;
+  if (status === "draft") return "Черновик — товар ещё не показывается на сайте.";
+  if (status === "hidden") return "Товар скрыт с сайта.";
+  return "Товар сейчас не показывается на сайте.";
+}
+
 /** Склад: один товар — остаток, порог (меняется в карточке товара), действия и история движения. */
 export function ProductStock({ id }: { id: string }) {
   const { can } = useAdmin();
-  const stock = useStockInfo([id]);
+  const stock = useProductStock(id);
 
   return (
     <QueryState query={stock.table}>
       {() => {
-        const info = stock.info[id];
+        const info = stock.info;
         if (!info) {
           if (stock.loading) {
             return (
@@ -78,7 +85,7 @@ export function ProductStock({ id }: { id: string }) {
                   {info.levelLabel ? <StatusBadge tone={LEVEL_TONES[info.level ?? ""] ?? "neutral"}>{info.levelLabel}</StatusBadge> : null}
                 </span>
               }
-              description={info.status === "published" ? undefined : "Товар сейчас не показывается на сайте."}
+              description={statusNote(info.status)}
               actions={<Actions id={id} />}
             />
 
@@ -90,20 +97,30 @@ export function ProductStock({ id }: { id: string }) {
                     {info.stockLabel}
                   </dd>
                 </div>
-                <div className="flex flex-col gap-0.5">
-                  <dt className="flex min-h-7 items-center gap-1 text-sm text-muted-foreground">
-                    Порог
-                    <Hint label="Порог">{thresholdHint(info.type)}</Hint>
-                  </dt>
-                  <dd data-testid="stock-threshold" className="text-2xl font-semibold tabular-nums">
-                    {info.thresholdLabel ?? "—"}
-                  </dd>
-                </div>
-                <div className="col-span-2 flex flex-col gap-0.5 md:col-span-1">
-                  <dt className="flex min-h-7 items-center text-sm text-muted-foreground">Последняя поставка</dt>
-                  <dd className="text-[15px]">{info.lastSupplyAt ? formatDate(info.lastSupplyAt) : "Поставок ещё не было"}</dd>
-                </div>
+                {/* у черновика порога и последней поставки в таблице остатков нет */}
+                {info.threshold !== null ? (
+                  <>
+                    <div className="flex flex-col gap-0.5">
+                      <dt className="flex min-h-7 items-center gap-1 text-sm text-muted-foreground">
+                        Порог
+                        <Hint label="Порог">{thresholdHint(info.type)}</Hint>
+                      </dt>
+                      <dd data-testid="stock-threshold" className="text-2xl font-semibold tabular-nums">
+                        {info.thresholdLabel ?? "—"}
+                      </dd>
+                    </div>
+                    <div className="col-span-2 flex flex-col gap-0.5 md:col-span-1">
+                      <dt className="flex min-h-7 items-center text-sm text-muted-foreground">Последняя поставка</dt>
+                      <dd className="text-[15px]">{info.lastSupplyAt ? formatDate(info.lastSupplyAt) : "Поставок ещё не было"}</dd>
+                    </div>
+                  </>
+                ) : null}
               </dl>
+              {info.threshold === null ? (
+                <p className="mt-3 text-sm text-muted-foreground">
+                  Порог и статус «Осталось мало / Нет в наличии» появятся, когда товар покажут на сайте.
+                </p>
+              ) : null}
               <p className="mt-4 border-t pt-3 text-sm text-muted-foreground">
                 {can("products") ? (
                   <>

@@ -8,7 +8,6 @@ import { Field } from "@/components/admin/Field";
 import { PageHeader } from "@/components/admin/page";
 import { ProductPicker } from "@/components/admin/ProductPicker";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { checkQty, parseIds, signedQty, type QtyCheck } from "@/lib/admin/inventory";
 import { errorMessage } from "@/lib/api/errors";
@@ -16,7 +15,8 @@ import { formatQty } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 import { qtyFieldId, QtyField, StepHeader, StickyBar, useAfterStockChange } from "./parts";
-import { useStockInfo, type StockInfo } from "./useStockInfo";
+import { SelectedFields } from "./SelectedFields";
+import { useSelectedStock, type StockInfo } from "./useStockInfo";
 
 export interface WizardLine {
   id: string;
@@ -64,7 +64,7 @@ export function QtyWizard({ config }: { config: WizardConfig }) {
   const [serverError, setServerError] = useState<string | null>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const moved = useRef(false);
-  const stock = useStockInfo(ids);
+  const stock = useSelectedStock(ids);
   const done = useAfterStockChange();
 
   // при переходе между шагами — фокус на первое поле или на заголовок шага (и прокрутка к нему)
@@ -159,43 +159,20 @@ export function QtyWizard({ config }: { config: WizardConfig }) {
       {step === 2 ? (
         <form aria-label={config.amounts.title} noValidate onSubmit={toReview}>
           <StepHeader step={2} total={3} title={config.amounts.title} hint={config.amounts.hint} headingRef={headingRef} />
-          {stock.loading ? (
-            <div className="flex flex-col gap-3" aria-busy="true" aria-label="Загружаем">
-              {ids.map((id) => (
-                <Skeleton key={id} className="h-24 w-full" />
-              ))}
-            </div>
-          ) : (
-            <div className="grid gap-4 md:grid-cols-2">
-              {ids.map((id) => {
-                const info = stock.info[id];
-                if (!info) {
-                  return (
-                    <div key={id} className="flex items-center justify-between gap-3 rounded-xl border border-dashed p-4 text-[15px]">
-                      <span>Товар не найден — возможно, его убрали в архив.</span>
-                      <Button type="button" variant="outline" onClick={() => setIds(ids.filter((v) => v !== id))}>
-                        Убрать
-                      </Button>
-                    </div>
-                  );
-                }
-                return (
-                  <div key={id} className="rounded-xl border bg-card p-4">
-                    <QtyField
-                      id={qtyFieldId(id)}
-                      label={info.name}
-                      type={info.type}
-                      value={texts[id] ?? ""}
-                      onChange={(value) => setTexts((t) => ({ ...t, [id]: value }))}
-                      hint={config.amounts.fieldHint(info.type)}
-                      description={config.amounts.describe(info, checks[id]!)}
-                      error={shownError(id)}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          <SelectedFields ids={ids} stock={stock} onRemove={(id) => setIds(ids.filter((v) => v !== id))}>
+            {(info) => (
+              <QtyField
+                id={qtyFieldId(info.id)}
+                label={info.name}
+                type={info.type}
+                value={texts[info.id] ?? ""}
+                onChange={(value) => setTexts((t) => ({ ...t, [info.id]: value }))}
+                hint={config.amounts.fieldHint(info.type)}
+                description={config.amounts.describe(info, checks[info.id]!)}
+                error={shownError(info.id)}
+              />
+            )}
+          </SelectedFields>
 
           <Field id={commentId} label={config.comment.label} hint={config.comment.hint} className="mt-5">
             <Textarea
