@@ -15,11 +15,14 @@ export const golos = Golos_Text({
   display: "swap",
 });
 
+// Второстепенные шрифты (мелкие подписи, акценты) — без предзагрузки: на медленном мобильном
+// интернете предзагрузка всех начертаний отодвигала первую отрисовку страницы.
 export const plexMono = IBM_Plex_Mono({
   weight: ["400", "500"],
   subsets: ["latin", "cyrillic"],
   variable: "--font-plex-mono",
   display: "swap",
+  preload: false,
 });
 
 // Иероглифы — украшение: браузер скачивает только нужные кусочки шрифта (unicode-range), без
@@ -39,6 +42,7 @@ export const spectral = Spectral({
   subsets: ["latin", "cyrillic"],
   variable: "--font-spectral",
   display: "swap",
+  preload: false,
 });
 
 export const fontVariables = [prata, golos, plexMono, notoSerifSc, spectral]
