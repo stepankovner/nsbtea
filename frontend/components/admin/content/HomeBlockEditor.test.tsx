@@ -92,6 +92,35 @@ describe("HomeBlockEditor — содержимое блока главной", {
     await waitFor(() => expect(within(dialog).getByText("с доставкой")).toBeInTheDocument());
   });
 
+  it("«Сейчас в наличии»: выбрано больше, чем показываем, — подсказка, а не запрет", async () => {
+    vi.mocked(homeApi.list).mockResolvedValue([
+      {
+        kind: "featured",
+        label: "Сейчас в наличии",
+        data: {
+          title: "Сейчас в наличии",
+          product_ids: ["p1", "p2", "p3", "p4", "p5", "p6"],
+          limit: 4,
+        },
+        images: {},
+        sort_order: 0,
+        is_visible: true,
+      },
+    ]);
+    vi.mocked(homeApi.patch).mockResolvedValue(homeBlocks()[0]!);
+    renderWithAdmin(<HomeBlockEditor kind="featured" />);
+    expect(await screen.findByText(/покажутся первые 4/)).toBeInTheDocument();
+    const title = screen.getByLabelText("Заголовок блока");
+    await userEvent.type(title, "!");
+    const save = screen.getByRole("button", { name: "Сохранить блок" });
+    expect(save).toBeEnabled();
+    await userEvent.click(save);
+    expect(homeApi.patch).toHaveBeenCalledWith(
+      "featured",
+      expect.objectContaining({ data: expect.objectContaining({ title: "Сейчас в наличии!" }) }),
+    );
+  });
+
   it("неизвестный блок — понятное сообщение", async () => {
     vi.mocked(homeApi.list).mockResolvedValue(homeBlocks());
     renderWithAdmin(<HomeBlockEditor kind="banner-x" />);

@@ -132,9 +132,10 @@ describe("EventEditor — изменить событие", { timeout: 15_000 },
     vi.mocked(eventsApi.get).mockResolvedValue(adminEvent());
     renderWithAdmin(<EventEditor id="e1" />);
     expect(await screen.findByText(/Записались 3 из 8/)).toBeInTheDocument();
+    // заявки именно этого события
     expect(screen.getByRole("link", { name: /Заявки/ })).toHaveAttribute(
       "href",
-      "/admin/applications?type=event",
+      "/admin/applications?event_id=e1",
     );
   });
 
@@ -166,6 +167,9 @@ describe("EventEditor — изменить событие", { timeout: 15_000 },
     await userEvent.click(await screen.findByRole("button", { name: "Убрать в архив" }));
     const dialog = await screen.findByRole("alertdialog");
     expect(within(dialog).getByText(/пропадёт с сайта/)).toBeInTheDocument();
+    // из архива событие можно вернуть; для паузы советуем «Скрыть с сайта»
+    expect(within(dialog).getByText(/вкладке «Архив»/)).toBeInTheDocument();
+    expect(within(dialog).getByText(/лучше «Скрыть с сайта»/)).toBeInTheDocument();
     await userEvent.click(within(dialog).getByRole("button", { name: "Да, убрать в архив" }));
     expect(eventsApi.archive).toHaveBeenCalledWith("e1");
     expect(push).toHaveBeenCalledWith("/admin/content/events");
