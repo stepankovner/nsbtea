@@ -8,7 +8,7 @@ import { lookupProducts } from "@/lib/admin/lookup";
 import { ApiError } from "@/lib/api/errors";
 import { renderWithAdmin } from "@/tests/admin";
 
-import { ALL_ROWS, lookupOf } from "./fixtures";
+import { ALL_ROWS, draftOolong, lookupOf, stockRow } from "./fixtures";
 import { SupplyForm } from "./SupplyForm";
 
 const replace = vi.fn();
@@ -104,6 +104,48 @@ describe("SupplyForm — принять поставку", () => {
         ],
       }),
     );
+  });
+
+  it("больше 30 товаров из «Нужно дозаказать» — у всех названия, все уходят в поставку", async () => {
+    const many = Array.from({ length: 35 }, (_, i) =>
+      stockRow({ product_id: `t${i + 1}`, name: `Чай ${i + 1}`, stock: 10, stock_label: "10 г", level: "low", level_label: "Осталось мало" }),
+    );
+    search = new URLSearchParams(`products=${many.map((r) => r.product_id).join(",")}`);
+    vi.mocked(inventoryApi.stock).mockResolvedValue({ items: many });
+    vi.mocked(lookupProducts).mockImplementation(async (params) =>
+      many.filter((r) => !params.ids || params.ids.includes(r.product_id)).map(lookupOf),
+    );
+    vi.mocked(inventoryApi.postSupply).mockResolvedValue(posted);
+    renderWithAdmin(<SupplyForm />);
+
+    expect(await screen.findByLabelText("Чай 35")).toBeInTheDocument();
+    for (const row of many) {
+      await userEvent.click(screen.getByLabelText(row.name));
+      await userEvent.paste("100");
+    }
+    // на первом шаге — тоже все 35 с названиями
+    await userEvent.click(screen.getByRole("button", { name: "Назад" }));
+    expect(await screen.findByText("Чай 35")).toBeInTheDocument();
+    expect(screen.queryByText("Загружаем…")).not.toBeInTheDocument();
+    await next();
+    await next();
+
+    const summary = await screen.findByRole("list", { name: "Что изменится" });
+    expect(within(summary).getAllByRole("listitem")).toHaveLength(35);
+    await userEvent.click(screen.getByRole("button", { name: "Провести поставку" }));
+    const body = vi.mocked(inventoryApi.postSupply).mock.calls[0]![0];
+    expect(body.lines).toHaveLength(35);
+    expect(body.lines[34]).toEqual({ product_id: "t35", qty: 100 });
+  });
+
+  it("черновик (его нет в таблице остатков) — «было» берём из поиска товаров", async () => {
+    search = new URLSearchParams("products=p9");
+    vi.mocked(lookupProducts).mockImplementation(async (params) =>
+      [...ALL_ROWS.map(lookupOf), draftOolong].filter((p) => !params.ids || params.ids.includes(p.id)),
+    );
+    renderWithAdmin(<SupplyForm />);
+    await userEvent.type(await screen.findByLabelText("Новый улун"), "10");
+    expect(await screen.findByText(/Сейчас 40 г → станет 50 г/)).toBeInTheDocument();
   });
 
   it("с шага проверки можно вернуться и поправить число", async () => {

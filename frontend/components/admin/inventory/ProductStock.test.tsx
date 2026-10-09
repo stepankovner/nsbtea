@@ -6,7 +6,7 @@ import { inventoryApi } from "@/lib/admin/inventory";
 import { lookupProducts } from "@/lib/admin/lookup";
 import { renderWithAdmin } from "@/tests/admin";
 
-import { ALL_ROWS, lookupOf, movement, saleMovement } from "./fixtures";
+import { ALL_ROWS, draftOolong, lookupOf, movement, saleMovement } from "./fixtures";
 import { ProductStock } from "./ProductStock";
 
 const replace = vi.fn();
@@ -65,6 +65,26 @@ describe("ProductStock — склад: один товар", () => {
     expect(screen.getByText("+500 г")).toBeInTheDocument();
     expect(screen.getByText("−50 г")).toBeInTheDocument();
     expect(inventoryApi.movements).toHaveBeenCalledWith(expect.objectContaining({ product_id: "p1", page: 1 }));
+  });
+
+  it("черновик (из карточки товара, ещё не на сайте) — остаток и действия тоже есть", async () => {
+    vi.mocked(lookupProducts).mockImplementation(async (params) =>
+      [draftOolong].filter((p) => !params.ids || params.ids.includes(p.id)),
+    );
+    vi.mocked(inventoryApi.movements).mockResolvedValue({ items: [], total: 0 });
+    renderWithAdmin(<ProductStock id="p9" />);
+    expect(await screen.findByRole("heading", { level: 1, name: /Новый улун/ })).toBeInTheDocument();
+    expect(screen.getByTestId("stock-now")).toHaveTextContent("40 г");
+    expect(screen.getByText(/Черновик/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Принять поставку/ })).toHaveAttribute("href", "/admin/inventory/supply?products=p9");
+    expect(lookupProducts).toHaveBeenCalledWith(expect.objectContaining({ ids: ["p9"] }));
+  });
+
+  it("товар убран в архив — объясняем и показываем его историю", async () => {
+    vi.mocked(lookupProducts).mockResolvedValue([]);
+    renderWithAdmin(<ProductStock id="gone" />);
+    expect(await screen.findByRole("heading", { level: 1, name: /Товара нет на складе/ })).toBeInTheDocument();
+    expect(inventoryApi.movements).toHaveBeenCalledWith(expect.objectContaining({ product_id: "gone" }));
   });
 
   it("движений нет — объясняем, что здесь появится", async () => {

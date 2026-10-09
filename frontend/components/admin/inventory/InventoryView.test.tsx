@@ -6,7 +6,7 @@ import { inventoryApi } from "@/lib/admin/inventory";
 import { lookupProducts } from "@/lib/admin/lookup";
 import { renderWithAdmin } from "@/tests/admin";
 
-import { ALL_ROWS, baiMuDan, gaiwan, lookupOf, movement, saleMovement } from "./fixtures";
+import { ALL_ROWS, baiMuDan, gaiwan, lookupOf, movement, saleMovement, supplyLines } from "./fixtures";
 import { InventoryView } from "./InventoryView";
 
 const replace = vi.fn();
@@ -145,6 +145,35 @@ describe("InventoryView — склад", () => {
     expect(screen.getByText(/5 октября 2026, 12:00/)).toBeInTheDocument();
     expect(screen.getByText(/3 товара/)).toBeInTheDocument();
     expect(screen.getByText(/Никита/)).toBeInTheDocument();
+  });
+
+  it("поставку можно раскрыть: что пришло, сколько и какой стал остаток", async () => {
+    search = new URLSearchParams("tab=supplies");
+    vi.mocked(inventoryApi.supplies).mockResolvedValue({
+      items: [{ id: "s1", comment: "Поставщик Ли", posted_at: "2026-10-05T09:00:00Z", actor_name: "Никита", lines_count: 2 }],
+      total: 1,
+    });
+    vi.mocked(inventoryApi.movements).mockImplementation(async (query) =>
+      query.supply_id === "s1" ? { items: supplyLines, total: 2 } : { items: [], total: 0 },
+    );
+    renderWithAdmin(<InventoryView />);
+
+    const toggle = await screen.findByRole("button", { name: /Поставщик Ли/ });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(inventoryApi.movements).not.toHaveBeenCalled();
+
+    await userEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    const lines = await screen.findByRole("list", { name: /Что пришло/ });
+    expect(inventoryApi.movements).toHaveBeenCalledWith(expect.objectContaining({ supply_id: "s1" }));
+    expect(within(lines).getByRole("link", { name: "Да Хун Пао" })).toHaveAttribute("href", "/admin/inventory/p1");
+    expect(within(lines).getByText("+500 г")).toBeInTheDocument();
+    expect(within(lines).getByText(/остаток стал 650 г/)).toBeInTheDocument();
+    expect(within(lines).getByRole("link", { name: "Гайвань" })).toHaveAttribute("href", "/admin/inventory/p3");
+    expect(within(lines).getByText("+4 шт.")).toBeInTheDocument();
+
+    await userEvent.click(toggle);
+    expect(screen.queryByRole("list", { name: /Что пришло/ })).not.toBeInTheDocument();
   });
 
   it("поставок не было — подсказка", async () => {

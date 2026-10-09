@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { checkQty, parseIds, qtyFromLabel, signedQty } from "@/lib/admin/inventory";
+import { checkQty, parseIds, signedQty } from "@/lib/admin/inventory";
 
 const NBSP = "\u00a0";
 /** подписи — с неразрывными пробелами, как на сервере; в тестах сравниваем с обычными */
@@ -65,14 +65,5 @@ describe("parseIds — товары из адреса (?products=id1,id2)", () =
     expect(parseIds("p1, p2,,p1")).toEqual(["p1", "p2"]);
     expect(parseIds(null)).toEqual([]);
     expect(parseIds("")).toEqual([]);
-  });
-});
-
-describe("qtyFromLabel — число из подписи остатка («1 200 г»)", () => {
-  it("достаёт целое число", () => {
-    expect(qtyFromLabel(`1${NBSP}200 г`)).toBe(1200);
-    expect(qtyFromLabel("6 шт.")).toBe(6);
-    expect(qtyFromLabel("0 г")).toBe(0);
-    expect(qtyFromLabel("")).toBeNull();
   });
 });

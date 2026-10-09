@@ -57,9 +57,22 @@ export function lookupOf(row: StockRow): Schemas["LookupProduct"] {
     type: row.type,
     status: row.status,
     image_url: row.image_url,
+    stock: row.stock,
     stock_label: row.stock_label,
   };
 }
+
+/** черновик: в таблице остатков его нет, остаток — только из поиска товаров */
+export const draftOolong: Schemas["LookupProduct"] = {
+  id: "p9",
+  slug: "novyj-ulun",
+  name: "Новый улун",
+  type: "tea",
+  status: "draft",
+  image_url: null,
+  stock: 40,
+  stock_label: "40 г",
+};
 
 export function movement(overrides: Partial<Schemas["MovementOut"]> = {}): Schemas["MovementOut"] {
   return {
@@ -97,3 +110,17 @@ export const saleMovement = movement({
   actor_name: "Система",
   created_at: "2026-10-06T10:00:00Z",
 });
+
+/** строки одной поставки — движения с её supply_id */
+export const supplyLines = [
+  movement(),
+  movement({
+    id: "m5",
+    product_id: "p3",
+    product_name: "Гайвань",
+    delta: 4,
+    delta_label: "+4 шт.",
+    balance_after: 4,
+    balance_label: "4 шт.",
+  }),
+];
