@@ -316,3 +316,21 @@ class TestApplications:
         )
         assert response.status_code == 422
         assert "уже прошло" in response.json()["detail"]
+
+
+async def test_featured_block_keeps_chosen_order(client: AsyncClient, db: AsyncSession) -> None:
+    """«Сейчас в наличии»: выбрано больше, чем показывать, — берутся первые по выбору владельца."""
+    await seed_content(db)
+    first = await make_tea(db, "Яньча")
+    second = await make_tea(db, "Бай Хао")
+    third = await make_tea(db, "Амбер")
+    block = await db.scalar(select(HomeBlock).where(HomeBlock.kind == "featured"))
+    assert block is not None
+    block.data = {
+        **block.data,
+        "product_ids": [str(first.id), str(second.id), str(third.id)],
+        "limit": 2,
+    }
+    await db.commit()
+    blocks = {b["kind"]: b for b in (await client.get("/api/home")).json()["blocks"]}
+    assert [p["name"] for p in blocks["featured"]["products"]] == ["Яньча", "Бай Хао"]
