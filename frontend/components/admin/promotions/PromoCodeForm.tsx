@@ -41,6 +41,7 @@ import { ApiError, errorMessage, fieldErrors } from "@/lib/api/errors";
 import { ActiveSwitchLabel, CategoryPicker, CopyButton, DateTimeField, DiscountFields, NoAccess, type DiscountKind } from "./fields";
 
 const BACK = { href: "/admin/promotions", label: "Все акции" };
+const CODES_ARCHIVE = "/admin/promotions?archive=codes";
 const LIMIT_ERROR = "Введите целое число больше нуля или оставьте поле пустым";
 const FIELDS = new Set([
   "code",
@@ -227,6 +228,12 @@ function PromoCodeEditor({ promo }: { promo: PromoCode | null }) {
                 <CopyButton text={normalizePromoCode(code)} />
               </div>
             </Field>
+            {errors.code?.includes("в архиве") ? (
+              // такой код уже есть в архиве — проще восстановить его, чем заводить новый
+              <Button asChild variant="outline" className="self-start">
+                <Link href={CODES_ARCHIVE}>Открыть архив промокодов</Link>
+              </Button>
+            ) : null}
             <Field
               id={descriptionId}
               label="Заметка для себя"
@@ -352,13 +359,14 @@ function PromoCodeEditor({ promo }: { promo: PromoCode | null }) {
           <ConfirmAction
             trigger="Убрать в архив"
             title={`Убрать промокод ${promo.code} в архив?`}
-            description="Код сразу перестанет действовать: покупатель, который введёт его в корзине, увидит, что такого кода нет. Скидки в уже оформленных заказах сохранятся. Вернуть код из архива здесь нельзя — если нужна пауза, лучше выключите его переключателем «Промокод включён»."
+            description="Код сразу перестанет действовать: покупатель, который введёт его в корзине, увидит, что такого кода нет. Скидки в уже оформленных заказах сохранятся. Код можно вернуть из архива (вкладка «Архив» в разделе «Промокоды») — он вернётся выключенным. Для короткой паузы проще выключить его переключателем «Промокод включён»."
             confirm="Да, убрать в архив"
             cancel="Не убирать"
             onConfirm={async () => {
               await promotionsApi.archiveCode(promo.id);
               client.setQueryData<PromoCode[]>(promotionKeys.codes, (old) => old?.filter((c) => c.id !== promo.id));
               void client.invalidateQueries({ queryKey: promotionKeys.codes });
+              void client.invalidateQueries({ queryKey: promotionKeys.codesArchived });
               toast.success(`Промокод ${promo.code} убран в архив`);
               router.push("/admin/promotions");
             }}
@@ -381,8 +389,16 @@ function EditPromoCode({ id }: { id: string }) {
         ) : (
           <>
             <PageHeader back={BACK} title="Промокод" />
-            <EmptyState icon={TicketPercent} title="Промокод не найден">
-              Возможно, его уже убрали в архив. Вернитесь к списку акций.
+            <EmptyState
+              icon={TicketPercent}
+              title="Промокод не найден"
+              action={
+                <Button asChild variant="outline">
+                  <Link href={CODES_ARCHIVE}>Открыть архив промокодов</Link>
+                </Button>
+              }
+            >
+              Возможно, его убрали в архив — оттуда код можно восстановить.
             </EmptyState>
           </>
         );

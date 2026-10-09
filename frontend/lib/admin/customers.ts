@@ -12,7 +12,7 @@ export const customersApi = {
   get: (id: string) => must(adminApi.GET("/api/admin/customers/{customer_id}", { params: { path: { customer_id: id } } })),
   updateNotes: (id: string, notes: string) =>
     must(adminApi.PATCH("/api/admin/customers/{customer_id}", { params: { path: { customer_id: id } }, body: { notes } })),
-  /** delta > 0 — начислить, < 0 — списать; комментарий обязателен (его видит покупатель в истории). */
+  /** Только владелец. delta > 0 — начислить, < 0 — списать; комментарий обязателен (его видит покупатель в истории). */
   adjustPoints: (id: string, body: Schemas["PointsAdjustIn"]) =>
     must(adminApi.POST("/api/admin/customers/{customer_id}/points", { params: { path: { customer_id: id } }, body })),
 };

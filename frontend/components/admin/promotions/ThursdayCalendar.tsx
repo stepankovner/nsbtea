@@ -156,7 +156,7 @@ function ThursdayCard({
   const headingId = useId();
   const refresh = useRefresh();
   const [editing, setEditing] = useState(false);
-  const runningNow = marker === "Сегодня";
+  const runningNow = thursday.running;
 
   return (
     <section
@@ -173,7 +173,11 @@ function ThursdayCard({
         </h2>
         <span className="flex flex-wrap gap-1.5">
           {marker ? <StatusBadge tone="brand">{marker}</StatusBadge> : null}
-          {thursday.planned ? <StatusBadge tone="success">Запланировано</StatusBadge> : null}
+          {runningNow ? (
+            <StatusBadge tone="success">Идёт сейчас</StatusBadge>
+          ) : thursday.planned ? (
+            <StatusBadge tone="info">Запланировано</StatusBadge>
+          ) : null}
         </span>
       </div>
 
@@ -233,6 +237,35 @@ function ThursdayCard({
   );
 }
 
+/** Скидка прошлого четверга, которая ещё идёт (режим «неделя», пятница–среда). Четверг прошёл — только просмотр. */
+function CurrentThursday({ thursday, mode }: { thursday: Thursday; mode: string }) {
+  const headingId = useId();
+  return (
+    <section aria-labelledby={headingId} className="mb-4 flex flex-col gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-950">
+      <h2 id={headingId} className="text-lg font-semibold">
+        Сейчас идёт
+      </h2>
+      <p className="text-[15px]">Чай недели с четверга, {thursday.label}</p>
+      <p className="flex flex-wrap items-baseline gap-x-2 text-[15px]">
+        <span className="font-semibold text-red-700">−{thursday.percent}%</span>
+        <span className="text-emerald-900/80">{thursday.custom_percent !== null ? "своя скидка" : "общая скидка"}</span>
+        <span className="text-emerald-900/80">·</span>
+        <span>{thursdayPeriodText(thursday.date, mode)}</span>
+      </p>
+      <div className="flex flex-col gap-1.5">
+        {thursday.products.map((p) => (
+          <span key={p.id} className="flex min-h-10 items-center gap-2.5">
+            <ProductThumb product={p} />
+            <span className="min-w-0 break-words">{p.name}</span>
+          </span>
+        ))}
+      </div>
+      {thursday.note ? <p className="text-sm text-emerald-900/80">Заметка: {thursday.note}</p> : null}
+      <p className="text-sm text-emerald-900/80">Этот четверг уже прошёл, поэтому план не меняется. Скидка закончится сама.</p>
+    </section>
+  );
+}
+
 function CalendarView({ calendar }: { calendar: Calendar }) {
   const { isOwner } = useAdmin();
   const today = moscowToday();
@@ -253,6 +286,7 @@ function CalendarView({ calendar }: { calendar: Calendar }) {
           </Link>
         ) : null}
       </div>
+      {calendar.current ? <CurrentThursday thursday={calendar.current} mode={calendar.mode} /> : null}
       {nothingPlanned ? (
         <p role="status" className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[15px] text-amber-900">
           Впереди не запланировано ни одного четверга — скидки на чай недели не будет. В понедельник бот напомнит об этом в Telegram.
