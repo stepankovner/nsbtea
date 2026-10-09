@@ -73,14 +73,15 @@ async def test_product_lookup_gives_stock_number_and_all_requested_ids(
     client: AsyncClient, db: AsyncSession
 ) -> None:
     """Склад: «было → станет» считается от числа, а выбранных товаров бывает больше 30."""
-    teas = [await make_tea(db, f"Чай {i:02d}", stock=i * 10) for i in range(35)]
+    # 200 id через запятую — около 7,4 тыс. символов в адресе
+    teas = [await make_tea(db, f"Чай {i:03d}", stock=i * 10) for i in range(200)]
     await staff(client, db, ["inventory"])
     ids = ",".join(str(t.id) for t in teas)
     found = (await client.get("/api/admin/lookup/products", params={"ids": ids})).json()
-    assert len(found) == 35
+    assert len(found) == 200
     by_name = {p["name"]: p for p in found}
-    assert by_name["Чай 07"]["stock"] == 70
-    assert by_name["Чай 07"]["stock_label"] == "70 г"
+    assert by_name["Чай 007"]["stock"] == 70
+    assert by_name["Чай 007"]["stock_label"] == "70 г"
 
 
 async def test_categories_are_visible_to_promotions_staff(
