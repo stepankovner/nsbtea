@@ -1,4 +1,4 @@
-import { screen, within } from "@testing-library/react";
+import { configure, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -7,7 +7,7 @@ import { promotionsApi } from "@/lib/admin/promotions";
 import { ApiError } from "@/lib/api/errors";
 import { renderWithAdmin } from "@/tests/admin";
 
-import { calendar, lookupOolong, lookupTea, thursday } from "./fixtures";
+import { calendar, lookupOolong, lookupTea, teGuanYin, thursday } from "./fixtures";
 import { ThursdayCalendar } from "./ThursdayCalendar";
 
 vi.mock("@/lib/admin/lookup", () => ({ lookupProducts: vi.fn() }));
@@ -23,6 +23,11 @@ function mockApi(cal = calendar()) {
   vi.mocked(promotionsApi.saveThursday).mockResolvedValue({ ok: true });
   vi.mocked(promotionsApi.clearThursday).mockResolvedValue({ ok: true });
 }
+
+// Формы с поиском товаров под нагрузкой (весь набор тестов идёт параллельно) отвечают дольше
+// обычной секунды — даём запас, чтобы тесты не падали случайно.
+configure({ asyncUtilTimeout: 3_000 });
+vi.setConfig({ testTimeout: 20_000 });
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -55,6 +60,42 @@ describe("ThursdayCalendar — календарь чая недели", () => {
     expect(within(next).getByText(/остатки весеннего урожая/)).toBeInTheDocument();
 
     expect(screen.getAllByText("Не запланировано — в этот четверг акции не будет")).toHaveLength(6);
+  });
+
+  it("скидка, которая идёт сейчас, отмечена у дня", async () => {
+    mockApi();
+    renderWithAdmin(<ThursdayCalendar />);
+    const today = await screen.findByRole("region", { name: /8 октября/ });
+    expect(within(today).getByText("Идёт сейчас")).toBeInTheDocument();
+    const next = screen.getByRole("region", { name: /15 октября/ });
+    expect(within(next).queryByText("Идёт сейчас")).not.toBeInTheDocument();
+    expect(within(next).getByText("Запланировано")).toBeInTheDocument();
+  });
+
+  it("с пятницы по среду — блок «Сейчас идёт» с чаем прошлого четверга, без изменения", async () => {
+    vi.setSystemTime(new Date("2026-10-05T09:00:00Z")); // понедельник
+    const cal = calendar({
+      current: thursday({ date: "2026-10-01", label: "1 октября", planned: true, running: true, products: [teGuanYin], percent: 25, custom_percent: 25 }),
+    });
+    cal.upcoming[0] = { ...cal.upcoming[0]!, running: false };
+    mockApi(cal);
+    renderWithAdmin(<ThursdayCalendar />);
+    const current = await screen.findByRole("region", { name: /Сейчас идёт/ });
+    expect(within(current).getByText(/1 октября/)).toBeInTheDocument();
+    expect(within(current).getByText("Те Гуань Инь")).toBeInTheDocument();
+    expect(within(current).getByText(/−25%/)).toBeInTheDocument();
+    expect(within(current).getByText(/с 1 по 7 октября/)).toBeInTheDocument();
+    // четверг уже прошёл — менять и снимать план нельзя
+    expect(within(current).queryByRole("button")).not.toBeInTheDocument();
+    // блок — над списком, а не внутри него
+    expect(within(screen.getByRole("list", { name: "Ближайшие четверги" })).getAllByRole("listitem")).toHaveLength(8);
+  });
+
+  it("если сейчас ничего не идёт — блока «Сейчас идёт» нет", async () => {
+    mockApi();
+    renderWithAdmin(<ThursdayCalendar />);
+    expect(await screen.findByRole("list", { name: "Ближайшие четверги" })).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: /Сейчас идёт/ })).not.toBeInTheDocument();
   });
 
   it("ближайший четверг отмечен, если сегодня не четверг", async () => {

@@ -1,4 +1,4 @@
-import { screen, within } from "@testing-library/react";
+import { configure, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -19,6 +19,11 @@ vi.mock("@/lib/admin/customers", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/admin/customers")>();
   return { ...actual, customersApi: { list: vi.fn() } };
 });
+
+// Формы с поиском товаров под нагрузкой (весь набор тестов идёт параллельно) отвечают дольше
+// обычной секунды — даём запас, чтобы тесты не падали случайно.
+configure({ asyncUtilTimeout: 3_000 });
+vi.setConfig({ testTimeout: 20_000 });
 
 beforeEach(() => {
   vi.clearAllMocks();

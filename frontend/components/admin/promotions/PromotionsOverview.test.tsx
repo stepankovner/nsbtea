@@ -1,11 +1,11 @@
-import { screen, within } from "@testing-library/react";
+import { configure, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { promotionsApi } from "@/lib/admin/promotions";
 import { renderWithAdmin } from "@/tests/admin";
 
-import { calendar, loyalty, promoCode, promotion, thursday } from "./fixtures";
+import { calendar, loyalty, promoCode, promotion, teGuanYin, thursday } from "./fixtures";
 import { PromotionsOverview } from "./PromotionsOverview";
 
 vi.mock("@/lib/admin/promotions", async (importOriginal) => {
@@ -18,6 +18,10 @@ vi.mock("@/lib/admin/promotions", async (importOriginal) => {
       welcomeStats: vi.fn(),
       thursdays: vi.fn(),
       loyaltySettings: vi.fn(),
+      listArchived: vi.fn(),
+      codesArchived: vi.fn(),
+      restore: vi.fn(),
+      restoreCode: vi.fn(),
     },
   };
 });
@@ -32,7 +36,17 @@ function mockAll({
   vi.mocked(promotionsApi.welcomeStats).mockResolvedValue({ uses: 15, discount_kop: 450_000 });
   vi.mocked(promotionsApi.thursdays).mockResolvedValue(cal);
   vi.mocked(promotionsApi.loyaltySettings).mockResolvedValue(loyalty);
+  vi.mocked(promotionsApi.listArchived).mockResolvedValue([]);
+  vi.mocked(promotionsApi.codesArchived).mockResolvedValue([]);
 }
+
+const oldSale = promotion({ id: "old", title: "Летняя распродажа", archived: true, is_active: false, status_label: "Выключена" });
+const oldCode = promoCode({ id: "pc-old", code: "LETO2026", archived: true, is_active: false });
+
+// Формы с поиском товаров под нагрузкой (весь набор тестов идёт параллельно) отвечают дольше
+// обычной секунды — даём запас, чтобы тесты не падали случайно.
+configure({ asyncUtilTimeout: 3_000 });
+vi.setConfig({ testTimeout: 20_000 });
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -134,6 +148,74 @@ describe("PromotionsOverview — обзор акций", () => {
     renderWithAdmin(<PromotionsOverview />);
     expect(await screen.findByText("Пока нет акций")).toBeInTheDocument();
     expect(await screen.findByText("Пока нет промокодов")).toBeInTheDocument();
+  });
+
+  it("архив акций: открывается отдельно, восстановленная акция возвращается выключенной", async () => {
+    const user = userEvent.setup();
+    mockAll();
+    vi.mocked(promotionsApi.listArchived).mockResolvedValue([oldSale]);
+    vi.mocked(promotionsApi.restore).mockResolvedValue({ ...oldSale, archived: false });
+    renderWithAdmin(<PromotionsOverview />);
+    const section = await screen.findByRole("region", { name: "Акции на товары" });
+    expect(await within(section).findByRole("link", { name: /Осенние улуны/ })).toBeInTheDocument();
+    // архив не грузим, пока его не открыли
+    expect(promotionsApi.listArchived).not.toHaveBeenCalled();
+    await user.click(within(section).getByRole("button", { name: "Архив" }));
+    expect(within(section).getByRole("button", { name: "Архив" })).toHaveAttribute("aria-pressed", "true");
+    expect(await within(section).findByText("Летняя распродажа")).toBeInTheDocument();
+    expect(within(section).getByText("В архиве")).toBeInTheDocument();
+    expect(within(section).getByText(/вернётся выключенной/)).toBeInTheDocument();
+    expect(within(section).queryByRole("link", { name: /Осенние улуны/ })).not.toBeInTheDocument();
+    await user.click(within(section).getByRole("button", { name: "Восстановить: Летняя распродажа" }));
+    expect(promotionsApi.restore).toHaveBeenCalledWith("old");
+    // списки обновились: действующие и архив
+    await vi.waitFor(() => expect(promotionsApi.list).toHaveBeenCalledTimes(2));
+    await vi.waitFor(() => expect(promotionsApi.listArchived).toHaveBeenCalledTimes(2));
+  });
+
+  it("архив пуст — так и пишем", async () => {
+    const user = userEvent.setup();
+    mockAll();
+    renderWithAdmin(<PromotionsOverview />);
+    const section = await screen.findByRole("region", { name: "Акции на товары" });
+    await user.click(within(section).getByRole("button", { name: "Архив" }));
+    expect(await within(section).findByText(/В архиве пусто/)).toBeInTheDocument();
+  });
+
+  it("архив промокодов: восстановить код", async () => {
+    const user = userEvent.setup();
+    mockAll();
+    vi.mocked(promotionsApi.codesArchived).mockResolvedValue([oldCode]);
+    vi.mocked(promotionsApi.restoreCode).mockResolvedValue({ ...oldCode, archived: false });
+    renderWithAdmin(<PromotionsOverview />);
+    const section = await screen.findByRole("region", { name: "Промокоды" });
+    await user.click(within(section).getByRole("button", { name: "Архив" }));
+    expect(await within(section).findByText("LETO2026")).toBeInTheDocument();
+    await user.click(within(section).getByRole("button", { name: "Восстановить промокод LETO2026" }));
+    expect(promotionsApi.restoreCode).toHaveBeenCalledWith("pc-old");
+    await vi.waitFor(() => expect(promotionsApi.codes).toHaveBeenCalledTimes(2));
+  });
+
+  it("по ссылке из формы промокода сразу открывается архив промокодов", async () => {
+    mockAll();
+    vi.mocked(promotionsApi.codesArchived).mockResolvedValue([oldCode]);
+    renderWithAdmin(<PromotionsOverview archive="codes" />);
+    const section = await screen.findByRole("region", { name: "Промокоды" });
+    expect(within(section).getByRole("button", { name: "Архив" })).toHaveAttribute("aria-pressed", "true");
+    expect(await within(section).findByText("LETO2026")).toBeInTheDocument();
+  });
+
+  it("в режиме «неделя» показываем чай недели, который идёт с прошлого четверга", async () => {
+    mockAll({
+      cal: calendar({
+        current: thursday({ date: "2026-10-01", label: "1 октября", planned: true, running: true, products: [teGuanYin], percent: 25, custom_percent: 25 }),
+      }),
+    });
+    renderWithAdmin(<PromotionsOverview />);
+    const section = await screen.findByRole("region", { name: "Чай недели" });
+    expect(await within(section).findByText(/Сейчас идёт/)).toBeInTheDocument();
+    expect(within(section).getByText(/Те Гуань Инь/)).toBeInTheDocument();
+    expect(within(section).getByText(/−25%/)).toBeInTheDocument();
   });
 
   it("без права «Акции» экран закрыт", async () => {

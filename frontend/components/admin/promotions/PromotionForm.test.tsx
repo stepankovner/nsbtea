@@ -1,4 +1,4 @@
-import { screen, within } from "@testing-library/react";
+import { configure, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -37,6 +37,11 @@ async function addTea(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByPlaceholderText("Название товара"), "хун");
   await user.click(await screen.findByRole("option", { name: /Да Хун Пао/ }));
 }
+
+// Формы с поиском товаров под нагрузкой (весь набор тестов идёт параллельно) отвечают дольше
+// обычной секунды — даём запас, чтобы тесты не падали случайно.
+configure({ asyncUtilTimeout: 3_000 });
+vi.setConfig({ testTimeout: 20_000 });
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -175,19 +180,24 @@ describe("PromotionForm — изменение акции", () => {
     await user.click(await screen.findByRole("button", { name: "Убрать в архив" }));
     const dialog = await screen.findByRole("alertdialog");
     expect(within(dialog).getByText(/перестанет действовать/)).toBeInTheDocument();
+    // теперь из архива можно вернуть — она вернётся выключенной
+    expect(within(dialog).getByText(/вернуть из архива/)).toBeInTheDocument();
+    expect(within(dialog).getByText(/выключенной/)).toBeInTheDocument();
     expect(promotionsApi.archive).not.toHaveBeenCalled();
     await user.click(within(dialog).getByRole("button", { name: "Да, убрать в архив" }));
     expect(promotionsApi.archive).toHaveBeenCalledWith("pr1");
     expect(push).toHaveBeenCalledWith("/admin/promotions");
   });
 
-  it("сотрудник без доступа к товарам: список категорий не загружаем, выбранные видны", async () => {
+  it("сотрудник с правом «Акции» выбирает категории из общего списка", async () => {
+    const user = userEvent.setup();
     mockApi();
     renderWithAdmin(<PromotionForm id="pr1" />, { owner: false, permissions: ["promotions"] });
     expect(await screen.findByLabelText(/^Название акции/)).toHaveValue("Осенние улуны");
-    expect(screen.getByText("Улуны")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Убрать категорию: Улуны" })).toBeInTheDocument();
-    expect(promotionsApi.categories).not.toHaveBeenCalled();
+    expect(await screen.findByRole("checkbox", { name: "Улуны" })).toBeChecked();
+    await user.click(screen.getByRole("checkbox", { name: "Пуэры" }));
+    await user.click(screen.getByRole("button", { name: "Сохранить" }));
+    expect(promotionsApi.update).toHaveBeenCalledWith("pr1", expect.objectContaining({ category_ids: ["cat1", "cat2"] }));
   });
 
   it("акции нет (например, уже в архиве) — понятное сообщение", async () => {
@@ -195,5 +205,6 @@ describe("PromotionForm — изменение акции", () => {
     vi.mocked(promotionsApi.list).mockResolvedValue([]);
     renderWithAdmin(<PromotionForm id="pr404" />);
     expect(await screen.findByText(/Акция не найдена/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Открыть архив акций/ })).toHaveAttribute("href", "/admin/promotions?archive=promotions");
   });
 });
