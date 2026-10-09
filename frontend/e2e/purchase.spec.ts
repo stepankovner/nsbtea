@@ -49,6 +49,13 @@ test("покупка чая: каталог → карточка → корзи�
   await expect(page.getByText("Да Хун Пао").first()).toBeVisible();
   await expectNoHorizontalScroll(page);
 
+  // упаковочный лист открывается и с телефона без прокрутки вбок
+  const orderUrl = page.url();
+  await page.goto(`${orderUrl}/print`);
+  await expect(page.getByText(orderNumber!).first()).toBeVisible();
+  await expectNoHorizontalScroll(page);
+  await page.goto(orderUrl);
+
   await page.getByRole("button", { name: "Начать сборку" }).click();
   await expect(page.getByRole("button", { name: "Собран → Готов к выдаче" })).toBeVisible();
 });
