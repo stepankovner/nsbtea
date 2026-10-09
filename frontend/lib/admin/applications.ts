@@ -9,6 +9,8 @@ export type ApplicationStatus = Schemas["ApplicationStatus"];
 export type ApplicationsQuery = {
   status?: string;
   type?: string;
+  /** заявки одного события */
+  event_id?: string;
   page?: number;
   per_page?: number;
 };

@@ -1,4 +1,5 @@
 import { screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { eventsApi } from "@/lib/admin/content";
@@ -15,7 +16,7 @@ vi.mock("next/navigation", () => ({
 }));
 vi.mock("@/lib/admin/content", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/admin/content")>();
-  return { ...actual, eventsApi: { list: vi.fn() } };
+  return { ...actual, eventsApi: { list: vi.fn(), restore: vi.fn() } };
 });
 
 describe("EventsList — события", () => {
@@ -80,6 +81,39 @@ describe("EventsList — события", () => {
       "href",
       "/admin/content/events/new",
     );
+  });
+
+  it("архив — отдельной вкладкой", async () => {
+    vi.mocked(eventsApi.list).mockResolvedValue([adminEvent()]);
+    renderWithAdmin(<EventsList />);
+    expect(await screen.findByRole("link", { name: "Архив" })).toHaveAttribute(
+      "href",
+      "/admin/content/events?period=archived",
+    );
+    expect(screen.getByRole("link", { name: "Прошедшие" })).toHaveAttribute(
+      "href",
+      "/admin/content/events?period=past",
+    );
+  });
+
+  it("архив: «Восстановить» возвращает событие (скрытым с сайта)", async () => {
+    search = new URLSearchParams("period=archived");
+    vi.mocked(eventsApi.list).mockResolvedValue([adminEvent({ is_published: false })]);
+    vi.mocked(eventsApi.restore).mockResolvedValue(adminEvent({ is_published: false }));
+    renderWithAdmin(<EventsList />);
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Восстановить «Сплав по Клязьме»" }),
+    );
+    expect(eventsApi.list).toHaveBeenCalledWith("archived");
+    expect(eventsApi.restore).toHaveBeenCalledWith("e1");
+    expect(screen.getByText(/вернётся скрытым/)).toBeInTheDocument();
+  });
+
+  it("пустой архив — объясняем", async () => {
+    search = new URLSearchParams("period=archived");
+    vi.mocked(eventsApi.list).mockResolvedValue([]);
+    renderWithAdmin(<EventsList />);
+    expect(await screen.findByText("В архиве пусто")).toBeInTheDocument();
   });
 
   it("без права «Сайт» — не показываем", () => {

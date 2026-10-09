@@ -831,7 +831,7 @@ function EditForm({ event }: { event: AdminEvent }) {
           ) : null}
         </p>
         <Link
-          href="/admin/applications?type=event"
+          href={`/admin/applications?event_id=${event.id}`}
           className="text-[15px] font-medium underline underline-offset-2"
         >
           Заявки на запись: {event.applications_count}
@@ -849,12 +849,12 @@ function EditForm({ event }: { event: AdminEvent }) {
             <div className="flex flex-col items-start gap-3">
               <p className="text-[15px] text-muted-foreground">
                 Если нужно только спрятать событие — нажмите «Скрыть с сайта» вверху. Прошедшие
-                события уходят в архив сами.
+                события сами переезжают во вкладку «Прошедшие» — убирать их в архив не нужно.
               </p>
               <ConfirmAction
                 trigger="Убрать в архив"
                 title={`Убрать «${event.title}» в архив?`}
-                description="Событие пропадёт с сайта и из списков в админке. Заявки на него сохранятся в «Заявках». Вернуть событие из архива в админке пока нельзя — если сомневаетесь, лучше просто скройте его с сайта."
+                description="Событие пропадёт с сайта и из списков событий. Заявки на него сохранятся в «Заявках». Вернуть событие можно во вкладке «Архив» — оно вернётся скрытым с сайта. Если нужна только пауза, лучше «Скрыть с сайта»."
                 confirm="Да, убрать в архив"
                 cancel="Не убирать"
                 onConfirm={async () => {

@@ -82,6 +82,38 @@ describe("ApplicationsList — заявки", () => {
     );
   });
 
+  it("заявки одного события: фильтр виден, его можно снять", async () => {
+    search = new URLSearchParams("event_id=e1");
+    vi.mocked(applicationsApi.list).mockResolvedValue(applicationList([eventApplication()]));
+    renderWithAdmin(<ApplicationsList />);
+    const banner = await screen.findByRole("status", { name: "Фильтр по событию" });
+    expect(banner).toHaveTextContent("Сплав по Клязьме");
+    expect(applicationsApi.list).toHaveBeenCalledWith(
+      expect.objectContaining({ event_id: "e1", page: 1 }),
+    );
+    expect(within(banner).getByRole("link", { name: "Показать все заявки" })).toHaveAttribute(
+      "href",
+      "/admin/applications",
+    );
+    // остальные фильтры не сбрасывают выбранное событие
+    expect(
+      within(screen.getByRole("navigation", { name: "Статус заявки" })).getByRole("link", {
+        name: /Новые/,
+      }),
+    ).toHaveAttribute("href", "/admin/applications?event_id=e1&status=new");
+  });
+
+  it("на событие ещё никто не записался — так и говорим", async () => {
+    search = new URLSearchParams("event_id=e1");
+    vi.mocked(applicationsApi.list).mockResolvedValue({ items: [], total: 0, counts: {} });
+    renderWithAdmin(<ApplicationsList />);
+    expect(await screen.findByText("На это событие заявок нет")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Показать все заявки" })).toHaveAttribute(
+      "href",
+      "/admin/applications",
+    );
+  });
+
   it("пусто — объясняем, откуда берутся заявки", async () => {
     vi.mocked(applicationsApi.list).mockResolvedValue({ items: [], total: 0, counts: {} });
     renderWithAdmin(<ApplicationsList />);
