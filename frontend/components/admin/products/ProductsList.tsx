@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FolderTree, Package, Plus } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -210,7 +210,14 @@ export function ProductsList() {
     page,
     per_page: PER_PAGE,
   };
-  const list = useQuery({ queryKey: productKeys.list(query), queryFn: () => productsApi.list(query) });
+  // пока грузится другая вкладка — показываем прежний список (приглушённо), чтобы числа на вкладках не мигали
+  const list = useQuery({ queryKey: productKeys.list(query), queryFn: () => productsApi.list(query), placeholderData: keepPreviousData });
+  const counts = list.data?.counts;
+  const countOf = (value: string | null): number | null => {
+    if (!counts) return null;
+    if (value === null) return (counts.published ?? 0) + (counts.hidden ?? 0) + (counts.draft ?? 0);
+    return counts[value] ?? 0;
+  };
 
   function href(change: Record<string, string | null>) {
     const next = new URLSearchParams(params.toString());
@@ -306,17 +313,19 @@ export function ProductsList() {
       <nav aria-label="Статус товаров" className="-mx-4 mb-4 flex gap-1.5 overflow-x-auto px-4 pb-1 md:mx-0 md:flex-wrap md:px-0">
         {PRODUCT_TABS.map((tab) => {
           const active = (status ?? null) === tab.value;
+          const count = countOf(tab.value);
           return (
             <Link
               key={tab.label}
               href={href({ status: tab.value })}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex min-h-10 shrink-0 items-center rounded-full border px-3.5 text-sm",
+                "flex min-h-10 shrink-0 items-center gap-2 rounded-full border px-3.5 text-sm",
                 active ? "border-foreground bg-foreground text-background" : "bg-card hover:bg-muted",
               )}
             >
               {tab.label}
+              {count !== null ? <span className={cn("tabular-nums", active ? "opacity-80" : "text-muted-foreground")}>{count}</span> : null}
             </Link>
           );
         })}
@@ -326,7 +335,7 @@ export function ProductsList() {
         {(data) =>
           data.items.length ? (
             <>
-              <ul className="flex flex-col overflow-hidden rounded-xl border bg-card">
+              <ul className={cn("flex flex-col overflow-hidden rounded-xl border bg-card transition-opacity", list.isPlaceholderData && "opacity-60")}>
                 {data.items.map((item) => (
                   <ProductRow key={item.id} item={item} onPrice={setPriceItem} />
                 ))}

@@ -10,6 +10,7 @@ import { uploadProductImages } from "./media";
 
 export type AdminProduct = Schemas["ProductOut"];
 export type ProductListItem = Schemas["ProductListItem"];
+export type ProductOptions = Schemas["ProductOptionsOut"];
 export type ProductPatch = Schemas["ProductPatchIn"];
 export type RelationKind = Schemas["RelationKind"];
 export type BrewMethod = Schemas["BrewMethod"];
@@ -68,8 +69,8 @@ export const productsApi = {
     ),
   /** Вкусовые ноты, которые уже есть у других товаров, — для подсказок при вводе. */
   tags: (q?: string) => must(adminApi.GET("/api/admin/tags", { params: { query: { q: q || undefined } } })),
-  /** Общий список граммовок из «Настройки → Каталог» (настройки доступны только владельцу). */
-  weightPresets: async (): Promise<number[]> => (await must(adminApi.GET("/api/admin/settings"))).catalog.weight_presets,
+  /** Общие граммовки и пороги «Осталось мало» из «Настройки → Каталог» — доступно с правом «Товары». */
+  options: () => must(adminApi.GET("/api/admin/products/options")),
 };
 
 export const productKeys = {
@@ -78,7 +79,7 @@ export const productKeys = {
   list: (query: ProductsQuery) => ["products", "list", query] as const,
   detail: (id: string) => ["products", "detail", id] as const,
   tags: (q: string) => ["products", "tags", q] as const,
-  presets: ["products", "weight-presets"] as const,
+  options: ["products", "options"] as const,
 };
 
 // ------------------------------------------------------------------ подписи
@@ -88,7 +89,7 @@ export const PRODUCT_TYPE_LABELS: Record<ProductType, string> = {
   unit: "Штучный товар",
 };
 
-/** Граммовки по умолчанию на сервере — пока список из настроек недоступен (у сотрудника). */
+/** Граммовки по умолчанию на сервере — на случай, если общий список не загрузился. */
 export const DEFAULT_WEIGHT_PRESETS = [25, 50, 100, 200];
 export const PRICE_BASES: PriceBase[] = [1, 50, 100];
 export const MAX_PHOTOS = 10;

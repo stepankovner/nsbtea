@@ -14,6 +14,8 @@ import { categoriesApi, categoryKeys, categoryOptions } from "@/lib/admin/catego
 import {
   PRICE_BASES,
   PRODUCT_TYPE_LABELS,
+  productKeys,
+  productsApi,
   stepTitle,
   WIZARD_STEP_COUNT,
   type PriceBase,
@@ -41,6 +43,11 @@ export function ProductThumb({ src, className }: { src: string | null | undefine
       <Package className="size-5 text-muted-foreground" aria-hidden="true" />
     </span>
   );
+}
+
+/** Граммовки и пороги «Осталось мало» из «Настройки → Каталог» (доступно с правом «Товары»). */
+export function useProductOptions() {
+  return useQuery({ queryKey: productKeys.options, queryFn: productsApi.options, staleTime: 300_000 });
 }
 
 export function useCategories() {
