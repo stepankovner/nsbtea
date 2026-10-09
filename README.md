@@ -52,5 +52,15 @@ cd frontend && pnpm lint && pnpm typecheck && pnpm test
 
 Изменили API — обновите типы фронтенда: `cd frontend && pnpm gen:api` (CI проверяет, что они совпадают).
 
+Сквозные тесты (Playwright: покупка, поставка, создание товара, все экраны на 375 и 1440 px) — против
+запущенного сайта с `TOCHKA_MODE=fake`, данными `seed` + `demo-data` и владельцем без Telegram:
+
+```sh
+cd frontend
+E2E_BASE_URL=https://localhost E2E_OWNER_EMAIL=owner@nsbtea.ru E2E_OWNER_PASSWORD=… pnpm e2e
+```
+
+В CI они идут против всего стека в Docker Compose; после запуска на сервере — `infra/smoke-test.sh`.
+
 Порядок работы — сначала тесты, потом код: тесты коммитятся до реализации и должны падать,
 реализация не подгоняет тесты.
