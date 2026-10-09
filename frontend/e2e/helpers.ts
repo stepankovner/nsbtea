@@ -9,11 +9,11 @@ export async function expectNoHorizontalScroll(page: Page): Promise<void> {
   expect(overflow, "горизонтальная прокрутка страницы").toBeLessThanOrEqual(0);
 }
 
+export const OWNER_STATE = "e2e/.auth/owner.json";
+
+/** Сессия владельца уже есть (вход один раз — auth.setup.ts): открываем админку без входа. */
 export async function loginOwner(page: Page): Promise<void> {
-  await page.goto("/admin/login");
-  await page.getByLabel("Почта").fill(OWNER_EMAIL);
-  await page.getByLabel("Пароль").fill(OWNER_PASSWORD);
-  await page.getByRole("button", { name: "Войти" }).click();
-  await page.waitForURL((url) => url.pathname.startsWith("/admin") && !url.pathname.startsWith("/admin/login"));
+  await page.goto("/admin");
+  await expect(page).not.toHaveURL(/\/admin\/login/);
   await expect(page.getByRole("main")).toBeVisible();
 }

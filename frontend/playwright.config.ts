@@ -1,5 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
+import { OWNER_STATE } from "./e2e/helpers";
+
 /**
  * Сквозные тесты против запущенного сайта (Docker Compose или pnpm dev + backend).
  * Нужны: TOCHKA_MODE=fake (страница «оплаты»), `seed` + `demo-data`, владелец без Telegram.
@@ -25,7 +27,16 @@ export default defineConfig({
     launchOptions: { executablePath },
   },
   projects: [
-    { name: "phone", use: { ...devices["iPhone 13"], defaultBrowserType: "chromium", viewport: { width: 375, height: 812 } } },
-    { name: "laptop", use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } } },
+    { name: "setup", testMatch: /auth\.setup\.ts/ },
+    {
+      name: "phone",
+      dependencies: ["setup"],
+      use: { ...devices["iPhone 13"], defaultBrowserType: "chromium", viewport: { width: 375, height: 812 }, storageState: OWNER_STATE },
+    },
+    {
+      name: "laptop",
+      dependencies: ["setup"],
+      use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 }, storageState: OWNER_STATE },
+    },
   ],
 });
