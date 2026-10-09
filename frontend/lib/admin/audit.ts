@@ -1,7 +1,15 @@
 import { adminApi, must, type Schemas } from "./client";
 
 export type AuditEntry = Schemas["AuditEntry"];
-export type AuditQuery = { entity?: string; actor_id?: string; page?: number; per_page?: number };
+/** date_from и date_to — дни по Москве (ГГГГ-ММ-ДД), обе границы включительно. */
+export type AuditQuery = {
+  entity?: string;
+  actor_id?: string;
+  date_from?: string;
+  date_to?: string;
+  page?: number;
+  per_page?: number;
+};
 
 export const auditApi = {
   list: (query: AuditQuery) => must(adminApi.GET("/api/admin/audit", { params: { query } })),
@@ -48,4 +56,11 @@ export const ENTITY_FILTERS: { value: string; label: string }[] = [
   { value: "application", label: "Заявки" },
   { value: "settings", label: "Настройки" },
   { value: "admin_user", label: "Сотрудники и входы" },
+];
+
+/** Быстрые периоды: в адресе хранится сам вариант, а даты считаются от сегодняшнего дня по Москве. */
+export const QUICK_PERIODS: { value: string; label: string; days: number }[] = [
+  { value: "today", label: "Сегодня", days: 1 },
+  { value: "7d", label: "7 дней", days: 7 },
+  { value: "30d", label: "30 дней", days: 30 },
 ];
