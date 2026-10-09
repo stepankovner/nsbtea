@@ -629,6 +629,23 @@ export interface paths {
         patch: operations["update_event_api_admin_events__event_id__patch"];
         trace?: never;
     };
+    "/api/admin/events/{event_id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Из архива */
+        post: operations["restore_event_api_admin_events__event_id__restore_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/home-blocks": {
         parameters: {
             query?: never;
@@ -6251,6 +6268,7 @@ export interface operations {
             query?: {
                 type?: string | null;
                 status?: string | null;
+                event_id?: string | null;
                 page?: number;
                 per_page?: number;
             };
@@ -7181,6 +7199,37 @@ export interface operations {
                 "application/json": components["schemas"]["EventPatch"];
             };
         };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EventAdminOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    restore_event_api_admin_events__event_id__restore_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                event_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {

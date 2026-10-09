@@ -392,10 +392,12 @@ async def home(db: AsyncSession, container: Container) -> HomeOut:
         elif block.kind == HomeBlockKind.FEATURED.value:
             ids = [uuid.UUID(str(i)) for i in data.get("product_ids") or []]
             if ids:
+                # порядок — как выбрал владелец; лишние (больше «сколько показать») отбрасываются
                 chosen = await products_where(
-                    Product.id.in_(ids), limit=limit, order=[Product.name]
+                    Product.id.in_(ids), limit=len(ids), order=[Product.name]
                 )
                 chosen.sort(key=lambda p: ids.index(p.id))
+                chosen = chosen[:limit]
             else:
                 chosen = await products_where(
                     Product.stock > 0,

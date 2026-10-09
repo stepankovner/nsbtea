@@ -11975,6 +11975,23 @@
      },
      {
       "in": "query",
+      "name": "event_id",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "format": "uuid",
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Event Id"
+      }
+     },
+     {
+      "in": "query",
       "name": "page",
       "required": false,
       "schema": {
@@ -13340,6 +13357,49 @@
      }
     },
     "summary": "Изменить событие",
+    "tags": [
+     "admin: контент"
+    ]
+   }
+  },
+  "/api/admin/events/{event_id}/restore": {
+   "post": {
+    "operationId": "restore_event_api_admin_events__event_id__restore_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "event_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Event Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/EventAdminOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Из архива",
     "tags": [
      "admin: контент"
     ]

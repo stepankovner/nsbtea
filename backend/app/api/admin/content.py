@@ -113,10 +113,11 @@ class PageAdminOut(ApiModel):
 
 def _page_out(container: Deps, page: Page) -> PageAdminOut:
     base = container.settings.public_base_url.rstrip("/")
+    # те же адреса, что на витрине: app/(shop)/[slug], guides/[slug], legal/[slug]
     path = (
         f"/legal/{page.slug}"
         if page.kind == "legal"
-        else (f"/guides/{page.slug}" if page.kind == "guide" else f"/pages/{page.slug}")
+        else (f"/guides/{page.slug}" if page.kind == "guide" else f"/{page.slug}")
     )
     return PageAdminOut(
         id=page.id,
@@ -240,7 +241,16 @@ async def restore_page(
     page = await db.get(Page, page_id)
     if page is None:
         raise NotFoundError("Страница не найдена")
-    page.archived_at = None
+    if page.archived_at is not None:
+        page.archived_at = None
+        await audit.record(
+            db,
+            context.user,
+            action="page.restore",
+            entity="page",
+            entity_id=page.id,
+            summary=f"Страница «{page.title}» возвращена из архива (не опубликована)",
+        )
     return _page_out(container, page)
 
 
@@ -312,11 +322,19 @@ class ReorderIn(ApiModel):
 
 
 @router.post("/home-blocks/reorder", response_model=Ok, summary="Порядок блоков")
-async def reorder_blocks(payload: ReorderIn, _: ContentAccess, db: Db) -> Ok:
+async def reorder_blocks(payload: ReorderIn, context: ContentAccess, db: Db) -> Ok:
     blocks = {b.kind: b for b in (await db.scalars(select(HomeBlock))).all()}
     for index, kind in enumerate(payload.kinds):
         if kind.value in blocks:
             blocks[kind.value].sort_order = index
+    await audit.record(
+        db,
+        context.user,
+        action="home_blocks.reorder",
+        entity="home_block",
+        summary="Изменён порядок блоков главной: "
+        + ", ".join(HOME_BLOCK_LABELS[kind] for kind in payload.kinds),
+    )
     return Ok()
 
 
@@ -442,11 +460,20 @@ async def list_events(
     _: ContentAccess, db: Db, container: Deps, period: str = "upcoming"
 ) -> list[EventAdminOut]:
     now = container.clock.now()
-    query = select(Event).where(Event.archived_at.is_(None))
-    if period == "past":
-        query = query.where(Event.starts_at <= now).order_by(Event.starts_at.desc())
+    if period == "archived":
+        query = select(Event).where(Event.archived_at.is_not(None)).order_by(Event.starts_at.desc())
+    elif period == "past":
+        query = (
+            select(Event)
+            .where(Event.archived_at.is_(None), Event.starts_at <= now)
+            .order_by(Event.starts_at.desc())
+        )
     else:
-        query = query.where(Event.starts_at > now).order_by(Event.starts_at)
+        query = (
+            select(Event)
+            .where(Event.archived_at.is_(None), Event.starts_at > now)
+            .order_by(Event.starts_at)
+        )
     return [await _event_out(db, container, e) for e in (await db.scalars(query)).all()]
 
 
@@ -484,6 +511,14 @@ async def get_event(
     return await _event_out(db, container, event)
 
 
+EVENT_REQUIRED = {
+    "type": "Вид события",
+    "title": "Название",
+    "slug": "Адрес",
+    "starts_at": "Дата и время начала",
+}
+
+
 @router.patch("/events/{event_id}", response_model=EventAdminOut, summary="Изменить событие")
 async def update_event(
     event_id: uuid.UUID, payload: EventPatch, context: ContentAccess, db: Db, container: Deps
@@ -492,7 +527,10 @@ async def update_event(
     if event is None:
         raise NotFoundError("Событие не найдено")
     data = payload.model_dump(exclude_unset=True)
-    if "type" in data and data["type"] is not None:
+    for key, label in EVENT_REQUIRED.items():
+        if key in data and data[key] is None:
+            raise DomainError(f"{label} — обязательное поле, его нельзя очистить", field=key)
+    if "type" in data:
         data["type"] = EventType(data["type"]).value
     if data.get("slug") and data["slug"] != event.slug:
         data["slug"] = await _unique(db, Event, data["slug"], event.id)
@@ -514,10 +552,40 @@ async def update_event(
 @router.delete("/events/{event_id}", response_model=Ok, summary="В архив")
 async def archive_event(event_id: uuid.UUID, context: ContentAccess, db: Db, container: Deps) -> Ok:
     event = await db.get(Event, event_id)
-    if event is not None:
+    if event is not None and event.archived_at is None:
         event.archived_at = container.clock.now()
         event.is_published = False
+        await audit.record(
+            db,
+            context.user,
+            action="event.archive",
+            entity="event",
+            entity_id=event.id,
+            summary=f"Событие «{event.title}» убрано в архив",
+        )
     return Ok()
+
+
+@router.post("/events/{event_id}/restore", response_model=EventAdminOut, summary="Из архива")
+async def restore_event(
+    event_id: uuid.UUID, context: ContentAccess, db: Db, container: Deps
+) -> EventAdminOut:
+    event = await db.get(Event, event_id)
+    if event is None:
+        raise NotFoundError("Событие не найдено")
+    if event.archived_at is not None:
+        event.archived_at = None  # возвращается скрытым: показать на сайте — осознанно
+        await audit.record(
+            db,
+            context.user,
+            action="event.restore",
+            entity="event",
+            entity_id=event.id,
+            summary=f"Событие «{event.title}» возвращено из архива (скрыто с сайта)",
+        )
+    await db.flush()
+    await db.refresh(event, ["cover", "updated_at"])
+    return await _event_out(db, container, event)
 
 
 # ------------------------------------------------------------------ applications
@@ -571,18 +639,22 @@ async def list_applications(
     db: Db,
     type: str | None = None,
     status: str | None = None,
+    event_id: uuid.UUID | None = None,
     page: Annotated[int, Query(ge=1)] = 1,
     per_page: Annotated[int, Query(ge=1, le=100)] = 30,
 ) -> ApplicationListOut:
-    base = select(Application)
+    filters = []
     if type:
-        base = base.where(Application.type == type)
+        filters.append(Application.type == type)
+    if event_id:
+        filters.append(Application.event_id == event_id)
+    base = select(Application).where(*filters)
     counts = {
         str(s): int(n)
         for s, n in (
             await db.execute(
                 select(Application.status, func.count())
-                .where(Application.type == type if type else Application.id.is_not(None))
+                .where(*filters)
                 .group_by(Application.status)
             )
         ).all()
