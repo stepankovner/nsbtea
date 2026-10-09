@@ -38,6 +38,10 @@ test("покупка чая: каталог → карточка → корзи�
   expect(orderNumber, "номер заказа на странице результата").toBeTruthy();
 
   await loginOwner(page);
+  // сводка с новым оплаченным заказом — строка заказа не должна раздвигать экран телефона
+  await expect(page.getByRole("link", { name: new RegExp(orderNumber!) }).first()).toBeVisible();
+  await expectNoHorizontalScroll(page);
+
   await page.goto("/admin/orders?status=paid");
   await expectNoHorizontalScroll(page);
   await page.getByRole("link", { name: new RegExp(orderNumber!) }).first().click();
