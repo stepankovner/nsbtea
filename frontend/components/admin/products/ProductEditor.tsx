@@ -39,13 +39,17 @@ import { NumberField } from "./inputs";
 import { ProductPhotos } from "./ProductPhotos";
 import { ProductPreview } from "./ProductPreview";
 import { ProductRelations } from "./ProductRelations";
-import { CategorySelect, PRODUCT_STATE_TONES, useCategories } from "./shared";
+import { CategorySelect, PRODUCT_STATE_TONES, useCategories, useProductOptions } from "./shared";
 import { useProductForm, type ProductFormState } from "./useProductForm";
 
 function StockSection({ product, state }: { product: AdminProduct; state: ProductFormState }) {
   const isTea = product.type === "tea";
   const unit = isTea ? "г" : "шт.";
-  const general = product.low_stock_threshold === null ? product.effective_threshold : isTea ? 50 : 2;
+  const options = useProductOptions();
+  // общий порог — из «Настройки → Каталог»; пока не загрузился, а своего порога нет — он же и действует
+  const fromSettings = options.data ? (isTea ? options.data.low_stock_tea_grams : options.data.low_stock_units) : null;
+  const general = fromSettings ?? (product.low_stock_threshold === null ? product.effective_threshold : null);
+  const generalText = general !== null ? `${general} ${unit}` : "как в настройках каталога";
   const level = product.stock <= 0 ? "out" : product.stock <= product.effective_threshold ? "low" : "ok";
   return (
     <SectionCard title="Остаток" id="product-stock" className="order-4 lg:order-none">
@@ -64,18 +68,18 @@ function StockSection({ product, state }: { product: AdminProduct; state: Produc
           Остаток меняется только на складе — поставкой, списанием или инвентаризацией. Так история движения всегда точная.
         </p>
         <Button asChild variant="outline" className="self-start">
-          <Link href={`/admin/inventory?product=${product.id}`}>Изменить остаток на складе</Link>
+          <Link href={`/admin/inventory/${product.id}`}>Изменить остаток на складе</Link>
         </Button>
         <NumberField
           label={`Порог «Осталось мало», ${unit}`}
           value={state.form.low_stock_threshold}
           onChange={(low_stock_threshold) => state.update({ low_stock_threshold })}
-          placeholder={String(general)}
+          placeholder={general !== null ? String(general) : undefined}
           suffix={unit}
           error={state.errors.low_stock_threshold}
-          hint={`Когда остаток станет таким или меньше, на сайте появится «Осталось мало», а вам придёт сообщение в Telegram. Например, для редкого чая — 100 г. Пусто — общий порог из настроек: ${general} ${unit}`}
+          hint={`Когда остаток станет таким или меньше, на сайте появится «Осталось мало», а вам придёт сообщение в Telegram. Например, для редкого чая — 100 г. Пусто — общий порог из настроек: ${generalText}.`}
           description={
-            state.form.low_stock_threshold === null ? `Пусто — общий порог: ${general} ${unit}` : "Свой порог для этого товара"
+            state.form.low_stock_threshold === null ? `Пусто — общий порог: ${generalText}` : `Свой порог для этого товара. Общий — ${generalText}`
           }
         />
       </div>

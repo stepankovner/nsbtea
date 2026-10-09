@@ -37,7 +37,7 @@ import {
 import { formatGrams, formatRub } from "@/lib/format";
 
 import { ChipsInput, NativeSelect, NumberField } from "./inputs";
-import { NameField, PriceBasePicker } from "./shared";
+import { NameField, PriceBasePicker, useProductOptions } from "./shared";
 
 export interface FormProps {
   form: ProductForm;
@@ -162,11 +162,11 @@ export function DescriptionFields({ form, update, errors }: FormProps) {
 
 // ------------------------------------------------------------------ шаг 4: цена и граммовки
 
+/** Граммовки из общего списка каталога и уже отмеченные у товара (даже если их убрали из списка). */
 function usePresets(selected: number[]): number[] {
-  const { isOwner } = useAdmin();
-  // общий список граммовок — в настройках, их видит только владелец; сотруднику — список по умолчанию
-  const settings = useQuery({ queryKey: productKeys.presets, queryFn: productsApi.weightPresets, enabled: isOwner, staleTime: 300_000 });
-  const allowed = settings.data ?? DEFAULT_WEIGHT_PRESETS;
+  const options = useProductOptions();
+  // пока список грузится — только отмеченные, чтобы не мелькали чужие варианты; не загрузился — как на сервере по умолчанию
+  const allowed = options.data?.weight_presets ?? (options.isError ? DEFAULT_WEIGHT_PRESETS : []);
   return [...new Set([...allowed, ...selected])].sort((a, b) => a - b);
 }
 
@@ -175,7 +175,7 @@ function StockNote({ productId, isTea }: { productId: string; isTea: boolean }) 
     <p className="rounded-lg bg-muted/60 p-3 text-sm leading-relaxed">
       {isTea ? "Остаток чая считается в граммах" : "Сколько штук в наличии"} и меняется только на складе — поставкой, списанием или
       инвентаризацией. Так история движения всегда точная.{" "}
-      <Link href={`/admin/inventory?product=${productId}`} className="font-medium underline underline-offset-2">
+      <Link href={`/admin/inventory/${productId}`} className="font-medium underline underline-offset-2">
         Открыть «Склад»
       </Link>
     </p>

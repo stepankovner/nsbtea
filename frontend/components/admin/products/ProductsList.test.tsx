@@ -54,8 +54,8 @@ const cup = listItem({
   stock_label: "6 шт.",
 });
 
-function page(items = [tea]) {
-  return { items, total: items.length, page: 1, per_page: 30 };
+function page(items = [tea], counts: Record<string, number> = { published: 1, hidden: 0, draft: 0, archived: 0 }) {
+  return { items, total: items.length, page: 1, per_page: 30, counts };
 }
 
 async function rowOf(name: string) {
@@ -92,14 +92,26 @@ describe("ProductsList — список товаров", () => {
     vi.mocked(productsApi.list).mockResolvedValue(page());
     const { unmount } = renderWithAdmin(<ProductsList />);
     const tabs = await screen.findByRole("navigation", { name: "Статус товаров" });
-    expect(within(tabs).getByRole("link", { name: "Черновики" })).toHaveAttribute("href", "/admin/products?status=draft");
-    expect(within(tabs).getByRole("link", { name: "Скрытые" })).toHaveAttribute("href", "/admin/products?status=hidden");
-    expect(within(tabs).getByRole("link", { name: "Архив" })).toHaveAttribute("href", "/admin/products?status=archived");
+    expect(within(tabs).getByRole("link", { name: /^Черновики/ })).toHaveAttribute("href", "/admin/products?status=draft");
+    expect(within(tabs).getByRole("link", { name: /^Скрытые/ })).toHaveAttribute("href", "/admin/products?status=hidden");
+    expect(within(tabs).getByRole("link", { name: /^Архив/ })).toHaveAttribute("href", "/admin/products?status=archived");
     unmount();
 
     search = new URLSearchParams("status=draft");
     renderWithAdmin(<ProductsList />);
     await waitFor(() => expect(productsApi.list).toHaveBeenLastCalledWith(expect.objectContaining({ status: "draft" })));
+  });
+
+  it("на вкладках — сколько товаров в каждом статусе, как в «Заказах»", async () => {
+    vi.mocked(productsApi.list).mockResolvedValue(page([tea], { published: 2, hidden: 1, draft: 3, archived: 4 }));
+    renderWithAdmin(<ProductsList />);
+    const tabs = await screen.findByRole("navigation", { name: "Статус товаров" });
+    // «Все» — всё, кроме архива
+    expect(await within(tabs).findByRole("link", { name: /^Все\s*6$/ })).toHaveAttribute("href", "/admin/products");
+    expect(within(tabs).getByRole("link", { name: /^На сайте\s*2$/ })).toHaveAttribute("href", "/admin/products?status=published");
+    expect(within(tabs).getByRole("link", { name: /^Скрытые\s*1$/ })).toBeInTheDocument();
+    expect(within(tabs).getByRole("link", { name: /^Черновики\s*3$/ })).toBeInTheDocument();
+    expect(within(tabs).getByRole("link", { name: /^Архив\s*4$/ })).toBeInTheDocument();
   });
 
   it("в архиве — кнопка «Восстановить» вместо переключателя", async () => {

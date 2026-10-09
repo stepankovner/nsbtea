@@ -32,7 +32,7 @@ vi.mock("@/lib/admin/products", async (importOriginal) => {
       copy: vi.fn(),
       setRelations: vi.fn(),
       tags: vi.fn(),
-      weightPresets: vi.fn(),
+      options: vi.fn(),
       uploadImages: vi.fn(),
       reorderImages: vi.fn(),
       updateImageAlt: vi.fn(),
@@ -50,7 +50,7 @@ beforeEach(() => {
   push.mockReset();
   vi.mocked(categoriesApi.list).mockResolvedValue(categoriesTree);
   vi.mocked(productsApi.tags).mockResolvedValue([]);
-  vi.mocked(productsApi.weightPresets).mockResolvedValue([25, 50, 100, 200]);
+  vi.mocked(productsApi.options).mockResolvedValue({ weight_presets: [25, 50, 100, 200], low_stock_tea_grams: 50, low_stock_units: 2 });
   vi.mocked(lookupProducts).mockResolvedValue([]);
 });
 
@@ -65,7 +65,7 @@ describe("ProductEditor — карточка товара", () => {
     expect(within(stock).getByText("600 г")).toBeInTheDocument();
     expect(within(stock).getByRole("link", { name: "Изменить остаток на складе" })).toHaveAttribute(
       "href",
-      "/admin/inventory?product=p1",
+      "/admin/inventory/p1",
     );
     expect(within(stock).queryByRole("textbox", { name: /Остаток/ })).not.toBeInTheDocument();
   });
@@ -92,6 +92,17 @@ describe("ProductEditor — карточка товара", () => {
     await userEvent.type(field, "100");
     await userEvent.click(screen.getByRole("button", { name: "Сохранить изменения" }));
     expect(productsApi.patch).toHaveBeenCalledWith("p1", { low_stock_threshold: 100 });
+  });
+
+  it("общий порог «по умолчанию» — из настроек каталога, даже если у товара свой и смотрит сотрудник", async () => {
+    vi.mocked(productsApi.get).mockResolvedValue(adminProduct({ low_stock_threshold: 100, effective_threshold: 100 }));
+    vi.mocked(productsApi.options).mockResolvedValue({ weight_presets: [25, 50, 100, 200], low_stock_tea_grams: 70, low_stock_units: 3 });
+    renderWithAdmin(<ProductEditor id="p1" />, { owner: false, permissions: ["products"] });
+    const field = await screen.findByRole("textbox", { name: "Порог «Осталось мало», г" });
+    expect(field).toHaveValue("100");
+    await waitFor(() => expect(field).toHaveAttribute("placeholder", "70"));
+    await userEvent.clear(field);
+    expect(await screen.findByText("Пусто — общий порог: 70 г")).toBeInTheDocument();
   });
 
   it("скрыть с сайта и снова показать", async () => {
