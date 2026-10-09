@@ -499,7 +499,8 @@ async def lookup_products(
     db: Db,
     container: Deps,
     q: Annotated[str | None, Query(max_length=100)] = None,
-    ids: Annotated[str | None, Query(max_length=4000, description="id через запятую")] = None,
+    # 200 UUID через запятую = 7399 символов
+    ids: Annotated[str | None, Query(max_length=7_500, description="id через запятую")] = None,
     limit: Annotated[int, Query(ge=1, le=100)] = 30,
 ) -> list[LookupProduct]:
     query = select(Product).where(Product.archived_at.is_(None))
