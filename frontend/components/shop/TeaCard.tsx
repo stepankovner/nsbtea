@@ -87,7 +87,7 @@ export function TeaCard({ product, priority = false }: { product: Card; priority
               className="absolute inset-y-0 right-0 w-[30%] transition-opacity hover:opacity-85"
             >
               {product.hanzi ? (
-                <span className="hanzi-vertical absolute left-1/2 top-5 -translate-x-1/2 text-[clamp(26px,2.4vw,34px)]">
+                <span lang="zh-Hans" className="hanzi-vertical absolute left-1/2 top-5 -translate-x-1/2 text-[clamp(26px,2.4vw,34px)]">
                   {product.hanzi}
                 </span>
               ) : null}
@@ -96,7 +96,7 @@ export function TeaCard({ product, priority = false }: { product: Card; priority
         ) : (
           <Link href={href} aria-label={product.name} className="absolute inset-0 transition-opacity hover:opacity-90">
             {product.hanzi ? (
-              <span className="hanzi-vertical absolute right-[22px] top-6 text-[44px] tracking-[0.14em]">
+              <span lang="zh-Hans" className="hanzi-vertical absolute right-[22px] top-6 text-[44px]">
                 {product.hanzi}
               </span>
             ) : null}

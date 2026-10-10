@@ -110,7 +110,7 @@ export function ProductPreview({
               // eslint-disable-next-line @next/next/no-img-element -- превью из медиатеки
               <img src={cover.srcset["640"] ?? cover.srcset["320"] ?? cover.url} alt={cover.alt ?? name} className="h-full w-full object-cover" />
             ) : form.hanzi.trim() ? (
-              <span className="hanzi-vertical absolute right-5 top-5 text-[44px]">{form.hanzi.trim()}</span>
+              <span lang="zh-Hans" className="hanzi-vertical absolute right-5 top-5 text-[44px]">{form.hanzi.trim()}</span>
             ) : (
               <span className="absolute inset-0 flex items-center justify-center p-4 text-center text-sm opacity-70">Нет фото</span>
             )}

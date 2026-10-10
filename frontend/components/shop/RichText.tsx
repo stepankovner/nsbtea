@@ -75,7 +75,7 @@ function ProductInline({ product }: { product: Schemas["ProductCard"] }) {
         style={{ background: colors.bg, color: colors.fg }}
         aria-hidden="true"
       >
-        {product.hanzi ? <span className="hanzi-vertical text-lg">{product.hanzi}</span> : null}
+        {product.hanzi ? <span lang="zh-Hans" className="hanzi-vertical text-lg">{product.hanzi}</span> : null}
       </span>
       <span className="flex flex-col justify-center gap-1 py-3 pr-4">
         <span className="font-serif text-xl leading-tight text-ink">{product.name}</span>

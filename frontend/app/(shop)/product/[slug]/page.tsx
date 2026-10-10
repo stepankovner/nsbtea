@@ -74,7 +74,7 @@ export default async function ProductPage(props: PageProps<"/product/[slug]">) {
             ← {p.category?.name ?? "Каталог"}
           </Link>
           {p.hanzi ? (
-            <span className="hanzi-vertical absolute right-[clamp(24px,4vw,64px)] top-8 text-[52px] md:top-10 md:text-[clamp(72px,10vw,150px)]">
+            <span lang="zh-Hans" className="hanzi-vertical absolute right-[clamp(24px,4vw,64px)] top-8 text-[52px] md:top-10 md:text-[clamp(72px,10vw,150px)]">
               {p.hanzi}
             </span>
           ) : null}

@@ -72,13 +72,19 @@
   text-transform: uppercase;
 }
 
+/* Иероглифы столбиком: колонка шириной в один знак, каждый знак на своей строке (между
+   китайскими знаками перенос разрешён). Не writing-mode: vertical-rl — со шрифтами без данных
+   для вертикального письма знаки в нём наезжают друг на друга. */
 @utility hanzi-vertical {
   font-family: var(--font-hanzi);
   font-weight: 500;
-  writing-mode: vertical-rl;
-  white-space: nowrap;
-  letter-spacing: 0.12em;
-  line-height: 1;
+  display: inline-block;
+  width: 1em;
+  white-space: normal;
+  word-break: break-all;
+  text-align: center;
+  letter-spacing: 0;
+  line-height: 1.12;
 }
 
 @utility section-y {

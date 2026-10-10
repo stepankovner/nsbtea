@@ -111,7 +111,7 @@ export function ThursdayBlock({ block }: { block: Block }) {
                   </div>
                 ) : null}
                 {p.hanzi ? (
-                  <span className="hanzi-vertical absolute right-[clamp(28px,4.4vw,64px)] top-[clamp(28px,3.4vw,48px)] text-[clamp(60px,7vw,108px)]">
+                  <span lang="zh-Hans" className="hanzi-vertical absolute right-[clamp(28px,4.4vw,64px)] top-[clamp(28px,3.4vw,48px)] text-[clamp(60px,7vw,108px)]">
                     {p.hanzi}
                   </span>
                 ) : null}

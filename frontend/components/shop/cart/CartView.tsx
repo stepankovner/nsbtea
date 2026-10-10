@@ -38,7 +38,7 @@ function CartLine({ line, onChange }: { line: Line; onChange: (next: Promise<Car
           // eslint-disable-next-line @next/next/no-img-element -- миниатюра от сервера
           <img src={line.image_url} alt="" className="absolute inset-0 h-full w-full object-cover" />
         ) : line.hanzi ? (
-          <span className="hanzi-vertical text-lg">{line.hanzi}</span>
+          <span lang="zh-Hans" className="hanzi-vertical text-lg">{line.hanzi}</span>
         ) : null}
       </Link>
       <div className="flex min-w-[180px] flex-[1_1_180px] flex-col gap-1.5">
