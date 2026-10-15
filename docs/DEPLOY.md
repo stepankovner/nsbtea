@@ -72,7 +72,7 @@ DKIM — TXT `mail._domainkey` из админки Яндекс 360). Письм
 `SMTP_STARTTLS=true`, `SMTP_FROM=НСБ Чай <shop@nsbtea.ru>`, логин и пароль — в панели Selectel на вкладке
 ресурса почтового сервиса. В DNS — запись подтверждения и DKIM Selectel (`selcloud._domainkey`).
 SPF-запись у домена одна, на оба сервиса: `v=spf1 include:_spf.yandex.net include:spf.mail.selcloud.ru ~all`;
-DMARC — TXT `_dmarc`: `v=DMARC1; p=none; rua=mailto:shop@nsbtea.ru`.
+DMARC — TXT `_dmarc`: `v=DMARC1; p=none` (без `rua`: иначе в ящик владельца пойдут XML-отчёты).
 Инструкция Selectel: https://docs.selectel.ru/email-service/connect-email-service/
 
 Сайт подключается к SMTP только через STARTTLS (порты 587, 1126), порт 465 не подходит. Если всё же отправлять
