@@ -15,7 +15,7 @@ from app.config import EmailMode, IntegrationMode, MediaStorage, Settings
 from app.core.clock import Clock, FrozenClock
 from app.core.ratelimit import MemoryRateLimiter, RateLimiter, RedisRateLimiter
 from app.db import create_engine, create_session_factory
-from app.integrations.delivery import CdekGateway, FakeCdekGateway
+from app.integrations.delivery import CdekGateway, DisabledCdekGateway, FakeCdekGateway
 from app.integrations.messaging import (
     BotTelegramSender,
     ConsoleMailer,
@@ -26,7 +26,11 @@ from app.integrations.messaging import (
     SmtpMailer,
     TelegramSender,
 )
-from app.integrations.payments import FakePaymentGateway, PaymentGateway
+from app.integrations.payments import (
+    DisabledPaymentGateway,
+    FakePaymentGateway,
+    PaymentGateway,
+)
 from app.integrations.storage import LocalStorage, S3Storage, Storage
 
 if TYPE_CHECKING:
@@ -104,7 +108,9 @@ def build_container(settings: Settings) -> Container:
         storage = LocalStorage(settings.media_local_dir, settings.media_public_url)
 
     payments: PaymentGateway
-    if settings.tochka_mode is IntegrationMode.FAKE:
+    if settings.tochka_mode is IntegrationMode.OFF:
+        payments = DisabledPaymentGateway()
+    elif settings.tochka_mode is IntegrationMode.FAKE:
         payments = FakePaymentGateway(clock, settings.public_base_url)
     else:
         from app.integrations.tochka import TochkaGateway
@@ -112,7 +118,9 @@ def build_container(settings: Settings) -> Container:
         payments = TochkaGateway.from_settings(settings)
 
     cdek: CdekGateway
-    if settings.cdek_mode is IntegrationMode.FAKE:
+    if settings.cdek_mode is IntegrationMode.OFF:
+        cdek = DisabledCdekGateway()
+    elif settings.cdek_mode is IntegrationMode.FAKE:
         cdek = FakeCdekGateway()
     else:
         from app.integrations.cdek import CdekClient

@@ -137,6 +137,7 @@ export function site(overrides: Partial<Schemas["SiteOut"]> = {}): Schemas["Site
       origin_city_code: 94,
     },
     allow_pay_on_delivery: false,
+    online_payment_available: true,
     pages: [
       { slug: "offer", title: "Публичная оферта", kind: "legal" },
       { slug: "privacy", title: "Политика обработки персональных данных", kind: "legal" },

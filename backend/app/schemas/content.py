@@ -66,6 +66,8 @@ class SiteOut(ApiModel):
     thursday: ThursdayPublic
     delivery: DeliveryPublic
     allow_pay_on_delivery: bool
+    # False, пока эквайринг не подключён (TOCHKA_MODE=off): оформление показывает, как заказать
+    online_payment_available: bool
     pages: list[PageLink]
     telegram_bot_username: str | None
     yandex_maps_api_key: str | None

@@ -6,6 +6,7 @@
 import asyncio
 import json
 import logging
+from collections.abc import Sequence
 from datetime import datetime
 from decimal import Decimal
 from typing import Any
@@ -51,6 +52,7 @@ class TochkaGateway:
         token: str,
         customer_code: str,
         merchant_id: str | None,
+        payment_modes: Sequence[str] = ("card", "sbp"),
         transport: httpx.AsyncBaseTransport | None = None,
         public_jwk: dict[str, Any] | None = None,
         public_key_url: str = PUBLIC_KEY_URL,
@@ -59,6 +61,7 @@ class TochkaGateway:
         self._base = base_url.rstrip("/")
         self._customer_code = customer_code
         self._merchant_id = merchant_id
+        self._payment_modes = [str(mode) for mode in payment_modes]
         self._client = httpx.AsyncClient(
             transport=transport,
             timeout=timeout,
@@ -69,7 +72,9 @@ class TochkaGateway:
         self._key_lock = asyncio.Lock()
 
     @classmethod
-    def from_settings(cls, settings: Settings) -> "TochkaGateway":
+    def from_settings(
+        cls, settings: Settings, *, transport: httpx.AsyncBaseTransport | None = None
+    ) -> "TochkaGateway":
         if settings.tochka_mode is IntegrationMode.SANDBOX:
             return cls(
                 base_url=SANDBOX_URL,
@@ -78,6 +83,8 @@ class TochkaGateway:
                 else SANDBOX_TOKEN,
                 customer_code=settings.tochka_customer_code or "1234567ab",
                 merchant_id=settings.tochka_merchant_id or "200000000001097",
+                payment_modes=settings.tochka_payment_modes,
+                transport=transport,
                 public_key_url=settings.tochka_webhook_public_key_url,
             )
         if not (settings.tochka_jwt and settings.tochka_customer_code):
@@ -87,6 +94,8 @@ class TochkaGateway:
             token=settings.tochka_jwt.get_secret_value(),
             customer_code=settings.tochka_customer_code,
             merchant_id=settings.tochka_merchant_id,
+            payment_modes=settings.tochka_payment_modes,
+            transport=transport,
             public_key_url=settings.tochka_webhook_public_key_url,
         )
 
@@ -124,7 +133,7 @@ class TochkaGateway:
             "purpose": request.purpose[:140],
             "redirectUrl": request.redirect_url,
             "failRedirectUrl": request.fail_redirect_url,
-            "paymentMode": ["card", "sbp"],
+            "paymentMode": self._payment_modes,
             "ttl": request.ttl_minutes,
             "paymentLinkId": request.payment_link_id,
             "taxSystemCode": request.tax_system,
@@ -158,6 +167,36 @@ class TochkaGateway:
             )
         except (KeyError, TypeError) as exc:
             raise PaymentGatewayError(f"Неожиданный ответ Точки: {result!r}"[:500]) from exc
+
+    async def list_customers(self) -> list[dict[str, Any]]:
+        """Счета, к которым у ключа есть доступ; нужен тот, где customerType=Business."""
+        result = await self._request("GET", "/open-banking/v1.0/customers")
+        return self._records(result, "Customer")
+
+    async def list_retailers(self, customer_code: str) -> list[dict[str, Any]]:
+        """Торговые точки интернет-эквайринга: merchantId, статус, способы оплаты, касса.
+        До одобрения заявки банк отвечает ошибкой «Retailer not found»."""
+        result = await self._request(
+            "GET", f"/acquiring/v1.0/retailers?customerCode={customer_code}"
+        )
+        return self._records(result, "Retailer")
+
+    async def register_webhook(self, client_id: str, url: str) -> None:
+        """Подписка на оплаты по ссылкам. Точка сразу шлёт на url тестовый вебхук
+        и регистрирует его, только если получила ответ 200."""
+        await self._request(
+            "PUT",
+            f"/webhook/v1.0/{client_id}",
+            {"webhooksList": ["acquiringInternetPayment"], "url": url},
+        )
+
+    @staticmethod
+    def _records(result: Any, key: str) -> list[dict[str, Any]]:
+        try:
+            records = result["Data"][key]
+        except (KeyError, TypeError) as exc:
+            raise PaymentGatewayError(f"Неожиданный ответ Точки: {result!r}"[:500]) from exc
+        return [r for r in records if isinstance(r, dict)]
 
     async def get_payment(self, operation_id: str) -> PaymentInfo:
         result = await self._request("GET", f"/acquiring/v1.0/payments/{operation_id}")

@@ -66,7 +66,7 @@ class TestOnlinePaymentOff:
         assert "Онлайн-оплата" in response.json()["detail"]
         assert await db.scalar(select(func.count()).select_from(Order)) == 0
         cart = (await client.get("/api/cart")).json()
-        assert len(cart["items"]) == 1  # корзина не потерялась
+        assert len(cart["lines"]) == 1  # корзина не потерялась
 
     async def test_pay_on_delivery_still_works(
         self, client: AsyncClient, db: AsyncSession, container: Container

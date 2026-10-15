@@ -107,6 +107,9 @@ class AttributesIn(BaseModel):
     fermentation: str | None = Field(default=None, max_length=80)
     shape: TeaShape | None = None
     effect: TeaEffect | None = None
+    # закон о защите прав потребителей: у продуктов — условия хранения и срок годности
+    storage: str | None = Field(default=None, max_length=200)
+    shelf_life: str | None = Field(default=None, max_length=80)
 
 
 class ProductPatchIn(ApiModel):

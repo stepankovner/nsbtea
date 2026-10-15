@@ -11,6 +11,7 @@ from sqlalchemy import ColumnElement, func, or_, select
 
 from app.api.admin.catalog import main_image_url
 from app.api.deps import Admin, Db, Deps, Owner
+from app.config import IntegrationMode
 from app.container import Container
 from app.core.security import hash_token, new_human_code
 from app.domain.errors import NotFoundError
@@ -148,15 +149,23 @@ async def _revenue(db: Db, container: Container) -> Revenue:
     )
 
 
-async def _checklist(db: Db, user: AdminUser) -> list[ChecklistItem]:
+# страницы, которые банк проверяет перед подключением эквайринга (кроме юридических)
+BUYER_PAGES = ("delivery", "returns")
+
+
+async def _checklist(db: Db, user: AdminUser, container: Container) -> list[ChecklistItem]:
     store = await get_group(db, StoreSettings)
-    legal = (
-        await db.scalars(
-            select(Page.slug).where(
-                Page.slug.in_(LEGAL_SLUGS), Page.is_published.is_(True), Page.archived_at.is_(None)
+    published = set(
+        (
+            await db.scalars(
+                select(Page.slug).where(
+                    Page.slug.in_((*LEGAL_SLUGS, *BUYER_PAGES)),
+                    Page.is_published.is_(True),
+                    Page.archived_at.is_(None),
+                )
             )
-        )
-    ).all()
+        ).all()
+    )
     products = await db.scalar(
         select(func.count()).select_from(Product).where(Product.status == "published")
     )
@@ -171,15 +180,31 @@ async def _checklist(db: Db, user: AdminUser) -> list[ChecklistItem]:
         ChecklistItem(
             key="requisites",
             title="Заполните реквизиты ИП",
-            hint="Они показываются в подвале сайта и нужны для оферты.",
-            done=bool(store.legal_name and store.inn),
+            hint="Название, ИНН, ОГРНИП и адрес показываются на сайте — банк проверяет их "
+            "перед подключением оплаты.",
+            done=bool(store.legal_name and store.inn and store.ogrnip and store.legal_address),
+            href="/admin/settings/store",
+        ),
+        ChecklistItem(
+            key="contacts",
+            title="Укажите телефон и ссылку на Telegram",
+            hint="Покупатели увидят их в подвале сайта.",
+            done=bool(store.phone and store.telegram_url),
             href="/admin/settings/store",
         ),
         ChecklistItem(
             key="legal_pages",
             title="Опубликуйте оферту, политику и согласие",
             hint="Без них покупатель не сможет подтвердить согласие при оформлении.",
-            done=len(legal) == len(LEGAL_SLUGS),
+            done=published.issuperset(LEGAL_SLUGS),
+            href="/admin/content/pages",
+        ),
+        ChecklistItem(
+            key="buyer_pages",
+            title="Опубликуйте «Доставка и оплата» и «Обмен и возврат»",
+            hint="Банк проверяет условия доставки, оплаты и возврата. Текст о возврате — "
+            "черновик: проверьте его перед публикацией.",
+            done=published.issuperset(BUYER_PAGES),
             href="/admin/content/pages",
         ),
         ChecklistItem(
@@ -190,11 +215,12 @@ async def _checklist(db: Db, user: AdminUser) -> list[ChecklistItem]:
             href="/admin/products/new",
         ),
         ChecklistItem(
-            key="contacts",
-            title="Укажите телефон и ссылку на Telegram",
-            hint="Покупатели увидят их в подвале сайта.",
-            done=bool(store.phone and store.telegram_url),
-            href="/admin/settings/store",
+            key="online_payment",
+            title="Подключите онлайн-оплату",
+            hint="Подайте заявку на интернет-эквайринг в Точке, когда пункты выше готовы. "
+            "После одобрения разработчик впишет ключи на сервере. Здесь — налоги для чеков.",
+            done=container.settings.tochka_mode is IntegrationMode.PRODUCTION,
+            href="/admin/settings/payment",
         ),
     ]
 
@@ -301,7 +327,7 @@ async def dashboard(context: Admin, db: Db, container: Deps) -> DashboardOut:
         ],
         new_applications=applications,
         new_applications_count=applications_count,
-        launch_checklist=await _checklist(db, user) if user.is_owner else [],
+        launch_checklist=await _checklist(db, user, container) if user.is_owner else [],
     )
 
 

@@ -110,6 +110,23 @@ class PaymentGateway(Protocol):
     async def parse_webhook(self, body: bytes) -> WebhookNotice: ...
 
 
+class DisabledPaymentGateway:
+    """TOCHKA_MODE=off: онлайн-оплата ещё не подключена. Оформление до шлюза не доходит
+    (checkout проверяет настройку), это — страховка от вызова в обход."""
+
+    async def create_payment(self, request: PaymentRequest) -> PaymentLink:
+        raise PaymentGatewayError("Онлайн-оплата не подключена (TOCHKA_MODE=off)")
+
+    async def get_payment(self, operation_id: str) -> PaymentInfo:
+        raise PaymentGatewayError("Онлайн-оплата не подключена (TOCHKA_MODE=off)")
+
+    async def refund(self, operation_id: str, amount_kop: int) -> RefundResult:
+        raise PaymentGatewayError("Онлайн-оплата не подключена (TOCHKA_MODE=off)")
+
+    async def parse_webhook(self, body: bytes) -> WebhookNotice:
+        raise WebhookSignatureError("онлайн-оплата не подключена")
+
+
 @dataclass(slots=True)
 class _FakePayment:
     request: PaymentRequest

@@ -47,7 +47,8 @@ async def quote(
 ) -> Quote:
     settings = await get_group(db, DeliverySettings)
     method = DeliveryMethod(delivery.method)
-    if method not in settings.enabled_methods():
+    cdek_off = method.value.startswith("cdek") and not container.settings.cdek_available
+    if method not in settings.enabled_methods() or cdek_off:
         raise DomainError("Этот способ доставки сейчас недоступен", field="delivery.method")
 
     if method is DeliveryMethod.PICKUP:

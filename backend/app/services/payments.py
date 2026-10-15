@@ -14,7 +14,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.container import Container
 from app.domain.errors import (
     ConflictError,
-    DomainError,
     ExternalServiceError,
     InsufficientStockError,
 )
@@ -34,11 +33,6 @@ from app.services.settings import get_group
 from app.services.settings_schema import PaymentSettings
 
 logger = logging.getLogger(__name__)
-
-
-class BadWebhookError(DomainError):
-    code = "bad_webhook"
-    http_status = 400
 
 
 PROVIDER = "tochka"
@@ -188,8 +182,10 @@ async def handle_webhook(db: AsyncSession, container: Container, body: bytes) ->
     try:
         notice = await container.payments.parse_webhook(body)
     except WebhookSignatureError as exc:
-        logger.warning("Отклонён вебхук Точки: %s", exc)
-        raise BadWebhookError("Некорректный вебхук") from exc
+        # Ответ всё равно 200: Точка регистрирует вебхук, только получив 200 на тестовый
+        # запрос, и повторяет не-200 тридцать раз. Неподписанное тело просто не обрабатываем.
+        logger.warning("Вебхук Точки без верной подписи — пропущен: %s", exc)
+        return
 
     payment = await db.scalar(select(Payment).where(Payment.operation_id == notice.operation_id))
     event_key = f"{notice.operation_id}:{notice.status.value}"

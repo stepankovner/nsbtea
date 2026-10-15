@@ -56,4 +56,6 @@ ATTRIBUTE_LABELS: dict[str, str] = {
     "fermentation": "Степень ферментации",
     "shape": "Форма",
     "effect": "Эффект",
+    "storage": "Условия хранения",
+    "shelf_life": "Срок годности",
 }

@@ -45,6 +45,23 @@ class CdekGateway(Protocol):
         ...
 
 
+class DisabledCdekGateway:
+    """CDEK_MODE=off: договора со СДЭК ещё нет — способ скрыт на сайте, расчёт недоступен."""
+
+    async def calculate(
+        self, *, tariff_code: int, from_city_code: int, to: dict[str, Any], parcel: Parcel
+    ) -> CdekQuote:
+        raise DeliveryGatewayError("СДЭК не подключён (CDEK_MODE=off)")
+
+    async def suggest_cities(self, query: str) -> list[CdekCity]:
+        raise DeliveryGatewayError("СДЭК не подключён (CDEK_MODE=off)")
+
+    async def proxy_widget(
+        self, action: str, params: dict[str, Any]
+    ) -> tuple[int, Any, dict[str, str]]:
+        raise DeliveryGatewayError("СДЭК не подключён (CDEK_MODE=off)")
+
+
 class FakeCdekGateway:
     """Предсказуемые цены для тестов и разработки без ключей СДЭК."""
 

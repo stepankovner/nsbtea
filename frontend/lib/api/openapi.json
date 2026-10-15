@@ -1182,6 +1182,30 @@
        }
       ]
      },
+     "shelf_life": {
+      "anyOf": [
+       {
+        "maxLength": 80,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Shelf Life"
+     },
+     "storage": {
+      "anyOf": [
+       {
+        "maxLength": 200,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Storage"
+     },
      "tea_type": {
       "anyOf": [
        {
@@ -9831,6 +9855,10 @@
       "title": "Metrika Id",
       "type": "string"
      },
+     "online_payment_available": {
+      "title": "Online Payment Available",
+      "type": "boolean"
+     },
      "pages": {
       "items": {
        "$ref": "#/components/schemas/PageLink"
@@ -9892,6 +9920,7 @@
      "thursday",
      "delivery",
      "allow_pay_on_delivery",
+     "online_payment_available",
      "pages",
      "telegram_bot_username",
      "yandex_maps_api_key"

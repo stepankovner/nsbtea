@@ -6,9 +6,10 @@
 
 from enum import StrEnum
 from functools import lru_cache
+from typing import Annotated, Any
 
-from pydantic import Field, SecretStr
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import Field, SecretStr, field_validator
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
 class Environment(StrEnum):
@@ -22,6 +23,18 @@ class IntegrationMode(StrEnum):
     FAKE = "fake"  # локальная заглушка: без сети, для разработки и тестов
     SANDBOX = "sandbox"  # тестовый контур провайдера
     PRODUCTION = "production"
+    # ещё не подключено (нет договора или ключей): сайт работает, покупателю способ недоступен.
+    # Нужно, чтобы банк проверил живой сайт до одобрения эквайринга — ключи он выдаёт после.
+    OFF = "off"
+
+
+class TochkaPaymentMode(StrEnum):
+    """Способы оплаты на странице Точки; доступны те, что подключены у торговой точки."""
+
+    CARD = "card"
+    SBP = "sbp"
+    TINKOFF = "tinkoff"  # T-Pay
+    DOLYAME = "dolyame"  # «Долями»
 
 
 class MediaStorage(StrEnum):
@@ -69,6 +82,10 @@ class Settings(BaseSettings):
     tochka_merchant_id: str | None = None
     tochka_client_id: str | None = None
     tochka_webhook_public_key_url: str = "https://enter.tochka.com/doc/openapi/static/keys/public"
+    # через запятую: card,sbp (что подключено у торговой точки — `python -m app.cli tochka-info`)
+    tochka_payment_modes: Annotated[list[TochkaPaymentMode], NoDecode] = Field(
+        default_factory=lambda: [TochkaPaymentMode.CARD, TochkaPaymentMode.SBP], min_length=1
+    )
     payment_ttl_minutes: int = 30
 
     # СДЭК
@@ -98,6 +115,21 @@ class Settings(BaseSettings):
     admin_session_days: int = 14
     customer_session_days: int = 180
 
+    @field_validator("tochka_payment_modes", mode="before")
+    @classmethod
+    def _split_payment_modes(cls, value: Any) -> Any:
+        if isinstance(value, str):
+            return [part.strip() for part in value.split(",") if part.strip()]
+        return value
+
+    @property
+    def online_payment_available(self) -> bool:
+        return self.tochka_mode is not IntegrationMode.OFF
+
+    @property
+    def cdek_available(self) -> bool:
+        return self.cdek_mode is not IntegrationMode.OFF
+
     @property
     def is_production(self) -> bool:
         return self.environment is Environment.PRODUCTION
@@ -120,17 +152,21 @@ def production_problems(settings: Settings) -> list[str]:
     if not settings.public_base_url.startswith("https://"):
         problems.append("PUBLIC_BASE_URL: нужен адрес с https://")
 
-    if settings.tochka_mode is not IntegrationMode.PRODUCTION:
-        problems.append("TOCHKA_MODE: в боевом режиме должно быть production")
-    for name in ("tochka_jwt", "tochka_customer_code"):
-        if not getattr(settings, name):
-            problems.append(f"{name.upper()}: не задан — оплата не заработает")
+    # off — честное «ещё не подключено» (покупатель видит это на сайте); fake и sandbox на боевом
+    # сайте недопустимы: заказ выглядел бы оплаченным без денег
+    if settings.tochka_mode not in (IntegrationMode.PRODUCTION, IntegrationMode.OFF):
+        problems.append("TOCHKA_MODE: в боевом режиме должно быть production (или off до договора)")
+    if settings.tochka_mode is IntegrationMode.PRODUCTION:
+        for name in ("tochka_jwt", "tochka_customer_code"):
+            if not getattr(settings, name):
+                problems.append(f"{name.upper()}: не задан — оплата не заработает")
 
-    if settings.cdek_mode is not IntegrationMode.PRODUCTION:
-        problems.append("CDEK_MODE: в боевом режиме должно быть production")
-    for name in ("cdek_client_id", "cdek_client_secret"):
-        if not getattr(settings, name):
-            problems.append(f"{name.upper()}: не задан — расчёт доставки СДЭК не заработает")
+    if settings.cdek_mode not in (IntegrationMode.PRODUCTION, IntegrationMode.OFF):
+        problems.append("CDEK_MODE: в боевом режиме должно быть production (или off до договора)")
+    if settings.cdek_mode is IntegrationMode.PRODUCTION:
+        for name in ("cdek_client_id", "cdek_client_secret"):
+            if not getattr(settings, name):
+                problems.append(f"{name.upper()}: не задан — расчёт доставки СДЭК не заработает")
 
     if settings.email_mode is not EmailMode.SMTP:
         problems.append("EMAIL_MODE: в боевом режиме должно быть smtp — иначе письма не уходят")
@@ -145,6 +181,20 @@ def production_problems(settings: Settings) -> list[str]:
     if settings.telegram_bot_token and not settings.telegram_webhook_secret:
         problems.append("TELEGRAM_WEBHOOK_SECRET: нужен, когда задан TELEGRAM_BOT_TOKEN")
     return problems
+
+
+def production_notes(settings: Settings) -> list[str]:
+    """Что на боевом сайте осознанно выключено — запуск не мешает, но об этом нужно помнить."""
+    if not settings.is_production:
+        return []
+    notes: list[str] = []
+    if not settings.online_payment_available:
+        notes.append(
+            "Онлайн-оплата не подключена (TOCHKA_MODE=off): покупатели видят «оплата подключается»."
+        )
+    if not settings.cdek_available:
+        notes.append("Доставка СДЭК не подключена (CDEK_MODE=off): способ скрыт на сайте.")
+    return notes
 
 
 def ensure_production_ready(settings: Settings) -> None:

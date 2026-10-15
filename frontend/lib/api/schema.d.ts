@@ -2507,6 +2507,10 @@ export interface components {
             /** Region */
             region?: string | null;
             shape?: components["schemas"]["TeaShape"] | null;
+            /** Shelf Life */
+            shelf_life?: string | null;
+            /** Storage */
+            storage?: string | null;
             /** Tea Type */
             tea_type?: string | null;
         };
@@ -5254,6 +5258,8 @@ export interface components {
             delivery: components["schemas"]["DeliveryPublic"];
             /** Metrika Id */
             metrika_id: string;
+            /** Online Payment Available */
+            online_payment_available: boolean;
             /** Pages */
             pages: components["schemas"]["PageLink"][];
             /** Seo Home Description */

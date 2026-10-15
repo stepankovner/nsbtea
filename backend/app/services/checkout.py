@@ -129,6 +129,11 @@ async def place_order(
 
     method = DeliveryMethod(payload.delivery.method)
     payment_method = PaymentMethod(payload.payment_method)
+    if payment_method is PaymentMethod.ONLINE and not container.settings.online_payment_available:
+        raise ConflictError(
+            "Онлайн-оплата на сайте подключается и скоро заработает. "
+            "Пока заказ можно оформить в Telegram — напишите нам."
+        )
     payment_settings = await get_group(db, PaymentSettings)
     if payment_method is PaymentMethod.ON_DELIVERY and (
         not payment_settings.allow_pay_on_delivery
