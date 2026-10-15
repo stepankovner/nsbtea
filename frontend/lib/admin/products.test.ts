@@ -95,6 +95,14 @@ describe("форма товара ↔ сервер", () => {
     expect(productPatch(next, base)).toEqual({ attributes: { region: "Уишань", harvest_year: 2023, shape: "loose" } });
   });
 
+  it("условия хранения и срок годности — в характеристиках", () => {
+    const base = formFromProduct(adminProduct({ attributes: { storage: "В сухом месте", shelf_life: "2 года" } }));
+    expect(base.attributes.storage).toBe("В сухом месте");
+    expect(base.attributes.shelf_life).toBe("2 года");
+    const next = { ...base, attributes: { ...base.attributes, shelf_life: " 3 года " } };
+    expect(productPatch(next, base)).toEqual({ attributes: { storage: "В сухом месте", shelf_life: "3 года" } });
+  });
+
   it("заварка: включённые способы и комментарий мастера", () => {
     const base = formFromProduct(adminProduct());
     const next = {

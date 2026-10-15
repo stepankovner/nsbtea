@@ -99,13 +99,43 @@ describe("CheckoutForm — оформление на одной странице
     expect(shopApi.checkout).not.toHaveBeenCalled();
   });
 
-  it("ссылки на оферту и политику", () => {
+  it("ссылки на оферту, согласие и политику", () => {
     renderForm();
     expect(screen.getByRole("link", { name: "условия оферты" })).toHaveAttribute("href", "/legal/offer");
+    // согласие на обработку ПД — отдельный документ (152-ФЗ, ч. 1 ст. 9), галочка ведёт на него
     expect(screen.getByRole("link", { name: "обработку персональных данных" })).toHaveAttribute(
+      "href",
+      "/legal/consent",
+    );
+    expect(screen.getByRole("link", { name: "политике обработки персональных данных" })).toHaveAttribute(
       "href",
       "/legal/privacy",
     );
+  });
+
+  it("какие карты принимаем — рядом с кнопкой оплаты", () => {
+    renderForm();
+    expect(screen.getByText(/карты МИР, Visa, Mastercard российских банков или СБП/)).toBeInTheDocument();
+  });
+
+  it("онлайн-оплата ещё не подключена: объясняем, как заказать, кнопка неактивна", () => {
+    renderForm({ siteData: site({ online_payment_available: false }) });
+    expect(screen.getByRole("status")).toHaveTextContent("Онлайн-оплата на сайте подключается");
+    expect(within(screen.getByRole("status")).getByRole("link", { name: /Telegram/ })).toHaveAttribute(
+      "href",
+      "https://t.me/nsbtea",
+    );
+    expect(screen.getByRole("button", { name: /Оплатить/ })).toBeDisabled();
+  });
+
+  it("онлайн-оплата не подключена, но можно заплатить при получении", async () => {
+    renderForm({ siteData: site({ online_payment_available: false, allow_pay_on_delivery: true }) });
+    expect(screen.queryByRole("radio", { name: /Онлайн/ })).not.toBeInTheDocument();
+    await fillContacts();
+    await userEvent.click(screen.getByRole("radio", { name: /Самовывоз/ }));
+    await acceptConsents();
+    await userEvent.click(screen.getByRole("button", { name: /Оформить заказ/ }));
+    expect(shopApi.checkout).toHaveBeenCalledWith(expect.objectContaining({ payment_method: "on_delivery" }));
   });
 
   it("самовывоз: заказ создаётся и покупатель уходит на оплату", async () => {

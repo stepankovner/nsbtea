@@ -18,6 +18,13 @@ describe("PackingSlip — упаковочный лист", () => {
     expect(screen.getByText("Позвоните заранее")).toBeInTheDocument();
   });
 
+  it("условия возврата — в посылке, письменно (ЗоЗПП, ст. 26.1)", () => {
+    render(<PackingSlip order={adminOrder()} size="a4" siteHost="nsbtea.ru" />);
+    const note = screen.getByText(/Обмен и возврат/);
+    expect(note).toHaveTextContent("7 дней");
+    expect(note).toHaveTextContent("nsbtea.ru/returns");
+  });
+
   it("формат A6 — компактная разметка", () => {
     const { container } = render(<PackingSlip order={adminOrder()} size="a6" />);
     expect(container.querySelector("[data-size=a6]")).not.toBeNull();
