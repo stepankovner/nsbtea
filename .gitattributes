@@ -1,0 +1,5 @@
+# Скрипты, crontab и Caddyfile работают в Linux-контейнерах: при клонировании на Windows
+# переводы строк должны остаться LF, иначе скрипты резервных копий не запустятся.
+*.sh text eol=lf
+infra/backup/crontab text eol=lf
+infra/Caddyfile text eol=lf
