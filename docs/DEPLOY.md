@@ -43,6 +43,14 @@ nano .env
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, `TELEGRAM_WEBHOOK_SECRET` | по желанию | да |
 | `BACKUP_S3_*`, `BACKUP_ALERT_CHAT_ID` | по желанию | да |
 
+**Почта на Selectel VDS.** Исходящие порты 465 и 587 там закрыты, и открыть их нельзя — письма через
+SMTP Яндекс 360 или Gmail с такого сервера не уйдут. Отправляйте через почтовый сервис Selectel
+(первые 1 000 писем в месяц бесплатно): `SMTP_HOST=smtp.mail.selcloud.ru`, `SMTP_PORT=1126`,
+`SMTP_STARTTLS=true`, логин и пароль — в панели Selectel на вкладке ресурса почтового сервиса. В DNS домена —
+запись подтверждения, DKIM (`selcloud._domainkey`), DMARC и `include:spf.mail.selcloud.ru` в SPF
+(SPF-запись у домена одна: если почтовый ящик на Яндекс 360, в ней оба `include`).
+Инструкция: https://docs.selectel.ru/email-service/connect-email-service/
+
 В боевом режиме сайт не запустится, пока чего-то не хватает: шаг `migrate` выведет список
 (`docker compose logs migrate`), API и воркер не стартуют.
 
