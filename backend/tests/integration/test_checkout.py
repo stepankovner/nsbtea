@@ -9,7 +9,7 @@ from typing import Any
 
 import pytest
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import Settings
@@ -302,9 +302,12 @@ class TestPayment:
         assert await send_webhook(client, operation_id, "APPROVED") == 200
         assert (await load_order(db, body["order_id"])).status == "awaiting_payment"
 
-    async def test_bad_webhook_body(self, client: AsyncClient) -> None:
+    async def test_bad_webhook_body_is_ignored(self, client: AsyncClient, db: AsyncSession) -> None:
+        # Точка ждёт 200 на любой вебхук (иначе 30 повторов, а новый вебхук не регистрируется);
+        # неподписанное тело ничего не меняет
         response = await client.post("/api/webhooks/tochka", content=b"garbage")
-        assert response.status_code == 400
+        assert response.status_code == 200
+        assert await db.scalar(select(func.count()).select_from(WebhookEvent)) == 0
 
     async def test_status_page_and_retry(
         self, client: AsyncClient, db: AsyncSession, container: Container

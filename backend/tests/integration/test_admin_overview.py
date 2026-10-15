@@ -41,6 +41,8 @@ async def test_dashboard(client: AsyncClient, db: AsyncSession, container: Conta
         "legal_pages": "/admin/content/pages",
         "products": "/admin/products/new",
         "contacts": "/admin/settings/store",
+        "buyer_pages": "/admin/content/pages",
+        "online_payment": "/admin/settings/payment",
     }
 
 

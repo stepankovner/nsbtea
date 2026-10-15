@@ -1,8 +1,14 @@
 """Боевой запуск без обязательных настроек должен падать сразу и понятно, а не на первом заказе."""
 
 import pytest
+from pydantic import ValidationError
 
-from app.config import Settings, ensure_production_ready, production_problems
+from app.config import (
+    Settings,
+    ensure_production_ready,
+    production_notes,
+    production_problems,
+)
 
 
 def _prod(**overrides: object) -> Settings:
@@ -75,3 +81,39 @@ def test_ensure_production_ready_lists_all_problems_at_once() -> None:
 
 def test_telegram_is_optional_but_needs_secret_when_enabled() -> None:
     assert production_problems(_prod(telegram_bot_token=None, telegram_webhook_secret=None)) == []
+
+
+def test_payments_and_cdek_can_be_off_until_contracts_are_signed() -> None:
+    """Банк проверяет живой сайт до одобрения эквайринга, а ключи выдаёт после:
+    боевой сайт запускается с TOCHKA_MODE=off / CDEK_MODE=off, ключи тогда не нужны."""
+    settings = _prod(
+        tochka_mode="off",
+        tochka_jwt=None,
+        tochka_customer_code=None,
+        cdek_mode="off",
+        cdek_client_id=None,
+        cdek_client_secret=None,
+    )
+    assert production_problems(settings) == []
+
+
+def test_notes_say_what_buyers_cannot_use_yet() -> None:
+    assert production_notes(_prod()) == []
+    notes = production_notes(_prod(tochka_mode="off", cdek_mode="off"))
+    assert any("Онлайн-оплата" in note for note in notes), notes
+    assert any("СДЭК" in note for note in notes), notes
+
+
+def test_payment_modes_default_to_card_and_sbp() -> None:
+    assert Settings(_env_file=None).tochka_payment_modes == ["card", "sbp"]
+
+
+def test_payment_modes_from_comma_separated_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("TOCHKA_PAYMENT_MODES", "sbp, card,tinkoff")
+    assert Settings(_env_file=None).tochka_payment_modes == ["sbp", "card", "tinkoff"]
+
+
+def test_unknown_payment_mode_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("TOCHKA_PAYMENT_MODES", "card,cash")
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None)

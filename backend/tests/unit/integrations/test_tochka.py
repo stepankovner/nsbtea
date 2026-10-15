@@ -9,6 +9,7 @@ import pytest
 from cryptography.hazmat.primitives.asymmetric import rsa
 from jwt.algorithms import RSAAlgorithm
 
+from app.config import Settings
 from app.integrations.payments import (
     PaymentGatewayError,
     PaymentRequest,
@@ -268,3 +269,140 @@ class TestWebhook:
         await gw.parse_webhook(body.encode())
         assert len(recorder.requests) == 1
         assert "keys/public" in str(recorder.requests[0].url)
+
+
+# Ответы песочницы Точки (сняты живым запросом, октябрь 2026)
+SANDBOX_RETAILERS = {
+    "Data": {
+        "Retailer": [
+            {
+                "status": "REG",
+                "isActive": True,
+                "mcc": "5111",
+                "rate": 2.6,
+                "name": "OOO  ALTERO",
+                "merchantId": "200000000001097",
+                "terminalId": "20000097",
+                "paymentModes": ["sbp", "card", "tinkoff"],
+            },
+            {
+                "status": "REG",
+                "isActive": True,
+                "mcc": "4353",
+                "rate": 3.0,
+                "name": "OOO  LUCH",
+                "url": "https://luch.com",
+                "merchantId": "200000000001098",
+                "terminalId": "20000090",
+                "paymentModes": ["sbp"],
+                "cashbox": "start",
+            },
+        ]
+    },
+    "Links": {"self": "https://enter.tochka.com/uapi/acquiring/v1.0/retailers"},
+    "Meta": {"totalPages": 1},
+}
+SANDBOX_CUSTOMERS = {
+    "Data": {
+        "Customer": [
+            {
+                "customerCode": "1234567ab",
+                "customerType": "Personal",
+                "isResident": True,
+                "taxCode": "662333407785",
+                "fullName": "Тестов Тест Тестович",
+                "shortName": "Тестов Т.Т.",
+            }
+        ]
+    }
+}
+
+
+async def test_payment_modes_come_from_settings() -> None:
+    recorder = Recorder(
+        [httpx.Response(200, json={"Data": {"operationId": "op", "paymentLink": "https://x"}})]
+    )
+    gw = TochkaGateway(
+        base_url=BASE,
+        token="t",
+        customer_code="1234567ab",
+        merchant_id=None,
+        payment_modes=("sbp",),
+        transport=httpx.MockTransport(recorder),
+    )
+    await gw.create_payment(make_request())
+    assert json.loads(recorder.requests[0].content)["Data"]["paymentMode"] == ["sbp"]
+
+
+async def test_from_settings_passes_payment_modes() -> None:
+    recorder = Recorder(
+        [httpx.Response(200, json={"Data": {"operationId": "op", "paymentLink": "https://x"}})]
+    )
+    settings = Settings(_env_file=None, tochka_mode="sandbox", tochka_payment_modes=["card"])
+    gw = TochkaGateway.from_settings(settings, transport=httpx.MockTransport(recorder))
+    await gw.create_payment(make_request())
+    data = json.loads(recorder.requests[0].content)["Data"]
+    assert data["paymentMode"] == ["card"]
+    assert data["merchantId"] == "200000000001097"
+
+
+async def test_list_retailers() -> None:
+    recorder = Recorder([httpx.Response(200, json=SANDBOX_RETAILERS)])
+    retailers = await gateway(recorder).list_retailers("1234567ab")
+    request = recorder.requests[0]
+    assert request.method == "GET"
+    assert str(request.url) == f"{BASE}/acquiring/v1.0/retailers?customerCode=1234567ab"
+    assert [r["merchantId"] for r in retailers] == ["200000000001097", "200000000001098"]
+
+
+async def test_list_retailers_before_approval_explains_why() -> None:
+    recorder = Recorder(
+        [
+            httpx.Response(
+                404,
+                json={
+                    "code": "404",
+                    "message": "Not Found",
+                    "Errors": [{"errorCode": "x", "message": "Retailer not found"}],
+                },
+            )
+        ]
+    )
+    with pytest.raises(PaymentGatewayError, match="Retailer not found"):
+        await gateway(recorder).list_retailers("1234567ab")
+
+
+async def test_list_customers() -> None:
+    recorder = Recorder([httpx.Response(200, json=SANDBOX_CUSTOMERS)])
+    customers = await gateway(recorder).list_customers()
+    assert str(recorder.requests[0].url) == f"{BASE}/open-banking/v1.0/customers"
+    assert customers[0]["customerCode"] == "1234567ab"
+
+
+async def test_register_webhook() -> None:
+    recorder = Recorder([httpx.Response(200, json={"Data": {"result": True}})])
+    await gateway(recorder).register_webhook("client-1", "https://nsbtea.ru/api/webhooks/tochka")
+    request = recorder.requests[0]
+    assert request.method == "PUT"
+    assert str(request.url) == f"{BASE}/webhook/v1.0/client-1"
+    # тело вебхука — без обёртки Data (docs/INTEGRATIONS.md)
+    assert json.loads(request.content) == {
+        "webhooksList": ["acquiringInternetPayment"],
+        "url": "https://nsbtea.ru/api/webhooks/tochka",
+    }
+
+
+async def test_register_webhook_failure_is_reported() -> None:
+    recorder = Recorder(
+        [
+            httpx.Response(
+                400,
+                json={
+                    "message": "Bad Request",
+                    "Errors": [{"message": "Failed to test webhook url accessibility"}],
+                },
+            )
+        ]
+    )
+    with pytest.raises(PaymentGatewayError, match="accessibility"):
+        await gateway(recorder).register_webhook("client-1", "https://nsbtea.ru/x")

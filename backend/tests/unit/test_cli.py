@@ -63,3 +63,14 @@ def test_clear_test_data_asks_for_confirmation(monkeypatch: pytest.MonkeyPatch) 
     with pytest.raises(SystemExit) as exc:
         _run(monkeypatch, "clear-test-data")
     assert "Отменено" in str(exc.value.code)
+
+
+def test_check_config_mentions_what_is_switched_off(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    settings = _prod(tochka_mode="off", tochka_jwt=None, tochka_customer_code=None)
+    monkeypatch.setattr(cli, "get_settings", lambda: settings)
+    _run(monkeypatch, "check-config")
+    out = capsys.readouterr().out
+    assert "Настройки в порядке" in out
+    assert "Онлайн-оплата" in out
