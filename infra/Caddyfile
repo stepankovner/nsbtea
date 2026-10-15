@@ -2,6 +2,9 @@
 # /api → backend, /media → загруженные картинки, остальное → Next.js.
 # SITE_ADDRESS: "nsbtea.ru, www.nsbtea.ru" на боевом сервере, "staging.nsbtea.ru" на тестовом,
 # "localhost" — локально.
+# REDIRECT_ADDRESS: дополнительные домены, которые ведут на основной сайт (PUBLIC_BASE_URL),
+# например "nsbtea.online, www.nsbtea.online". Не задан — блок слушает только служебное имя по http
+# (без сертификата).
 
 {$SITE_ADDRESS} {
 	encode zstd gzip
@@ -36,4 +39,8 @@
 		output stdout
 		format json
 	}
+}
+
+{$REDIRECT_ADDRESS:http://redirect.invalid} {
+	redir {$PUBLIC_BASE_URL}{uri} permanent
 }

@@ -60,6 +60,18 @@ else
   bad "резервная копия не создаётся: $(echo "$out" | tail -3)"
 fi
 
+# 8. С http сайт сам переводит на https (требование банка для интернет-эквайринга)
+case "$BASE" in
+  https://localhost*) ;;
+  https://*)
+    location=$(curl -sS --max-time 15 -o /dev/null -w '%{redirect_url}' "http://${BASE#https://}/" || true)
+    case "$location" in
+      https://*) ok "http → https" ;;
+      *) bad "http://${BASE#https://} не переводит на https" ;;
+    esac
+    ;;
+esac
+
 if [ "$failed" -ne 0 ]; then
   echo "Есть проблемы — см. ✗ выше. Логи: $COMPOSE logs --tail 100 <сервис>"
   exit 1

@@ -13,7 +13,11 @@
   рядом показан `client_id` (нужен для регистрации вебхука). Права:
   `MakeAcquiringOperation`, `ReadAcquiringData`, `ReadCustomerData`, `ManageWebhookData`.
 - `customerCode`: `GET /open-banking/v1.0/customers` → запись с `customerType=Business`.
-- `merchantId`: `GET /acquiring/v1.0/retailers?customerCode=…` → `status=REG`, `isActive=true`.
+- `merchantId`: `GET /acquiring/v1.0/retailers?customerCode=…` → `Data.Retailer[]`: `status` (`REG` — можно
+  принимать оплату), `isActive`, `mcc`, `rate`, `name`, `url` (может отсутствовать), `merchantId` (15 цифр),
+  `terminalId`, `paymentModes`, `cashbox` (нет поля — не подключены чеки, оплата с чеком не пройдёт).
+  До одобрения заявки — ошибка `Retailer not found`. При нескольких точках `merchantId` в оплате обязателен.
+  Всё это проверяет `python -m app.cli tochka-info`.
 
 ### Платёжная ссылка с чеком
 `POST /acquiring/v1.0/payments_with_receipt`, тело обёрнуто в `Data`:
@@ -39,6 +43,7 @@
 - Регистрация: `PUT /webhook/v1.0/{client_id}` с `{"webhooksList":["acquiringInternetPayment"],
   "url":"https://nsbtea.ru/api/webhooks/tochka"}` (без `Data`). Только HTTPS/443; при
   регистрации Точка шлёт тестовый вебхук и ждёт 200. Не-200 повторяется 30 раз раз в 10 с.
+  Поэтому наш обработчик отвечает 200 всегда, а тело без верной подписи просто пропускает.
 - Тело — строка JWT (`Content-Type: text/plain`), подпись RS256, публичный ключ (JWK):
   `https://enter.tochka.com/doc/openapi/static/keys/public`.
 - Поля: `webhookType`, `customerCode`, `amount` (**строка**, `"0.33"`), `paymentType`,

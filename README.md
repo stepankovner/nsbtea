@@ -5,7 +5,7 @@
 
 - Требования и правила: `CLAUDE.md`, `docs/SPEC.md`, `docs/DATA_MODEL.md`, `docs/ROADMAP.md`
 - Решения по ходу работы: `docs/DECISIONS.md`
-- Запуск на сервере: `docs/DEPLOY.md`
+- Запуск на сервере: `docs/DEPLOY.md`; подключение онлайн-оплаты: `docs/ACQUIRING.md`
 
 ## Устройство
 

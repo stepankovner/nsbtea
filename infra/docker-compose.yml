@@ -125,6 +125,8 @@ services:
       - "443:443/udp"
     environment:
       SITE_ADDRESS: ${SITE_ADDRESS:-localhost}
+      REDIRECT_ADDRESS: ${REDIRECT_ADDRESS:-http://redirect.invalid}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost:3000}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - media:/srv/media:ro

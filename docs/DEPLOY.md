@@ -6,7 +6,8 @@
 ## 1. Сервер
 
 - Ubuntu 24.04, 2 vCPU, 4 ГБ памяти, 50 ГБ SSD; провайдер с дата-центром в РФ.
-- DNS: A-записи `nsbtea.ru` и `www.nsbtea.ru` (для тестового сервера — `staging.nsbtea.ru`) → IP сервера.
+- DNS: A-записи `nsbtea.ru` и `www.nsbtea.ru` (для тестового сервера — `staging.nsbtea.ru`) → IP сервера;
+  `nsbtea.online` и `www.nsbtea.online` → тот же IP (сайт переводит их на nsbtea.ru, `REDIRECT_ADDRESS`).
 
 ```sh
 # под root на новом сервере
@@ -36,9 +37,10 @@ nano .env
 | `SECRET_KEY` | `python3 -c "import secrets; print(secrets.token_urlsafe(48))"` | так же, другой |
 | `PUBLIC_BASE_URL` | `https://staging.nsbtea.ru` | `https://nsbtea.ru` |
 | `SITE_ADDRESS` | `staging.nsbtea.ru` | `nsbtea.ru, www.nsbtea.ru` |
+| `REDIRECT_ADDRESS` | пусто | `nsbtea.online, www.nsbtea.online` |
 | `POSTGRES_PASSWORD` | случайная строка | случайная строка |
-| `TOCHKA_MODE`, `TOCHKA_JWT`, `TOCHKA_CUSTOMER_CODE`, `TOCHKA_CLIENT_ID` | `sandbox` или `fake` | `production` + ключи |
-| `CDEK_MODE`, `CDEK_CLIENT_ID`, `CDEK_CLIENT_SECRET` | `sandbox` или `fake` | `production` + ключи |
+| `TOCHKA_MODE`, `TOCHKA_JWT`, `TOCHKA_CUSTOMER_CODE`, `TOCHKA_MERCHANT_ID`, `TOCHKA_CLIENT_ID` | `sandbox` или `fake` | `off` до одобрения эквайринга, затем `production` + ключи (`docs/ACQUIRING.md`) |
+| `CDEK_MODE`, `CDEK_CLIENT_ID`, `CDEK_CLIENT_SECRET` | `sandbox` или `fake` | `off` до договора, затем `production` + ключи |
 | `EMAIL_MODE`, `SMTP_*` | `console` или `smtp` | `smtp` |
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, `TELEGRAM_WEBHOOK_SECRET` | по желанию | да |
 | `BACKUP_S3_*`, `BACKUP_ALERT_CHAT_ID` | по желанию | да |
@@ -52,7 +54,9 @@ SMTP Яндекс 360 или Gmail с такого сервера не уйду�
 Инструкция: https://docs.selectel.ru/email-service/connect-email-service/
 
 В боевом режиме сайт не запустится, пока чего-то не хватает: шаг `migrate` выведет список
-(`docker compose logs migrate`), API и воркер не стартуют.
+(`docker compose logs migrate`), API и воркер не стартуют. `off` — честное «ещё не подключено»: ключи не
+нужны, покупатель видит, что онлайн-оплата подключается (СДЭК скрыт). Так сайт открывают на nsbtea.ru,
+пока банк проверяет его по заявке на эквайринг: `fake` и `sandbox` на боевом сайте запрещены.
 
 ## 3. Первый запуск
 
@@ -85,8 +89,10 @@ docker compose --env-file ../.env exec api python -m app.cli clear-test-data # �
 Остатки вернутся так, будто пробных заказов не было. Демо-товары (если добавлялись) уберите в админке
 в архив. Затем в `.env`: `ENVIRONMENT=production`, `PUBLIC_BASE_URL=https://nsbtea.ru`,
 `SITE_ADDRESS=nsbtea.ru, www.nsbtea.ru`, боевые ключи Точки и СДЭК, `EMAIL_MODE=smtp`; DNS nsbtea.ru → сервер;
-`up -d`, `set-telegram-webhook`, `register-tochka-webhook`, `./smoke-test.sh https://nsbtea.ru`.
-Перед объявлением — один настоящий платёж и возврат (ROADMAP, M6).
+`up -d`, `set-telegram-webhook`, `./smoke-test.sh https://nsbtea.ru`.
+Эквайринг ещё не одобрен — `TOCHKA_MODE=off` и подаём заявку; после одобрения — шаги из
+`docs/ACQUIRING.md` (раздел 4): `tochka-info`, `TOCHKA_MODE=production`, `register-tochka-webhook`,
+настоящий платёж и возврат (ROADMAP, M6).
 
 ## 5. Обновление
 
@@ -124,4 +130,5 @@ docker compose --env-file ../.env ps                     # что запущен
 docker compose --env-file ../.env logs --tail 100 api    # логи (api, worker, web, caddy, backup)
 docker compose --env-file ../.env exec api python -m app.cli reset-password --email shop@nsbtea.ru
 docker compose --env-file ../.env exec api python -m app.cli check-config
+docker compose --env-file ../.env exec api python -m app.cli tochka-info   # эквайринг: что вписать в .env
 ```
