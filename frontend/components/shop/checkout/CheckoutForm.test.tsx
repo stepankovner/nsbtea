@@ -126,6 +126,8 @@ describe("CheckoutForm — оформление на одной странице
       "https://t.me/nsbtea",
     );
     expect(screen.getByRole("button", { name: /Оплатить/ })).toBeDisabled();
+    // не обещаем страницу банка, которой пока нет
+    expect(screen.queryByText(/защищённой странице банка/)).not.toBeInTheDocument();
   });
 
   it("онлайн-оплата не подключена, но можно заплатить при получении", async () => {
