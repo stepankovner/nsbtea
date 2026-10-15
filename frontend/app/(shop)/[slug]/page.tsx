@@ -1,42 +1,13 @@
 import type { Metadata } from "next";
 
 import { ApplicationForm } from "@/components/shop/ApplicationForm";
+import { ContactsDetails, DeliveryPaymentDetails } from "@/components/shop/content/BuyerInfo";
 import { ContentPage, loadPage, pageMetadata } from "@/components/shop/content/ContentPage";
 import { getSite } from "@/lib/shop-server";
 
 export async function generateMetadata(props: PageProps<"/[slug]">): Promise<Metadata> {
   const { slug } = await props.params;
   return pageMetadata(await loadPage(slug, "page"));
-}
-
-async function ContactsAside() {
-  const { store } = await getSite();
-  const rows = [
-    ["Телефон", store.phone],
-    ["Почта", store.email],
-    ["Адрес", store.address],
-    ["Часы работы", store.work_hours],
-  ].filter(([, v]) => v);
-  return (
-    <dl className="grid grid-cols-[auto_1fr] gap-x-8 gap-y-3 border-t border-ink pt-5 text-[17px]">
-      {rows.map(([k, v]) => (
-        <div key={k} className="contents">
-          <dt className="text-muted">{k}</dt>
-          <dd>{v}</dd>
-        </div>
-      ))}
-      {store.telegram_url ? (
-        <div className="contents">
-          <dt className="text-muted">Telegram</dt>
-          <dd>
-            <a href={store.telegram_url} target="_blank" rel="noopener noreferrer" className="text-red underline">
-              Написать
-            </a>
-          </dd>
-        </div>
-      ) : null}
-    </dl>
-  );
 }
 
 export default async function InfoPage(props: PageProps<"/[slug]">) {
@@ -63,5 +34,11 @@ export default async function InfoPage(props: PageProps<"/[slug]">) {
       </ContentPage>
     );
   }
-  return <ContentPage page={page} aside={slug === "contacts" ? <ContactsAside /> : undefined} />;
+  // реквизиты, доставка и оплата — из настроек магазина: банк проверяет их перед подключением оплаты
+  if (slug === "contacts" || slug === "delivery") {
+    const site = await getSite();
+    const aside = slug === "contacts" ? <ContactsDetails site={site} /> : <DeliveryPaymentDetails site={site} />;
+    return <ContentPage page={page} aside={aside} />;
+  }
+  return <ContentPage page={page} />;
 }

@@ -12,6 +12,7 @@ import { shopApi, type DeliveryIn, type Pvz } from "@/lib/shop-api";
 import { normalizePhone, validateCheckout, type DeliveryMethod, type FormErrors } from "@/lib/validation";
 
 import { useCart } from "../cart-context";
+import { CARDS_TEXT } from "../content/BuyerInfo";
 import { buttonClass, TextAreaField, TextField } from "../ui";
 import { CityPicker, type City } from "./CityPicker";
 import { PvzPicker } from "./PvzPicker";
@@ -44,7 +45,8 @@ function deliveryOptions(site: Site): Option[] {
         : "Бесплатно";
     options.push({ method: "courier", label: "Курьер по Владимиру", note: [price, d.courier_note].filter(Boolean).join(" · ") });
   }
-  if (d.cdek_enabled) {
+  // СДЭК — только с онлайн-оплатой (при получении платят лишь самовывоз и курьер)
+  if (d.cdek_enabled && site.online_payment_available) {
     const free = d.cdek_free_from_kop ? ` Бесплатно от ${formatRub(d.cdek_free_from_kop)}.` : "";
     options.push({ method: "cdek_pvz", label: "СДЭК — пункт выдачи", note: `По всей России. Стоимость — после выбора пункта.${free}` });
     options.push({ method: "cdek_door", label: "СДЭК — до двери", note: `СДЭК привезёт заказ по вашему адресу.${free}` });
@@ -106,7 +108,9 @@ export function CheckoutForm({
   const [postalCode, setPostalCode] = useState("");
   const [courierTime, setCourierTime] = useState("");
   const [comment, setComment] = useState("");
-  const [payment, setPayment] = useState<"online" | "on_delivery">("online");
+  const [payment, setPayment] = useState<"online" | "on_delivery">(
+    !site.online_payment_available && site.allow_pay_on_delivery ? "on_delivery" : "online",
+  );
   const [consentOffer, setConsentOffer] = useState(false);
   const [consentPd, setConsentPd] = useState(false);
   const [marketing, setMarketing] = useState(false);
@@ -242,7 +246,9 @@ export function CheckoutForm({
   }
 
   const offer = "/legal/offer";
+  const consent = "/legal/consent";
   const privacy = "/legal/privacy";
+  const paymentOff = payment === "online" && !site.online_payment_available;
 
   // пустая корзина: оформлять нечего, рядом уже есть «Перейти в каталог»
   if (cart && cart.lines.length === 0) return null;
@@ -341,7 +347,9 @@ export function CheckoutForm({
                 ["online", "Онлайн — картой или СБП"],
                 ["on_delivery", "При получении"],
               ] as const
-            ).map(([value, label]) => (
+            )
+              .filter(([value]) => value !== "online" || site.online_payment_available)
+              .map(([value, label]) => (
               <button
                 key={value}
                 type="button"
@@ -377,12 +385,18 @@ export function CheckoutForm({
           <input type="checkbox" className="mt-0.5 size-5 flex-none accent-ink" checked={consentPd} onChange={(e) => setConsentPd(e.target.checked)} />
           <span>
             Даю согласие на{" "}
-            <Link href={privacy} target="_blank" className="text-red underline underline-offset-2">
+            <Link href={consent} target="_blank" className="text-red underline underline-offset-2">
               обработку персональных данных
             </Link>
           </span>
         </label>
         {errors.consentPd ? <span className="-mt-2 pl-8 text-[13px] text-red">{errors.consentPd}</span> : null}
+        <p className="pl-8 text-[13px] text-muted">
+          Как мы храним и защищаем данные — в{" "}
+          <Link href={privacy} target="_blank" className="underline underline-offset-2">
+            политике обработки персональных данных
+          </Link>
+        </p>
         <label className="flex items-start gap-3">
           <input type="checkbox" className="mt-0.5 size-5 flex-none accent-ink" checked={marketing} onChange={(e) => setMarketing(e.target.checked)} />
           <span>Присылать на почту новости и акции (можно отписаться в любой момент)</span>
@@ -427,13 +441,28 @@ export function CheckoutForm({
         </p>
       ) : null}
 
-      <button type="submit" disabled={submitting || blocked} className={buttonClass("primary", "py-[18px]")}>
+      {!site.online_payment_available ? (
+        <p role="status" className="border border-ink p-4 text-[15px] leading-snug">
+          Онлайн-оплата на сайте подключается и скоро заработает.{" "}
+          {site.allow_pay_on_delivery ? "Можно оплатить при получении (самовывоз и курьер по Владимиру) или " : "Пока "}
+          {site.store.telegram_url ? (
+            <a href={site.store.telegram_url} target="_blank" rel="noopener noreferrer" className="text-red underline underline-offset-2">
+              оформить заказ в Telegram
+            </a>
+          ) : (
+            "оформить заказ по телефону"
+          )}
+          .
+        </p>
+      ) : null}
+
+      <button type="submit" disabled={submitting || blocked || paymentOff} className={buttonClass("primary", "py-[18px]")}>
         {submitting ? "Создаём заказ…" : payment === "on_delivery" ? `Оформить заказ на ${formatRub(total)}` : `Оплатить ${formatRub(total)}`}
       </button>
       <p className="text-[13px] text-muted">
         {payment === "on_delivery"
           ? "Оплатите при получении. Чек пришлём на почту."
-          : "Оплата на защищённой странице банка «Точка»: карта или СБП. Чек придёт на почту."}
+          : `Оплата на защищённой странице банка «Точка»: ${CARDS_TEXT}. Чек придёт на почту.`}
       </p>
     </form>
   );

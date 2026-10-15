@@ -425,6 +425,20 @@ export function CharacteristicsFields({ form, update, errors }: FormProps) {
           hint="Для прессованных чаёв, например 2019."
           error={errors["attributes.pressing_year"]}
         />
+        <TextField
+          label={ATTRIBUTE_LABELS.storage}
+          value={a.storage}
+          onChange={(storage) => set({ storage })}
+          maxLength={200}
+          hint="Покупателю по закону нужно знать, как хранить продукт. Например: в сухом месте без посторонних запахов."
+        />
+        <TextField
+          label={ATTRIBUTE_LABELS.shelf_life}
+          value={a.shelf_life}
+          onChange={(shelf_life) => set({ shelf_life })}
+          maxLength={80}
+          hint="Как на упаковке от производителя. Например: 2 года; для выдержанного пуэра — не ограничен."
+        />
         <Field id={shapeId} label={ATTRIBUTE_LABELS.shape} hint="Как выглядит чай: блин, кирпич, рассыпной, точа (маленькое «гнёздышко»).">
           <NativeSelect id={shapeId} value={a.shape} onChange={(e) => set({ shape: e.target.value as TeaShape | "" })}>
             <option value="">Не указана</option>

@@ -31,6 +31,9 @@ export function Footer({ site }: { site: Schemas["SiteOut"] }) {
               <span>{s.address || "Владимир"}</span>
               <span className="text-forest-muted">Доставка по России</span>
               {s.work_hours ? <span className="text-forest-muted">{s.work_hours}</span> : null}
+              {site.online_payment_available ? (
+                <span className="text-forest-muted">Оплата: карты МИР, Visa, Mastercard и СБП</span>
+              ) : null}
             </div>
             <div className="flex flex-col">
               <ColumnTitle>Связь</ColumnTitle>
@@ -83,6 +86,7 @@ export function Footer({ site }: { site: Schemas["SiteOut"] }) {
             © {new Date().getFullYear()} {s.legal_name || "НСБ Чай"}
             {s.inn ? ` · ИНН ${s.inn}` : ""}
             {s.ogrnip ? ` · ОГРНИП ${s.ogrnip}` : ""}
+            {s.legal_address ? ` · ${s.legal_address}` : ""}
           </span>
           <span>Владимир</span>
         </div>

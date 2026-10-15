@@ -3,8 +3,10 @@ import type { AdminOrder } from "@/lib/admin/orders";
 import { formatDateTime, formatPhone } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-/** Упаковочный лист: что положить в посылку и кому (SPEC 10.5). Без цен — его видит покупатель. */
-export function PackingSlip({ order, size }: { order: AdminOrder; size: "a4" | "a6" }) {
+/** Упаковочный лист: что положить в посылку и кому (SPEC 10.5). Без цен — его видит покупатель.
+ * Кладётся в посылку, поэтому на нём — условия возврата: при дистанционной продаже их нужно
+ * дать письменно при доставке (ЗоЗПП, ст. 26.1), иначе срок возврата растёт до трёх месяцев. */
+export function PackingSlip({ order, size, siteHost }: { order: AdminOrder; size: "a4" | "a6"; siteHost?: string }) {
   const small = size === "a6";
   return (
     <article
@@ -72,7 +74,13 @@ export function PackingSlip({ order, size }: { order: AdminOrder; size: "a4" | "
         </section>
       ) : null}
 
-      <footer className={cn("text-neutral-600", small ? "mt-3" : "mt-8")}>Спасибо за заказ! Вопросы — пишите нам в Telegram.</footer>
+      <footer className={cn("flex flex-col gap-1 text-neutral-600", small ? "mt-3" : "mt-8")}>
+        <p>Спасибо за заказ! Вопросы — пишите нам в Telegram.</p>
+        <p>
+          Обмен и возврат: товар надлежащего качества можно вернуть в течение 7 дней после получения, если сохранены
+          его товарный вид и свойства. Как это сделать — {siteHost ? `${siteHost}/returns` : "на сайте, в разделе «Обмен и возврат»"}.
+        </p>
+      </footer>
     </article>
   );
 }

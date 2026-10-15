@@ -40,6 +40,8 @@ function attributeRows(form: ProductForm): { label: string; value: string }[] {
     [ATTRIBUTE_LABELS.fermentation, a.fermentation.trim()],
     [ATTRIBUTE_LABELS.shape, a.shape ? SHAPE_LABELS[a.shape] : ""],
     [ATTRIBUTE_LABELS.effect, a.effect ? EFFECT_LABELS[a.effect] : ""],
+    [ATTRIBUTE_LABELS.storage, a.storage.trim()],
+    [ATTRIBUTE_LABELS.shelf_life, a.shelf_life.trim()],
   ];
   return rows.filter(([, v]) => v !== null && v !== "").map(([label, value]) => ({ label, value: String(value) }));
 }

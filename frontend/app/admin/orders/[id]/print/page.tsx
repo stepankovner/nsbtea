@@ -34,7 +34,7 @@ function PrintInner() {
       </div>
       {query.isPending ? <p className="text-center">Загружаем…</p> : null}
       {query.isError ? <p className="text-center text-red-700">{errorMessage(query.error)}</p> : null}
-      {query.data ? <PackingSlip order={query.data} size={size} /> : null}
+      {query.data ? <PackingSlip order={query.data} size={size} siteHost={typeof window === "undefined" ? undefined : window.location.host} /> : null}
     </div>
   );
 }

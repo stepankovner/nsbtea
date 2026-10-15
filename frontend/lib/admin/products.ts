@@ -126,6 +126,8 @@ export const ATTRIBUTE_LABELS = {
   fermentation: "Степень ферментации",
   shape: "Форма",
   effect: "Эффект",
+  storage: "Условия хранения",
+  shelf_life: "Срок годности",
 } as const;
 
 /** Вкладки списка по статусу; «Архив» — отдельный запрос (archived=true). */
@@ -295,6 +297,8 @@ export interface AttributesForm {
   fermentation: string;
   shape: TeaShape | "";
   effect: TeaEffect | "";
+  storage: string;
+  shelf_life: string;
 }
 
 export interface BrewMethodForm {
@@ -406,6 +410,8 @@ export function formFromProduct(p: AdminProduct): ProductForm {
       fermentation: str(a.fermentation),
       shape: (str(a.shape) as TeaShape) || "",
       effect: (str(a.effect) as TeaEffect) || "",
+      storage: str(a.storage),
+      shelf_life: str(a.shelf_life),
     },
     brewing_methods: methods
       .filter((m) => BREW_METHODS.includes(m.method as BrewMethod))
@@ -448,7 +454,7 @@ export function descriptionValue(doc: unknown): Record<string, unknown> | null {
 
 function attributesPayload(a: AttributesForm): Schemas["AttributesIn"] {
   const out: Schemas["AttributesIn"] = {};
-  for (const key of ["tea_type", "region", "factory", "fermentation"] as const) {
+  for (const key of ["tea_type", "region", "factory", "fermentation", "storage", "shelf_life"] as const) {
     const value = a[key].trim();
     if (value) out[key] = value;
   }
