@@ -6,18 +6,37 @@
 ## 1. Сервер
 
 - Ubuntu 24.04, 2 vCPU, 4 ГБ памяти, 50 ГБ SSD; провайдер с дата-центром в РФ.
+  Сейчас — AdminVPS Micro (Москва): 2 × 3,6 ГГц, 4 ГБ, 60 ГБ NVMe; аккаунт на ИП, личный кабинет my.adminvps.ru.
 - DNS: A-записи `nsbtea.ru` и `www.nsbtea.ru` (для тестового сервера — `staging.nsbtea.ru`) → IP сервера;
   `nsbtea.online` и `www.nsbtea.online` → тот же IP (сайт переводит их на nsbtea.ru, `REDIRECT_ADDRESS`).
+
+Первый вход. AdminVPS создаёт сервер с паролем root (письмо и «Серверы» → сервер в личном кабинете);
+пароль никому не пересылать. Со своего компьютера один раз положить на сервер публичный SSH-ключ:
+
+```sh
+ssh-copy-id root@IP                     # macOS и Linux; спросит пароль root один раз
+# Windows (PowerShell):
+# type $env:USERPROFILE\.ssh\id_ed25519.pub | ssh root@IP "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys"
+ssh root@IP                             # теперь без пароля
+```
 
 ```sh
 # под root на новом сервере
 apt update && apt upgrade -y
 curl -fsSL https://get.docker.com | sh
 ufw allow OpenSSH && ufw allow 80/tcp && ufw allow 443/tcp && ufw allow 443/udp && ufw --force enable
-adduser --disabled-password deploy && usermod -aG docker deploy
+adduser --disabled-password --gecos "" deploy && usermod -aG docker deploy
+install -d -m 700 -o deploy -g deploy /home/deploy/.ssh
+install -m 600 -o deploy -g deploy /root/.ssh/authorized_keys /home/deploy/.ssh/authorized_keys
+# вход только по ключу; файл в sshd_config.d, иначе его может перекрыть 50-cloud-init.conf
+printf 'PasswordAuthentication no\nKbdInteractiveAuthentication no\n' > /etc/ssh/sshd_config.d/00-nsbtea.conf
+sshd -t && systemctl reload ssh
+timedatectl | grep synchronized          # должно быть «yes»: от точного времени зависят подписи Точки
 ```
 
-Вход по SSH — только по ключу (`PasswordAuthentication no` в `/etc/ssh/sshd_config`).
+Перед тем как закрыть окно, проверьте вход по ключу во втором окне (`ssh deploy@IP`). Затем смените
+пароль root в личном кабинете («Серверы» → сервер → «Доступ» → «Смена root пароля»): тот, что пришёл
+письмом, больше нигде не нужен. Если ключ потерян — через поддержку AdminVPS (тикет в личном кабинете).
 
 ## 2. Код и настройки
 
@@ -45,9 +64,10 @@ nano .env
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, `TELEGRAM_WEBHOOK_SECRET` | по желанию | да |
 | `BACKUP_S3_*`, `BACKUP_ALERT_CHAT_ID` | по желанию | да |
 
-**Почта на Selectel VDS.** Исходящие порты 465 и 587 там закрыты, и открыть их нельзя — письма через
-SMTP Яндекс 360 или Gmail с такого сервера не уйдут. Отправляйте через почтовый сервис Selectel
-(первые 1 000 писем в месяц бесплатно): `SMTP_HOST=smtp.mail.selcloud.ru`, `SMTP_PORT=1126`,
+**Почта.** Письма сайта (коды входа, статусы заказов) — через почтовый сервис Selectel: аккаунт ИП там
+уже есть, первые 1 000 писем в месяц бесплатно. У AdminVPS в России исходящие SMTP-порты открыты
+(закрыты только в части зарубежных локаций), так что подойдёт и SMTP Яндекс 360; на Selectel VDS порты
+465 и 587 закрыты навсегда. Почтовый сервис Selectel: `SMTP_HOST=smtp.mail.selcloud.ru`, `SMTP_PORT=1126`,
 `SMTP_STARTTLS=true`, логин и пароль — в панели Selectel на вкладке ресурса почтового сервиса. В DNS домена —
 запись подтверждения, DKIM (`selcloud._domainkey`), DMARC и `include:spf.mail.selcloud.ru` в SPF
 (SPF-запись у домена одна: если почтовый ящик на Яндекс 360, в ней оба `include`).
