@@ -459,11 +459,13 @@ export function CheckoutForm({
       <button type="submit" disabled={submitting || blocked || paymentOff} className={buttonClass("primary", "py-[18px]")}>
         {submitting ? "Создаём заказ…" : payment === "on_delivery" ? `Оформить заказ на ${formatRub(total)}` : `Оплатить ${formatRub(total)}`}
       </button>
-      <p className="text-[13px] text-muted">
-        {payment === "on_delivery"
-          ? "Оплатите при получении. Чек пришлём на почту."
-          : `Оплата на защищённой странице банка «Точка»: ${CARDS_TEXT}. Чек придёт на почту.`}
-      </p>
+      {paymentOff ? null : (
+        <p className="text-[13px] text-muted">
+          {payment === "on_delivery"
+            ? "Оплатите при получении. Чек пришлём на почту."
+            : `Оплата на защищённой странице банка «Точка»: ${CARDS_TEXT}. Чек придёт на почту.`}
+        </p>
+      )}
     </form>
   );
 }
