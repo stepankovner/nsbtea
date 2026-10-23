@@ -9,11 +9,11 @@ from email.message import EmailMessage
 from pathlib import Path
 from typing import Any
 
+import aiosmtplib
 import pytest
 
 from app.config import EmailMode, Settings
 from app.container import build_container
-from app.integrations import messaging
 from app.integrations.messaging import SmtpMailer
 
 Sent = list[tuple[EmailMessage, dict[str, Any]]]
@@ -26,7 +26,7 @@ def sent(monkeypatch: pytest.MonkeyPatch) -> Sent:
     async def fake_send(message: EmailMessage, **kwargs: Any) -> None:
         captured.append((message, kwargs))
 
-    monkeypatch.setattr(messaging.aiosmtplib, "send", fake_send)
+    monkeypatch.setattr(aiosmtplib, "send", fake_send)
     return captured
 
 

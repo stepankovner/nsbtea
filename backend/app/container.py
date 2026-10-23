@@ -142,6 +142,7 @@ def build_container(settings: Settings) -> Container:
             password=settings.smtp_password.get_secret_value() if settings.smtp_password else None,
             sender=settings.smtp_from,
             starttls=settings.smtp_starttls,
+            reply_to=settings.smtp_reply_to,
         )
     else:
         mailer = ConsoleMailer()

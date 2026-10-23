@@ -64,20 +64,27 @@ nano .env
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, `TELEGRAM_WEBHOOK_SECRET` | по желанию | да |
 | `BACKUP_S3_*`, `BACKUP_ALERT_CHAT_ID` | по желанию | да |
 
-**Почта.** Ящик shop@nsbtea.ru для переписки — Яндекс 360 (домен у reg.ru: MX `mx.yandex.net` с приоритетом 10,
-DKIM — TXT `mail._domainkey` из админки Яндекс 360). Письма сайта (коды входа, статусы заказов) идут от того же
-адреса, но через почтовый сервис Selectel: через SMTP Яндекса — около 300 писем в сутки, а при подозрении
-на рассылку Яндекс блокирует отправку со всего ящика, то есть и переписку владельца. Аккаунт ИП в Selectel
-уже есть, первые 1 000 писем в месяц бесплатно: `SMTP_HOST=smtp.mail.selcloud.ru`, `SMTP_PORT=1126`,
-`SMTP_STARTTLS=true`, `SMTP_FROM=НСБ Чай <shop@nsbtea.ru>`, логин и пароль — в панели Selectel на вкладке
-ресурса почтового сервиса. В DNS — запись подтверждения и DKIM Selectel (`selcloud._domainkey`).
-SPF-запись у домена одна, на оба сервиса: `v=spf1 include:_spf.yandex.net include:spf.mail.selcloud.ru ~all`;
-DMARC — TXT `_dmarc`: `v=DMARC1; p=none` (без `rua`: иначе в ящик владельца пойдут XML-отчёты).
+**Почта.** Письма сайта (коды входа, статусы заказов) отправляет почтовый сервис Selectel — первые
+1 000 писем в месяц бесплатно: `SMTP_HOST=smtp.mail.selcloud.ru`, `SMTP_PORT=1126`, `SMTP_STARTTLS=true`,
+логин и пароль — в панели Selectel на странице ресурса почтового сервиса. Принимать письма он не умеет,
+а ящика на домене пока нет (нет MX-записи), поэтому:
+
+- `SMTP_FROM=НСБ Чай <noreply@nsbtea.ru>` — на этот адрес не пишут;
+- `SMTP_REPLY_TO=` — ящик, который читает владелец: туда придёт ответ покупателя на любое письмо сайта;
+- тот же ящик — в админке «Настройки» → «Магазин, реквизиты и контакты» → «Почта» (его видят покупатели и банк).
+
+В DNS у reg.ru: TXT-запись подтверждения и DKIM Selectel (`selcloud._domainkey`), SPF
+`v=spf1 include:spf.mail.selcloud.ru ~all`, DMARC — TXT `_dmarc`, например `v=DMARC1; p=quarantine`.
 Инструкция Selectel: https://docs.selectel.ru/email-service/connect-email-service/
 
-Сайт подключается к SMTP только через STARTTLS (порты 587, 1126), порт 465 не подходит. Если всё же отправлять
-через Яндекс: `smtp.yandex.ru`, порт 587, логин — адрес ящика, пароль — пароль приложения. У AdminVPS
-в России исходящие SMTP-порты открыты; на Selectel VDS порты 465 и 587 закрыты навсегда.
+Если позже понадобится ящик shop@nsbtea.ru — Яндекс 360 («Минимальный», 319 ₽ в месяц за ящик): MX
+`mx.yandex.net` с приоритетом 10, DKIM `mail._domainkey` из админки Яндекс 360, а в SPF добавить Яндекс —
+запись одна на оба сервиса: `v=spf1 include:_spf.yandex.net include:spf.mail.selcloud.ru ~all`. Письма
+сайта оставить на Selectel: через SMTP Яндекса — около 300 писем в сутки, а при подозрении на рассылку
+блокируется отправка со всего ящика.
+
+Сайт подключается к SMTP только через STARTTLS (порты 587, 1126), порты 465 и 1127 (SSL сразу) не подходят.
+У AdminVPS в России исходящие SMTP-порты открыты; на Selectel VDS порты 465 и 587 закрыты навсегда.
 
 В боевом режиме сайт не запустится, пока чего-то не хватает: шаг `migrate` выведет список
 (`docker compose logs migrate`), API и воркер не стартуют. `off` — честное «ещё не подключено»: ключи не

@@ -107,6 +107,9 @@ class Settings(BaseSettings):
     smtp_user: str | None = None
     smtp_password: SecretStr | None = None
     smtp_from: str = "НСБ Чай <shop@nsbtea.ru>"
+    # Куда попадёт ответ покупателя на письмо сайта (Reply-To). Нужен, если у адреса SMTP_FROM
+    # нет почтового ящика: сервис отправки писем Selectel письма не принимает.
+    smtp_reply_to: str | None = None
     smtp_starttls: bool = True
 
     sentry_dsn: str | None = None

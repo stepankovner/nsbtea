@@ -102,6 +102,7 @@ class SmtpMailer:
         password: str | None,
         sender: str,
         starttls: bool,
+        reply_to: str | None = None,
     ) -> None:
         self._host = host
         self._port = port
@@ -109,11 +110,14 @@ class SmtpMailer:
         self._password = password
         self._sender = sender
         self._starttls = starttls
+        self._reply_to = reply_to
 
     async def send(self, *, to: str, subject: str, text: str, html: str | None) -> None:
         message = EmailMessage()
         message["From"] = self._sender
         message["To"] = to
+        if self._reply_to:
+            message["Reply-To"] = self._reply_to
         message["Subject"] = subject
         message.set_content(text)
         if html:
