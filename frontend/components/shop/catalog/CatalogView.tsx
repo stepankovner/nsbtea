@@ -87,7 +87,7 @@ export function CatalogView({
       {current?.description ? <p className="mb-8 max-w-[720px] text-[17px] leading-[1.6] text-text2">{current.description}</p> : null}
 
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-y border-b-line border-t-ink py-3.5">
-        <nav aria-label="Виды чая" className="flex flex-wrap gap-1.5">
+        <nav aria-label="Виды чая" className="-mx-5 flex w-[calc(100%+40px)] gap-1.5 overflow-x-auto px-5 [scrollbar-width:none] sm:mx-0 sm:w-auto sm:flex-wrap sm:overflow-visible sm:px-0 [&>*]:shrink-0">
           <Pill href={catalogHref("/catalog", params, {})} active={!current}>
             Все
           </Pill>
@@ -221,7 +221,7 @@ export function CatalogView({
       </details>
 
       {data.items.length ? (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,230px),1fr))] gap-x-6 gap-y-14">
+        <div className="grid grid-cols-2 gap-x-3 gap-y-10 sm:grid-cols-[repeat(auto-fill,minmax(230px,1fr))] sm:gap-x-6 sm:gap-y-14">
           {data.items.map((p, i) => (
             <TeaCard key={p.id} product={p} priority={i < 4} />
           ))}

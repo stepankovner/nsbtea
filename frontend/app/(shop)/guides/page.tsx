@@ -21,7 +21,7 @@ export default async function GuidesPage() {
         <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,280px),1fr))] gap-x-6 gap-y-12">
           {guides.map((g) => (
             <Link key={g.slug} href={`/guides/${g.slug}`} className="group flex flex-col gap-4">
-              <div className="aspect-[4/3] overflow-hidden bg-photo">
+              <div className="aspect-[16/9] sm:aspect-[4/3] overflow-hidden bg-photo">
                 <Picture media={g.cover} alt={g.title} placeholder="фото" sizes="(max-width: 900px) 100vw, 33vw" />
               </div>
               <span className="font-serif text-[28px] leading-tight group-hover:text-red">{g.title}</span>

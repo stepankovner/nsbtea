@@ -27,9 +27,9 @@ export function HeroBlock({ block }: { block: Block }) {
           <span>{str(d.kicker_left)}</span>
           <span>{str(d.kicker_right)}</span>
         </div>
-        <h1 className="font-serif text-[clamp(52px,9vw,148px)] font-normal leading-[0.95] tracking-[-0.025em]">
+        <h1 className="font-serif text-[clamp(40px,9vw,148px)] font-normal leading-[0.95] tracking-[-0.025em] [overflow-wrap:anywhere] [hyphens:auto]">
           <span className="block">{str(d.title_line1)}</span>
-          <span className="block pl-[clamp(0px,16vw,240px)]">{str(d.title_line2)}</span>
+          <span className="block sm:pl-[clamp(0px,16vw,240px)]">{str(d.title_line2)}</span>
         </h1>
       </section>
       <section className="container-site flex flex-wrap items-end gap-x-[clamp(32px,5vw,72px)] gap-y-12 pb-[clamp(80px,9vw,140px)] pt-[clamp(40px,5vw,72px)]">
@@ -180,7 +180,7 @@ export function ServicesBlock({ block }: { block: Block }) {
           const media = typeof id === "string" ? (block.images[id] ?? null) : null;
           return (
             <div key={index} className="flex flex-col gap-[18px]">
-              <div className="relative aspect-[4/5] overflow-hidden bg-photo">
+              <div className="relative aspect-[16/10] overflow-hidden bg-photo sm:aspect-[4/5]">
                 <Picture media={media} alt={str(item.title)} placeholder={`фото: ${str(item.title).toLowerCase()}`} sizes="(max-width: 900px) 100vw, 33vw" />
                 {item.kicker ? (
                   <span
@@ -218,7 +218,7 @@ export function ProductsBlock({ block, moreHref = "/catalog" }: { block: Block; 
           Весь каталог →
         </Link>
       </div>
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,190px),1fr))] gap-x-6 gap-y-12">
+      <div className="grid grid-cols-2 gap-x-3 gap-y-10 sm:grid-cols-[repeat(auto-fit,minmax(190px,1fr))] sm:gap-x-6 sm:gap-y-12">
         {block.products.map((p) => (
           <TeaCard key={p.id} product={p} />
         ))}

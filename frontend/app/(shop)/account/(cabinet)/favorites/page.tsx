@@ -20,7 +20,7 @@ export default async function FavoritesPage() {
     );
   }
   return (
-    <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,230px),1fr))] gap-x-6 gap-y-12">
+    <div className="grid grid-cols-2 gap-x-3 gap-y-10 sm:grid-cols-[repeat(auto-fill,minmax(230px,1fr))] sm:gap-x-6 sm:gap-y-12">
       {items.map((p) => (
         <TeaCard key={p.id} product={p} />
       ))}

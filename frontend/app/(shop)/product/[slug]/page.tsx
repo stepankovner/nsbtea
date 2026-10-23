@@ -38,7 +38,7 @@ function Related({ title, items }: { title: string; items: Schemas["ProductCard"
   return (
     <section className="container-site pt-[clamp(64px,8vw,120px)]">
       <h2 className="mb-8 font-serif text-[clamp(32px,3.6vw,48px)]">{title}</h2>
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,230px),1fr))] gap-x-6 gap-y-12">
+      <div className="grid grid-cols-2 gap-x-3 gap-y-10 sm:grid-cols-[repeat(auto-fill,minmax(230px,1fr))] sm:gap-x-6 sm:gap-y-12">
         {items.map((p) => (
           <TeaCard key={p.id} product={p} />
         ))}
@@ -94,7 +94,7 @@ export default async function ProductPage(props: PageProps<"/product/[slug]">) {
         <div className="flex max-w-[760px] flex-[1_1_460px] flex-col gap-8 px-[clamp(20px,4vw,64px)] py-[clamp(28px,5vw,72px)]">
           <div className="flex flex-col gap-3.5">
             {p.meta ? <span className="kicker text-green">{p.meta}</span> : null}
-            <h1 className="font-serif text-[clamp(38px,5vw,76px)] leading-[1.02]">{p.name}</h1>
+            <h1 className="font-serif text-[clamp(30px,5vw,76px)] leading-[1.05] [overflow-wrap:anywhere] [hyphens:auto]">{p.name}</h1>
             {p.promotion_title ? <span className="text-sm text-red">{p.promotion_title}</span> : null}
           </div>
           {p.short_description ? (
