@@ -113,7 +113,7 @@ docker compose --env-file ../.env exec api python -m app.cli register-tochka-web
 Каталог, тексты и настройки владелец заполняет на тестовом сервере — они переезжают вместе с базой.
 
 ```sh
-cd ~/nsbtea/infra
+cd /opt/nsbtea/infra         # папка проекта на сервере nsbtea.ru
 docker compose --env-file ../.env exec backup backup.sh                      # копия на всякий случай
 docker compose --env-file ../.env exec api python -m app.cli clear-test-data # пробные заказы, покупатели, баллы, письма
 ```
@@ -130,7 +130,7 @@ docker compose --env-file ../.env exec api python -m app.cli clear-test-data # �
 ## 5. Обновление
 
 ```sh
-cd ~/nsbtea && git pull
+cd /opt/nsbtea && git pull     # папка проекта на сервере nsbtea.ru
 cd infra && docker compose --env-file ../.env up -d --build
 ./smoke-test.sh https://nsbtea.ru
 ```
