@@ -83,6 +83,16 @@ async def deliver_pending(container: Container) -> int:
                     logger.error("Сообщение %s не доставлено: %s", message.id, exc)
                 else:
                     message.next_attempt_at = now + _backoff(message.attempts)
+                    # Адрес и текст (в нём бывает код входа) в лог не пишем
+                    logger.warning(
+                        "Сообщение %s (%s, %s) не отправлено, попытка %s из %s: %s",
+                        message.id,
+                        message.channel,
+                        message.event,
+                        message.attempts,
+                        MAX_ATTEMPTS,
+                        exc,
+                    )
                 continue
             message.attempts += 1
             message.status = OutboxStatus.SENT.value
