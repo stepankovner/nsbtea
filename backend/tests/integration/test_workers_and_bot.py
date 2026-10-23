@@ -1,7 +1,9 @@
 """Фоновые задачи (SPEC 11.1, 10.5) и вебхук Telegram-бота."""
 
+import logging
 from datetime import UTC, date, datetime, timedelta
 
+import pytest
 from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -50,6 +52,28 @@ class TestOutbox:
         assert await jobs.deliver_outbox(container) == 1
         assert telegram.sent[0].text == "Привет"
         assert mailer.sent[0].subject == "Тема"
+
+    async def test_every_failed_attempt_is_logged(
+        self, db: AsyncSession, container: Container, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """Иначе неверный пароль SMTP или упавший Telegram видно в логе только после последней
+        попытки — через много часов. Адрес и текст письма (в нём код входа) в лог не пишем."""
+        enqueue_email(
+            db, to="a@mail.ru", subject="Код входа", text="123456", html=None, event="login_code"
+        )
+        await db.commit()
+        mailer = container.mailer
+        assert isinstance(mailer, FakeMailer)
+        mailer.fail = True
+
+        with caplog.at_level(logging.WARNING, logger="app.services.outbox"):
+            assert await jobs.deliver_outbox(container) == 0
+
+        messages = [r.getMessage() for r in caplog.records if r.name == "app.services.outbox"]
+        assert any(
+            "login_code" in m and "попытка 1" in m and "SMTP недоступен" in m for m in messages
+        ), messages
+        assert not any("123456" in m or "a@mail.ru" in m for m in messages)
 
 
 class TestAutoComplete:
