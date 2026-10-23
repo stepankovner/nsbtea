@@ -81,18 +81,31 @@ async def _set_telegram_webhook() -> None:
     settings = get_settings()
     if not settings.telegram_bot_token or not settings.telegram_webhook_secret:
         sys.exit("Задайте TELEGRAM_BOT_TOKEN и TELEGRAM_WEBHOOK_SECRET")
-    from aiogram import Bot
+    from aiogram.exceptions import TelegramNetworkError
 
-    bot = Bot(settings.telegram_bot_token.get_secret_value())
-    url = f"{settings.public_base_url.rstrip('/')}/api/webhooks/telegram"
-    await bot.set_webhook(
-        url,
-        secret_token=settings.telegram_webhook_secret.get_secret_value(),
-        allowed_updates=["message"],
-        drop_pending_updates=True,
+    from app.integrations.messaging import make_bot
+
+    bot = make_bot(
+        settings.telegram_bot_token.get_secret_value(), api_url=settings.telegram_api_url
     )
-    me = await bot.get_me()
-    await bot.session.close()
+    url = f"{settings.public_base_url.rstrip('/')}/api/webhooks/telegram"
+    try:
+        await bot.set_webhook(
+            url,
+            secret_token=settings.telegram_webhook_secret.get_secret_value(),
+            allowed_updates=["message"],
+            drop_pending_updates=True,
+        )
+        me = await bot.get_me()
+    except TelegramNetworkError as exc:
+        target = settings.telegram_api_url or "api.telegram.org"
+        sys.exit(
+            f"Сервер не может подключиться к Telegram ({target}): "
+            f"{exc}. Если api.telegram.org отсюда недоступен — задайте TELEGRAM_API_URL "
+            "(docs/DEPLOY.md, «Telegram»)."
+        )
+    finally:
+        await bot.session.close()
     print(f"Вебхук бота @{me.username} установлен: {url}")
 
 

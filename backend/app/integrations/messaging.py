@@ -12,9 +12,25 @@ from typing import Protocol
 import aiosmtplib
 from aiogram import Bot
 from aiogram.client.default import DefaultBotProperties
+from aiogram.client.session.aiohttp import AiohttpSession
+from aiogram.client.telegram import PRODUCTION, TelegramAPIServer
 from aiogram.enums import ParseMode
 
 logger = logging.getLogger(__name__)
+
+# Запрос к Telegram, который не ответил за это время, считается неудачным: воркер повторит его
+# позже, а команда настройки сразу покажет ошибку вместо бесконечного ожидания.
+TELEGRAM_TIMEOUT_SECONDS = 20
+
+
+def make_bot(
+    token: str, *, api_url: str | None, default: DefaultBotProperties | None = None
+) -> Bot:
+    """Клиент Bot API. `api_url` — промежуточный сервер, если api.telegram.org с сервера
+    недоступен (`TELEGRAM_API_URL`); без него — официальный адрес."""
+    api = TelegramAPIServer.from_base(api_url.rstrip("/")) if api_url else PRODUCTION
+    session = AiohttpSession(api=api, timeout=TELEGRAM_TIMEOUT_SECONDS)
+    return Bot(token, session=session, default=default)
 
 
 class TelegramSender(Protocol):
@@ -47,8 +63,10 @@ class FakeTelegramSender:
 
 
 class BotTelegramSender:
-    def __init__(self, token: str) -> None:
-        self._bot = Bot(token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+    def __init__(self, token: str, *, api_url: str | None = None) -> None:
+        self._bot = make_bot(
+            token, api_url=api_url, default=DefaultBotProperties(parse_mode=ParseMode.HTML)
+        )
 
     @property
     def bot(self) -> Bot:

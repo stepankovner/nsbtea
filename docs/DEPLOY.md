@@ -86,6 +86,24 @@ nano .env
 Сайт подключается к SMTP только через STARTTLS (порты 587, 1126), порты 465 и 1127 (SSL сразу) не подходят.
 У AdminVPS в России исходящие SMTP-порты открыты; на Selectel VDS порты 465 и 587 закрыты навсегда.
 
+**Telegram.** С сервера в России api.telegram.org может быть недоступен (на AdminVPS в Москве — так:
+`curl -4 -m 15 https://api.telegram.org` обрывается по таймауту). Тогда запросы бота идут через небольшой
+сервер за границей (например, AdminVPS в Нидерландах или Финляндии, Ubuntu 24.04), где Caddy
+пересылает их в Telegram и пускает только сервер магазина (`infra/telegram-relay/Caddyfile`):
+
+```sh
+# на сервере за границей; DNS: A-запись tg.nsbtea.ru → его IP
+curl -fsSL https://get.docker.com | sh
+mkdir -p /opt/tg-relay && cd /opt/tg-relay
+nano Caddyfile        # содержимое infra/telegram-relay/Caddyfile
+docker run -d --name tg-relay --restart unless-stopped -p 80:80 -p 443:443 \
+  -e SHOP_IP=168.113.168.174 -v "$PWD/Caddyfile:/etc/caddy/Caddyfile" -v caddy_data:/data caddy:2-alpine
+```
+
+На основном сервере: `curl -sS -m 15 https://tg.nsbtea.ru/bot<токен>/getMe` отвечает `"ok":true`, затем в `.env`
+`TELEGRAM_API_URL=https://tg.nsbtea.ru`, `up -d` и `exec api python -m app.cli set-telegram-webhook`.
+Привязывать Telegram в «Мой профиль» — только когда бот отвечает: иначе код входа в админку не дойдёт.
+
 В боевом режиме сайт не запустится, пока чего-то не хватает: шаг `migrate` выведет список
 (`docker compose logs migrate`), API и воркер не стартуют. `off` — честное «ещё не подключено»: ключи не
 нужны, покупатель видит, что онлайн-оплата подключается (СДЭК скрыт). Так сайт открывают на nsbtea.ru,

@@ -129,7 +129,9 @@ def build_container(settings: Settings) -> Container:
 
     telegram: TelegramSender
     if settings.telegram_bot_token:
-        telegram = BotTelegramSender(settings.telegram_bot_token.get_secret_value())
+        telegram = BotTelegramSender(
+            settings.telegram_bot_token.get_secret_value(), api_url=settings.telegram_api_url
+        )
     else:
         telegram = DisabledTelegramSender()
 

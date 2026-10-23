@@ -99,6 +99,9 @@ class Settings(BaseSettings):
     telegram_bot_token: SecretStr | None = None
     telegram_bot_username: str | None = None
     telegram_webhook_secret: SecretStr | None = None
+    # Промежуточный сервер для Bot API, если api.telegram.org с сервера недоступен
+    # (например, https://tg.nsbtea.ru). Пусто — запросы идут напрямую.
+    telegram_api_url: str | None = None
 
     # Почта
     email_mode: EmailMode = EmailMode.CONSOLE

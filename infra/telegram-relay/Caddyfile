@@ -1,0 +1,12 @@
+# Пересылка запросов сайта к Telegram Bot API. Ставится на небольшой сервер за границей, если
+# с основного сервера api.telegram.org недоступен (docs/DEPLOY.md, «Telegram»).
+# Пускает только сервер магазина (SHOP_IP), остальным — 403. Данные не хранит.
+{$RELAY_HOST:tg.nsbtea.ru} {
+	@shop remote_ip {$SHOP_IP:168.113.168.174}
+	handle @shop {
+		reverse_proxy https://api.telegram.org {
+			header_up Host api.telegram.org
+		}
+	}
+	respond 403
+}
