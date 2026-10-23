@@ -76,8 +76,10 @@ def create_app(container: Container | None = None) -> FastAPI:
         title="НСБ Чай — API",
         version="1.0.0",
         lifespan=lifespan,
-        docs_url="/api/docs" if settings.environment is not Environment.PRODUCTION else None,
-        openapi_url="/api/openapi.json",
+        # На боевом сайте схема API (в ней все адреса админки) не публикуется; типы фронтенда
+        # собираются из `python -m app.cli export-openapi`.
+        docs_url=None if settings.is_production else "/api/docs",
+        openapi_url=None if settings.is_production else "/api/openapi.json",
         redoc_url=None,
     )
     app.state.container = container
