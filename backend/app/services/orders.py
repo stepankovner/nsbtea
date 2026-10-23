@@ -211,25 +211,52 @@ def delivery_summary(order: Order) -> str:
     return f"{label}{': ' + detail if detail else ''}"
 
 
+def _delivery_label(order: Order) -> str:
+    try:
+        return DELIVERY_LABELS[DeliveryMethod(order.delivery_method)]
+    except ValueError:
+        return order.delivery_method
+
+
 async def notify_new_order(db: AsyncSession, container: Container, order: Order) -> None:
-    lines = [
-        f"🛒 <b>Новый заказ {order.display_number}</b> — {format_rub(order.total_kop)}",
-        "Оплачен онлайн" if order.status == OrderStatus.PAID.value else "Оплата при получении",
+    title = f"Новый заказ {order.display_number} — {format_rub(order.total_kop)}"
+    paid = "Оплачен онлайн" if order.status == OrderStatus.PAID.value else "Оплата при получении"
+    items = [
+        f"• {item_line(i.product_name, i.variant_label, i.qty, i.product_type)}"
+        f" — {format_rub(i.line_total_kop)}"
+        for i in order.items
+    ]
+    delivery_cost = f" — {format_rub(order.delivery_kop)}" if order.delivery_kop else ""
+    link = admin_link(container, f"/orders/{order.id}")
+    # Telegram: без имени, телефона, почты, адреса и комментария покупателя
+    telegram = [
+        f"🛒 <b>{h(title)}</b>",
+        paid,
         "",
-        *(
-            f"• {h(item_line(i.product_name, i.variant_label, i.qty, i.product_type))}"
-            f" — {format_rub(i.line_total_kop)}"
-            for i in order.items
-        ),
+        *(h(line) for line in items),
         "",
-        f"Доставка: {h(delivery_summary(order))}"
-        + (f" — {format_rub(order.delivery_kop)}" if order.delivery_kop else ""),
-        f"Клиент: {h(order.name)}, {order.phone}, {h(order.email)}",
+        f"Доставка: {h(_delivery_label(order))}{delivery_cost}",
+        link,
+    ]
+    mail = [
+        title,
+        paid,
+        "",
+        *items,
+        "",
+        f"Доставка: {delivery_summary(order)}{delivery_cost}",
+        f"Покупатель: {order.name}, {order.phone}, {order.email}",
     ]
     if order.customer_comment:
-        lines.append(f"Комментарий: {h(order.customer_comment)}")
-    lines.append(admin_link(container, f"/orders/{order.id}"))
-    await notify_owner(db, container, NotificationEvent.NEW_ORDER, "\n".join(lines))
+        mail.append(f"Комментарий: {order.customer_comment}")
+    mail += ["", link]
+    await notify_owner(
+        db,
+        container,
+        NotificationEvent.NEW_ORDER,
+        "\n".join(telegram),
+        email=(title, "\n".join(mail)),
+    )
 
 
 async def notify_attention(

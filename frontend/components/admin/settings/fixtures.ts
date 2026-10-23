@@ -483,6 +483,7 @@ const VALUES: AllSettings = {
     telegram_channel_url: "",
     vk_url: "",
     work_hours: "",
+    notify_email: "",
   },
   catalog: {
     weight_presets: [25, 50, 100, 200],

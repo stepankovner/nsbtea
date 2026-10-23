@@ -69,6 +69,9 @@ DATA_LABELS = {
     "comment": "Комментарий",
 }
 
+# Поля заявки без персональных данных — их можно показать и в Telegram
+TELEGRAM_SAFE_KEYS = frozenset({"organization", "city", "volume", "date", "occasion", "guests"})
+
 
 def media_out(container: Container, media: MediaFile | None) -> MediaOut | None:
     if media is None:
@@ -487,18 +490,33 @@ async def create_application(
     db.add(application)
     await db.flush()
 
-    lines = [f"📝 <b>Новая заявка: {APPLICATION_TYPE_LABELS[ApplicationType(payload.type)]}</b>"]
+    title = f"Новая заявка: {APPLICATION_TYPE_LABELS[ApplicationType(payload.type)]}"
+    about: list[str] = []
     if event is not None:
         local = event.starts_at.astimezone(MSK)
-        lines.append(f"Событие: {h(event.title)}, {day_month(local.date())} {local:%H:%M}")
-        lines.append(f"Гостей: {payload.guests}")
-    lines.append(f"Имя: {h(application.name)}")
+        about.append(f"Событие: {event.title}, {day_month(local.date())} {local:%H:%M}")
+        about.append(f"Гостей: {payload.guests}")
+    link = admin_link(container, f"/applications/{application.id}")
+    # Telegram: без имени и контактов — они в письме и в админке
+    about_telegram = about + [
+        f"{DATA_LABELS[key]}: {value}"
+        for key, value in application.data.items()
+        if key in TELEGRAM_SAFE_KEYS
+    ]
+    telegram_lines = [f"📝 <b>{h(title)}</b>", *(h(line) for line in about_telegram), link]
+    mail = [title, *about, f"Имя: {application.name}"]
     if phone:
-        lines.append(f"Телефон: {phone}")
+        mail.append(f"Телефон: {phone}")
     if telegram:
-        lines.append(f"Telegram: @{telegram}")
+        mail.append(f"Telegram: @{telegram}")
     for key, value in application.data.items():
-        lines.append(f"{DATA_LABELS.get(key, key)}: {h(value)}")
-    lines.append(admin_link(container, f"/applications/{application.id}"))
-    await notify_owner(db, container, NotificationEvent.NEW_APPLICATION, "\n".join(lines))
+        mail.append(f"{DATA_LABELS.get(key, key)}: {value}")
+    mail += ["", link]
+    await notify_owner(
+        db,
+        container,
+        NotificationEvent.NEW_APPLICATION,
+        "\n".join(telegram_lines),
+        email=(title, "\n".join(mail)),
+    )
     return thanks

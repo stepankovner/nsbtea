@@ -293,6 +293,14 @@ class StoreSettings(SettingsGroup):
     telegram_channel_url: str = Field(default="", max_length=200, title="Ссылка на канал")
     vk_url: str = Field(default="", max_length=200, title="Ссылка на ВКонтакте")
     work_hours: str = Field(default="", max_length=200, title="Часы работы")
+    notify_email: str = Field(
+        default="",
+        max_length=200,
+        title="Почта для уведомлений о заказах",
+        description="Сюда придут письма о новых заказах, заявках и заказах, которые требуют "
+        "внимания, — с контактами покупателя. Покупатели этот адрес не видят. Лучше российская "
+        "почта (Mail.ru, Яндекс). Пусто — писем не будет, только Telegram.",
+    )
 
 
 class SeoSettings(SettingsGroup):

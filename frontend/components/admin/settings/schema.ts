@@ -56,6 +56,11 @@ const SECTIONS: Record<string, { title: string | null; description?: string; lin
       description: "Показываются в подвале сайта и нужны для оферты. Возьмите их из выписки ЕГРИП или из банка.",
       keys: ["legal_name", "inn", "ogrnip", "legal_address"],
     },
+    {
+      title: "Уведомления на почту",
+      description: "Письма о новых заказах и заявках — с контактами покупателя. Видите только вы.",
+      keys: ["notify_email"],
+    },
   ],
   catalog: [
     { title: "Варианты веса чая", keys: ["weight_presets"] },
@@ -181,7 +186,7 @@ function unitFor(key: string): string | undefined {
 }
 
 function inputModeFor(key: string): SettingField["inputMode"] {
-  if (key === "email") return "email";
+  if (key === "email" || key.endsWith("_email")) return "email";
   if (key === "phone") return "tel";
   if (key.endsWith("_url")) return "url";
   return "text";
