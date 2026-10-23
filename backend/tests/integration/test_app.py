@@ -1,6 +1,10 @@
 """Каркас приложения: здоровье, единый формат ошибок на русском."""
 
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
+
+from app.config import Environment
+from app.container import Container
+from app.main import create_app
 
 
 async def test_health(client: AsyncClient) -> None:
@@ -40,3 +44,22 @@ async def test_security_headers(client: AsyncClient) -> None:
     response = await client.get("/api/health")
     assert response.headers["x-content-type-options"] == "nosniff"
     assert response.headers["referrer-policy"] == "strict-origin-when-cross-origin"
+
+
+async def test_api_schema_is_hidden_on_production(container: Container) -> None:
+    """Схема API перечисляет все адреса админки — на боевом сайте её не отдаём
+    (типы фронтенда собираются из `python -m app.cli export-openapi`, а не с сервера)."""
+    container.settings = container.settings.model_copy(
+        update={"environment": Environment.PRODUCTION}
+    )
+    app = create_app(container)
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="https://nsbtea.test") as ac:
+        assert (await ac.get("/api/openapi.json")).status_code == 404
+        assert (await ac.get("/api/docs")).status_code == 404
+        assert (await ac.get("/api/health")).status_code == 200
+
+
+async def test_api_schema_is_available_off_production(client: AsyncClient) -> None:
+    response = await client.get("/api/openapi.json")
+    assert response.status_code == 200
+    assert "/api/health" in response.json()["paths"]
