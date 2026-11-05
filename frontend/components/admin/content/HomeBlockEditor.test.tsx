@@ -23,6 +23,22 @@ vi.mock("@/lib/admin/lookup", () => ({ lookupProducts: vi.fn().mockResolvedValue
 describe("HomeBlockEditor — содержимое блока главной", { timeout: 15_000 }, () => {
   beforeEach(() => vi.clearAllMocks());
 
+  it("сохраняет показ пустого блока вместе с его текстами", async () => {
+    const block = homeBlocks()[1]!;
+    vi.mocked(homeApi.list).mockResolvedValue([block]);
+    vi.mocked(homeApi.patch).mockResolvedValue({
+      ...block, data: { ...block.data, show_when_empty: true },
+    });
+    renderWithAdmin(<HomeBlockEditor kind="thursday" />);
+    await userEvent.click(await screen.findByRole("switch", {
+      name: "Показывать пустой блок при заполнении",
+    }));
+    await userEvent.click(screen.getByRole("button", { name: "Сохранить блок" }));
+    expect(homeApi.patch).toHaveBeenCalledWith("thursday", {
+      data: { ...block.data, show_when_empty: true },
+    });
+  });
+
   it("баннер: меняем заголовок — сохраняем блок целиком, ничего не теряя", async () => {
     const blocks = homeBlocks();
     vi.mocked(homeApi.list).mockResolvedValue(blocks);

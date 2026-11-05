@@ -18,6 +18,23 @@ const image = (block: Block, key: string) => {
   return typeof id === "string" ? (block.images[id] ?? null) : null;
 };
 
+/** Явно включается владельцем на время заполнения; реальные данные не подменяет. */
+function EmptyHomeBlock({ block, title, message }: { block: Block; title: string; message: string }) {
+  if (block.data.show_when_empty !== true) return null;
+  return (
+    <section className="container-site pb-[clamp(80px,9vw,140px)]">
+      <h2 className="mb-6 font-serif text-[clamp(32px,3.6vw,48px)]">
+        {str(block.data.title, title)}
+      </h2>
+      {block.data.note ? <p className="mb-4 text-base text-text2">{str(block.data.note)}</p> : null}
+      <div className="border border-dashed border-line bg-block p-6 text-text2">
+        <p className="font-medium">Блок пока заполняется</p>
+        <p className="mt-2">{message}</p>
+      </div>
+    </section>
+  );
+}
+
 export function HeroBlock({ block }: { block: Block }) {
   const d = block.data;
   return (
@@ -77,7 +94,8 @@ function BrewStat({ value, label }: { value: string; label: string }) {
 }
 
 export function ThursdayBlock({ block }: { block: Block }) {
-  if (!block.products.length || !block.thursday) return null;
+  if (!block.products.length || !block.thursday)
+    return <EmptyHomeBlock block={block} title="Чай недели" message="Выберите чаи и даты акции в календаре четвергов." />;
   const t = block.thursday;
   return (
     <section id="chai-nedeli" className="container-site scroll-mt-24 pb-[clamp(80px,9vw,140px)]">
@@ -170,7 +188,8 @@ const CHIP: Record<string, string> = { ink: "#1D231B", green: "#546B49", red: "#
 
 export function ServicesBlock({ block }: { block: Block }) {
   const items = Array.isArray(block.data.items) ? (block.data.items as Record<string, unknown>[]) : [];
-  if (!items.length) return null;
+  if (!items.length)
+    return <EmptyHomeBlock block={block} title="Не только чай" message="Добавьте карточки мероприятий в редакторе этого блока." />;
   return (
     <section className="container-site pb-[clamp(80px,9vw,140px)]">
       <h2 className="mb-8 font-serif text-[clamp(32px,3.6vw,48px)]">{str(block.data.title, "Не только чай")}</h2>
@@ -209,7 +228,8 @@ export function ServicesBlock({ block }: { block: Block }) {
 }
 
 export function ProductsBlock({ block, moreHref = "/catalog" }: { block: Block; moreHref?: string }) {
-  if (!block.products.length) return null;
+  if (!block.products.length)
+    return <EmptyHomeBlock block={block} title="Товары" message="Добавьте и опубликуйте подходящие товары. Они появятся здесь автоматически." />;
   return (
     <section className="container-site pb-[clamp(80px,9vw,140px)]">
       <div className="mb-8 flex flex-wrap items-baseline justify-between gap-4">
@@ -228,7 +248,8 @@ export function ProductsBlock({ block, moreHref = "/catalog" }: { block: Block; 
 }
 
 export function EventsBlock({ block }: { block: Block }) {
-  if (!block.events.length) return null;
+  if (!block.events.length)
+    return <EmptyHomeBlock block={block} title="Ближайшие церемонии и сплавы" message="Добавьте и опубликуйте ближайшее событие в разделе «События»." />;
   return (
     <section className="bg-forest text-paper">
       <div className="container-site flex flex-wrap gap-x-[clamp(32px,6vw,96px)] gap-y-12 py-[clamp(64px,8vw,120px)]">
@@ -295,7 +316,8 @@ export function AboutBlock({ block }: { block: Block }) {
 
 export function AdvantagesBlock({ block }: { block: Block }) {
   const items = Array.isArray(block.data.items) ? (block.data.items as Record<string, unknown>[]) : [];
-  if (!items.length) return null;
+  if (!items.length)
+    return <EmptyHomeBlock block={block} title="Почему у нас" message="Добавьте карточки преимуществ в редакторе этого блока." />;
   return (
     <section className="container-site pb-[clamp(80px,9vw,140px)]">
       <h2 className="mb-8 font-serif text-[clamp(32px,3.6vw,48px)]">{str(block.data.title)}</h2>

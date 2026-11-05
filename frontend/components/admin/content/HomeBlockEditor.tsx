@@ -447,6 +447,23 @@ function BlockForm({ block, kind }: { block: HomeBlock; kind: HomeBlockKind }) {
           />
         </Label>
 
+        {["thursday", "featured", "new_products", "sets", "events", "services", "advantages"].includes(kind) ? (
+          <div className="rounded-xl border bg-card p-4">
+            <Label className="flex min-h-12 items-center justify-between gap-3 font-normal">
+              <span className="text-[15px]">Показывать пустой блок при заполнении</span>
+              <Switch
+                checked={data.show_when_empty === true}
+                onCheckedChange={(v) => set("show_when_empty", v)}
+                aria-label="Показывать пустой блок при заполнении"
+              />
+            </Label>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Сохраните блок и включите его показ на главной. Пока содержимого нет, посетители
+              увидят заголовок и пометку «Блок пока заполняется». Перед запуском выключите этот режим.
+            </p>
+          </div>
+        ) : null}
+
         {schema.auto ? (
           <div className="flex items-start gap-3 rounded-xl border border-sky-200 bg-sky-50 p-4 text-[15px] text-sky-950">
             <Info className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
