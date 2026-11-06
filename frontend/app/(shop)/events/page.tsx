@@ -93,7 +93,7 @@ export default async function EventsPage(props: PageProps<"/events">) {
             <span className="kicker text-green-light">На заказ</span>
             <h2 className="font-serif text-[clamp(40px,5vw,72px)] leading-none">Выездная церемония</h2>
             <p className="max-w-[420px] text-[17px] leading-[1.6] text-forest-muted">
-              {copy.formats[2].text}
+              {copy.formats[2]?.text}
             </p>
           </div>
           <div className="max-w-[600px] flex-[1_1_400px]">
