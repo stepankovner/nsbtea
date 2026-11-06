@@ -548,6 +548,7 @@ export const BLOCK_SCHEMAS: Record<HomeBlockKind, BlockSchema> = {
     preview: true,
     fields: [
       { ...TITLE, placeholder: "Не только чай" },
+      { key: "subtitle", label: "Подзаголовок", type: "text", maxLength: 200 },
       {
         key: "items",
         label: "Карточки",

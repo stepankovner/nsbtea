@@ -59,7 +59,7 @@ function SearchBox({ onDone, autoFocus = true }: { onDone: () => void; autoFocus
         id={id}
         type="search"
         aria-label="Поиск по каталогу"
-        placeholder="Шу пуэр, улун, гайвань…"
+        placeholder="Шу пуэр, улун, посуда…"
         value={q}
         onChange={(e) => setQ(e.target.value)}
         onKeyDown={(e) => e.key === "Escape" && onDone()}
@@ -90,7 +90,7 @@ export function Header({ site }: { site: Site }) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const items = navItems(site);
+  const items = navItems();
   const close = () => {
     setMenuOpen(false);
     setSearchOpen(false);
@@ -109,7 +109,7 @@ export function Header({ site }: { site: Site }) {
   return (
     <header className="sticky top-0 z-30 border-b border-line-2 bg-paper">
       <div className="container-site flex items-center justify-between gap-x-3 gap-y-4 py-3.5 sm:gap-x-8">
-        <Link href="/" aria-label="НСБ Чай — на главную" onClick={close} className="flex">
+        <Link href="/" aria-label={`${site.store.shop_name} — на главную`} onClick={close} className="flex">
           <NsbLogo size={12} />
         </Link>
 

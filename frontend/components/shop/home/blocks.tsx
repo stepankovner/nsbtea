@@ -44,9 +44,9 @@ export function HeroBlock({ block }: { block: Block }) {
           <span>{str(d.kicker_left)}</span>
           <span>{str(d.kicker_right)}</span>
         </div>
-        <h1 className="font-serif text-[clamp(40px,9vw,148px)] font-normal leading-[0.95] tracking-[-0.025em] [overflow-wrap:anywhere] [hyphens:auto]">
+        <h1 className="font-serif text-[clamp(40px,8vw,132px)] font-normal leading-[0.95] tracking-[-0.025em] [overflow-wrap:anywhere] [hyphens:auto]">
           <span className="block">{str(d.title_line1)}</span>
-          <span className="block sm:pl-[clamp(0px,16vw,240px)]">{str(d.title_line2)}</span>
+          <span className="block sm:pl-[clamp(0px,10vw,160px)] lg:whitespace-nowrap">{str(d.title_line2)}</span>
         </h1>
       </section>
       <section className="container-site flex flex-wrap items-end gap-x-[clamp(32px,5vw,72px)] gap-y-12 pb-[clamp(80px,9vw,140px)] pt-[clamp(40px,5vw,72px)]">
@@ -192,7 +192,10 @@ export function ServicesBlock({ block }: { block: Block }) {
     return <EmptyHomeBlock block={block} title="Не только чай" message="Добавьте карточки мероприятий в редакторе этого блока." />;
   return (
     <section className="container-site pb-[clamp(80px,9vw,140px)]">
-      <h2 className="mb-8 font-serif text-[clamp(32px,3.6vw,48px)]">{str(block.data.title, "Не только чай")}</h2>
+      <div className="mb-8">
+        <h2 className="font-serif text-[clamp(32px,3.6vw,48px)]">{str(block.data.title, "Не только чай")}</h2>
+        {block.data.subtitle ? <p className="mt-2 text-lg text-text2">{str(block.data.subtitle)}</p> : null}
+      </div>
       <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,280px),1fr))] gap-x-6 gap-y-10">
         {items.map((item, index) => {
           const id = item.image_media_id;

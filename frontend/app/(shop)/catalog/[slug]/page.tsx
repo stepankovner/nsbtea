@@ -5,7 +5,7 @@ import { CatalogView } from "@/components/shop/catalog/CatalogView";
 import { parseCatalogParams } from "@/lib/catalog-params";
 import { findCategory, loadCatalog } from "@/lib/catalog-server";
 import { breadcrumbsJsonLd, jsonLdString } from "@/lib/seo";
-import { getCategories, PUBLIC_BASE_URL } from "@/lib/shop-server";
+import { getCategories, getSite, PUBLIC_BASE_URL } from "@/lib/shop-server";
 
 export async function generateMetadata(props: PageProps<"/catalog/[slug]">): Promise<Metadata> {
   const { slug } = await props.params;
@@ -31,9 +31,11 @@ export default async function CategoryPage(props: PageProps<"/catalog/[slug]">) 
   const [data, categories] = await Promise.all([loadCatalog(params, slug), getCategories()]);
   const current = data.category ? (findCategory(categories, data.category.slug) ?? data.category) : findCategory(categories, slug);
   if (!current) notFound();
+  const site = await getSite();
   return (
     <>
       <CatalogView
+        helpUrl={site.store.telegram_url || "/contacts"}
         data={data}
         params={params}
         path={`/catalog/${current.slug}`}

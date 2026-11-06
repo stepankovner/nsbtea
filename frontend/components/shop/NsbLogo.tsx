@@ -42,7 +42,7 @@ export function NsbLogo({
         </span>
         <span className="flex flex-col" style={{ gap: "0.55em" }}>
           <span style={{ fontWeight: 500, fontSize: "1.55em", letterSpacing: "0.07em", whiteSpace: "nowrap" }}>
-            НСБ ЧАЙ
+            НСБ | ЧАЙ
           </span>
           {tagline ? (
             <span

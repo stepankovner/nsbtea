@@ -2,6 +2,7 @@ import clsx from "clsx";
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import copy from "@/content/events.json";
 import { ApplicationForm } from "@/components/shop/ApplicationForm";
 import { EventRow } from "@/components/shop/events/EventRow";
 import { must } from "@/lib/api/client";
@@ -10,7 +11,7 @@ import { PUBLIC_BASE_URL } from "@/lib/shop-server";
 
 export const metadata: Metadata = {
   title: "Церемонии и сплавы",
-  description: "Чайные церемонии во Владимире, сплавы на сапах по Клязьме и выездные церемонии на заказ.",
+  description: copy.seo,
   alternates: { canonical: `${PUBLIC_BASE_URL}/events` },
 };
 
@@ -18,14 +19,10 @@ const FILTERS = [
   { value: undefined, label: "Все" },
   { value: "ceremony", label: "Церемонии" },
   { value: "rafting", label: "Сплавы" },
-  { value: "lecture", label: "Лекции" },
+  { value: "other", label: "Другое" },
 ] as const;
 
-const FORMATS = [
-  { title: "Чайная церемония", text: "Два часа, три-четыре чая одной темы, до восьми гостей." },
-  { title: "Сплав на сапах", text: "Около четырёх часов по Клязьме. Сапы и инструктор включены, чай заваривается на берегу." },
-  { title: "Выездная церемония", text: "Привезём чай, посуду и мастера: домой, в офис, на праздник или на природу." },
-];
+const FORMATS = copy.formats;
 
 export default async function EventsPage(props: PageProps<"/events">) {
   const search = await props.searchParams;
@@ -44,15 +41,14 @@ export default async function EventsPage(props: PageProps<"/events">) {
             <br />и сплавы
           </h1>
           <p className="max-w-[440px] text-[17px] leading-[1.6] text-text2">
-            Вечерние церемонии проходят во Владимире, сплавы — по Клязьме, с церемонией на берегу. Выездную церемонию можно
-            заказать на любую дату.
+            {copy.intro}
           </p>
         </div>
         <div className="mb-[72px] grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-8">
           {FORMATS.map((f) => (
             <div key={f.title} className="flex flex-col gap-2.5 border-t border-ink pt-[18px]">
               <span className="font-serif text-[26px]">{f.title}</span>
-              <span className="text-[15px] leading-[1.55] text-text2">{f.text}</span>
+              <span className="whitespace-pre-line text-[15px] leading-[1.55] text-text2">{f.text}</span>
             </div>
           ))}
         </div>
@@ -86,7 +82,7 @@ export default async function EventsPage(props: PageProps<"/events">) {
           events.map((event) => <EventRow key={event.id} event={event} />)
         ) : (
           <p className="border-t border-line py-10 text-[17px] text-text2">
-            {past ? "Архив пока пуст." : "Ближайших событий пока нет — расписание появится здесь и в нашем Telegram-канале."}
+            {past ? "Архив пока пуст." : copy.empty}
           </p>
         )}
       </section>
@@ -97,7 +93,7 @@ export default async function EventsPage(props: PageProps<"/events">) {
             <span className="kicker text-green-light">На заказ</span>
             <h2 className="font-serif text-[clamp(40px,5vw,72px)] leading-none">Выездная церемония</h2>
             <p className="max-w-[420px] text-[17px] leading-[1.6] text-forest-muted">
-              Расскажите, где и когда. Перезвоним, предложим чаи и рассчитаем стоимость.
+              {copy.formats[2].text}
             </p>
           </div>
           <div className="max-w-[600px] flex-[1_1_400px]">

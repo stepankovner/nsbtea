@@ -55,7 +55,7 @@ export function Footer({ site }: { site: Schemas["SiteOut"] }) {
             </div>
             <div className="flex flex-col items-start">
               <ColumnTitle>Разделы</ColumnTitle>
-              {navItems(site).map((item) => (
+              {navItems().map((item) => (
                 <Link key={item.href} href={item.href} className="hover:text-green-light">
                   {item.label}
                 </Link>

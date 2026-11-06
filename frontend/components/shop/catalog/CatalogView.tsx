@@ -58,6 +58,7 @@ export function CatalogView({
   categories,
   current,
   title,
+  helpUrl = "/contacts",
 }: {
   data: Page;
   params: CatalogParams;
@@ -65,6 +66,7 @@ export function CatalogView({
   categories: Category[];
   current: Category | null;
   title: string;
+  helpUrl?: string;
 }) {
   const f = data.facets;
   const toggleTag = (slug: string) =>
@@ -81,10 +83,17 @@ export function CatalogView({
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <h1 className="font-serif text-[clamp(52px,7vw,104px)] leading-[0.95]">{title}</h1>
         <span className="font-mono text-xs tracking-[0.08em] text-muted">
-          {data.total} {plural(data.total, "товар", "товара", "товаров")} · доставка по Владимиру и России
+          {data.total} {plural(data.total, "товар", "товара", "товаров")} · Доставка по Владимиру и России
         </span>
       </div>
       {current?.description ? <p className="mb-8 max-w-[720px] text-[17px] leading-[1.6] text-text2">{current.description}</p> : null}
+
+      <p className="mb-8 max-w-[720px] text-base leading-relaxed text-text2">
+        Поможем выбрать чай исходя из ваших предпочтений и запросов.{" "}
+        <a href={helpUrl} className="text-red underline underline-offset-4">
+          Написать нам
+        </a>
+      </p>
 
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-y border-b-line border-t-ink py-3.5">
         <nav aria-label="Виды чая" className="-mx-5 flex w-[calc(100%+40px)] gap-1.5 overflow-x-auto px-5 [scrollbar-width:none] sm:mx-0 sm:w-auto sm:flex-wrap sm:overflow-visible sm:px-0 [&>*]:shrink-0">
